@@ -1,13 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { DollarSign, CheckCircle, XCircle, CreditCard, BarChart3, Users, Building, MapPin } from "lucide-react"
+import {
+  TrendingUp,
+  DollarSign,
+  CheckCircle,
+  XCircle,
+  CreditCard,
+  Users,
+  Building,
+  MapPin,
+  Calendar,
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 import { LoadingSpinner } from "./loading-spinner"
-import type { Statistics, FilterOptions } from "../lib/types"
+import type { FilterOptions, Statistics } from "../lib/types"
 import { getStatistics } from "../lib/api"
 
 interface StatisticsPanelProps {
@@ -22,8 +31,8 @@ export function StatisticsPanel({ filters }: StatisticsPanelProps) {
     const loadStatistics = async () => {
       setLoading(true)
       try {
-        const stats = await getStatistics(filters)
-        setStatistics(stats)
+        const data = await getStatistics(filters)
+        setStatistics(data)
       } catch (error) {
         console.error("Error loading statistics:", error)
       } finally {
@@ -34,18 +43,6 @@ export function StatisticsPanel({ filters }: StatisticsPanelProps) {
     loadStatistics()
   }, [filters])
 
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    )
-  }
-
-  if (!statistics) {
-    return <div className="h-full flex items-center justify-center text-gray-500">No statistics available</div>
-  }
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("uz-UZ", {
       style: "currency",
@@ -54,239 +51,222 @@ export function StatisticsPanel({ filters }: StatisticsPanelProps) {
     }).format(amount)
   }
 
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat("uz-UZ").format(num)
+  }
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
+
+  if (!statistics) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-500">
+        <p>Failed to load statistics</p>
+      </div>
+    )
+  }
+
   const successRate = statistics.totalChecks > 0 ? (statistics.deliveredChecks / statistics.totalChecks) * 100 : 0
 
   return (
-    <div className="h-full overflow-y-auto p-4 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Statistics</h2>
-        <Badge variant="outline">{statistics.totalChecks} checks</Badge>
+    <div className="h-full overflow-y-auto">
+      <div className="p-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold flex items-center gap-2">
+          <TrendingUp className="h-5 w-5" />
+          Statistics
+        </h2>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="rankings">Rankings</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-4">
-          {/* Main Stats */}
-          <div className="grid grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Checks</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{statistics.totalChecks}</div>
-                <p className="text-xs text-muted-foreground">
-                  {statistics.deliveredChecks} delivered, {statistics.failedChecks} failed
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Sum</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(statistics.totalSum)}</div>
-                <p className="text-xs text-muted-foreground">
-                  Avg: {formatCurrency(statistics.totalSum / Math.max(statistics.totalChecks, 1))}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{successRate.toFixed(1)}%</div>
-                <Progress value={successRate} className="mt-2" />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Failed Deliveries</CardTitle>
-                <XCircle className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{statistics.failedChecks}</div>
-                <p className="text-xs text-muted-foreground">
-                  {((statistics.failedChecks / Math.max(statistics.totalChecks, 1)) * 100).toFixed(1)}% failure rate
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Daily Stats */}
+      <div className="p-4 space-y-4">
+        {/* Overview Cards */}
+        <div className="grid grid-cols-2 gap-3">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Daily Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {statistics.dailyStats.map((day, index) => (
-                  <div key={day.date} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{day.date}</div>
-                      <div className="text-sm text-muted-foreground">{day.checksCount} checks</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(day.totalSum)}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {formatCurrency(day.totalSum / Math.max(day.checksCount, 1))} avg
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payments" className="space-y-4">
-          {/* Payment Methods */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Payment Methods
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Nalichniy (Cash)</span>
-                  <span className="font-bold">{formatCurrency(statistics.paymentMethods.nalichniy)}</span>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-600">Total Checks</p>
+                  <p className="text-lg font-bold">{formatNumber(statistics.totalChecks)}</p>
                 </div>
-                <Progress value={(statistics.paymentMethods.nalichniy / statistics.totalSum) * 100} className="h-2" />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">UzCard</span>
-                  <span className="font-bold">{formatCurrency(statistics.paymentMethods.uzcard)}</span>
-                </div>
-                <Progress value={(statistics.paymentMethods.uzcard / statistics.totalSum) * 100} className="h-2" />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Humo</span>
-                  <span className="font-bold">{formatCurrency(statistics.paymentMethods.humo)}</span>
-                </div>
-                <Progress value={(statistics.paymentMethods.humo / statistics.totalSum) * 100} className="h-2" />
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Click</span>
-                  <span className="font-bold">{formatCurrency(statistics.paymentMethods.click)}</span>
-                </div>
-                <Progress value={(statistics.paymentMethods.click / statistics.totalSum) * 100} className="h-2" />
+                <CheckCircle className="h-8 w-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="rankings" className="space-y-4">
-          {/* Top Expeditors */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Top Expeditors
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {statistics.topExpeditors.map((expeditor, index) => (
-                  <div key={expeditor.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center">
-                        {index + 1}
-                      </Badge>
-                      <div>
-                        <div className="font-medium">{expeditor.name}</div>
-                        <div className="text-sm text-muted-foreground">{expeditor.checksCount} checks</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatCurrency(expeditor.totalSum)}</div>
-                    </div>
-                  </div>
-                ))}
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-600">Total Sum</p>
+                  <p className="text-sm font-bold text-green-600">{formatCurrency(statistics.totalSum)}</p>
+                </div>
+                <DollarSign className="h-8 w-8 text-green-500" />
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Top Projects */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                Top Projects
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {statistics.topProjects.map((project, index) => (
-                  <div key={project.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center">
-                        {index + 1}
-                      </Badge>
-                      <div>
-                        <div className="font-medium">{project.name}</div>
-                        <div className="text-sm text-muted-foreground">{project.checksCount} checks</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatCurrency(project.totalSum)}</div>
-                    </div>
-                  </div>
-                ))}
+        {/* Success Rate */}
+        <Card>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Success Rate</span>
+                <span className="text-sm font-bold">{successRate.toFixed(1)}%</span>
               </div>
-            </CardContent>
-          </Card>
+              <Progress value={successRate} className="h-2" />
+              <div className="flex justify-between text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  {statistics.deliveredChecks} delivered
+                </span>
+                <span className="flex items-center gap-1">
+                  <XCircle className="h-3 w-3 text-red-500" />
+                  {statistics.failedChecks} failed
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Top Cities */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Top Cities
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {statistics.topCities.map((city, index) => (
-                  <div key={city.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center">
-                        {index + 1}
-                      </Badge>
-                      <div>
-                        <div className="font-medium">{city.name}</div>
-                        <div className="text-sm text-muted-foreground">{city.checksCount} checks</div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatCurrency(city.totalSum)}</div>
-                    </div>
-                  </div>
-                ))}
+        {/* Payment Methods */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Payment Methods
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Cash</span>
+                <span className="text-xs font-medium">{formatCurrency(statistics.paymentMethods.nalichniy)}</span>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="flex justify-between items-center">
+                <span className="text-xs">UzCard</span>
+                <span className="text-xs font-medium">{formatCurrency(statistics.paymentMethods.uzcard)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Humo</span>
+                <span className="text-xs font-medium">{formatCurrency(statistics.paymentMethods.humo)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs">Click</span>
+                <span className="text-xs font-medium">{formatCurrency(statistics.paymentMethods.click)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Expeditors */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Top Expeditors
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {statistics.topExpeditors.map((expeditor, index) => (
+              <div key={expeditor.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="w-5 h-5 p-0 text-xs">
+                    {index + 1}
+                  </Badge>
+                  <span className="text-xs font-medium">{expeditor.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold">{expeditor.checksCount} checks</div>
+                  <div className="text-xs text-gray-500">{formatCurrency(expeditor.totalSum)}</div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Top Projects */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Top Projects
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {statistics.topProjects.map((project, index) => (
+              <div key={project.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="w-5 h-5 p-0 text-xs">
+                    {index + 1}
+                  </Badge>
+                  <span className="text-xs font-medium">{project.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold">{project.checksCount} checks</div>
+                  <div className="text-xs text-gray-500">{formatCurrency(project.totalSum)}</div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Top Cities */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Top Cities
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {statistics.topCities.map((city, index) => (
+              <div key={city.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="w-5 h-5 p-0 text-xs">
+                    {index + 1}
+                  </Badge>
+                  <span className="text-xs font-medium">{city.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-bold">{city.checksCount} checks</div>
+                  <div className="text-xs text-gray-500">{formatCurrency(city.totalSum)}</div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Daily Statistics */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Daily Stats
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {statistics.dailyStats.map((day) => (
+              <div key={day.date} className="flex items-center justify-between">
+                <span className="text-xs font-medium">
+                  {new Date(day.date).toLocaleDateString("uz-UZ", {
+                    month: "2-digit",
+                    day: "2-digit",
+                  })}
+                </span>
+                <div className="text-right">
+                  <div className="text-xs font-bold">{day.checksCount} checks</div>
+                  <div className="text-xs text-gray-500">{formatCurrency(day.totalSum)}</div>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

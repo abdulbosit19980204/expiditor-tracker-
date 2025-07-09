@@ -110,12 +110,25 @@ const mockExpeditors: Expeditor[] = [
   },
 ]
 
+// Get today's date for filtering today's checks
+const getTodayStart = () => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today
+}
+
+const getTodayEnd = () => {
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+  return today
+}
+
 const mockCheckDetails: CheckDetail[] = [
   {
     id: "1",
     check_id: "CHK001",
-    checkURL: "https://example.com/check/CHK001",
-    check_date: "2024-01-15T09:15:00Z",
+    checkURL: "https://soliq.uz/check/CHK001",
+    check_date: new Date().toISOString(),
     check_lat: 41.311081,
     check_lon: 69.240562,
     total_sum: 150000,
@@ -123,14 +136,14 @@ const mockCheckDetails: CheckDetail[] = [
     uzcard: 100000,
     humo: 0,
     click: 0,
-    created_at: "2024-01-15T09:15:00Z",
-    updated_at: "2024-01-15T09:15:00Z",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: "2",
     check_id: "CHK002",
-    checkURL: "https://example.com/check/CHK002",
-    check_date: "2024-01-15T10:30:00Z",
+    checkURL: "https://soliq.uz/check/CHK002",
+    check_date: new Date().toISOString(),
     check_lat: 41.28543,
     check_lon: 69.203735,
     total_sum: 250000,
@@ -138,8 +151,53 @@ const mockCheckDetails: CheckDetail[] = [
     uzcard: 150000,
     humo: 100000,
     click: 0,
-    created_at: "2024-01-15T10:30:00Z",
-    updated_at: "2024-01-15T10:30:00Z",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "3",
+    check_id: "CHK003",
+    checkURL: "https://soliq.uz/check/CHK003",
+    check_date: new Date().toISOString(),
+    check_lat: 41.326142,
+    check_lon: 69.228439,
+    total_sum: 180000,
+    nalichniy: 180000,
+    uzcard: 0,
+    humo: 0,
+    click: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "4",
+    check_id: "CHK004",
+    checkURL: "https://soliq.uz/check/CHK004",
+    check_date: new Date().toISOString(),
+    check_lat: 41.304223,
+    check_lon: 69.249755,
+    total_sum: 320000,
+    nalichniy: 120000,
+    uzcard: 200000,
+    humo: 0,
+    click: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "5",
+    check_id: "CHK005",
+    checkURL: "https://soliq.uz/check/CHK005",
+    check_date: new Date().toISOString(),
+    check_lat: 41.275,
+    check_lon: 69.21,
+    total_sum: 95000,
+    nalichniy: 0,
+    uzcard: 0,
+    humo: 95000,
+    click: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ]
 
@@ -153,7 +211,7 @@ const mockChecks: Check[] = [
     sborshik: "Olim Sobirov",
     agent: "Kamol Agents",
     ekispiditor: "Aziz Karimov",
-    yetkazilgan_vaqti: "2024-01-15T09:15:00Z",
+    yetkazilgan_vaqti: new Date().toISOString(),
     transport_number: "01A123BC",
     kkm_number: "KKM001",
     check_detail: mockCheckDetails[0],
@@ -166,11 +224,53 @@ const mockChecks: Check[] = [
     city: "Tashkent",
     sborshik: "Jasur Toshev",
     agent: "Fast Agents",
-    ekispiditor: "Malika Tosheva",
-    yetkazilgan_vaqti: "2024-01-15T10:30:00Z",
-    transport_number: "01B456DE",
+    ekispiditor: "Aziz Karimov",
+    yetkazilgan_vaqti: new Date().toISOString(),
+    transport_number: "01A123BC",
     kkm_number: "KKM002",
     check_detail: mockCheckDetails[1],
+  },
+  {
+    id: "3",
+    check_id: "CHK003",
+    project: "Tashkent Delivery",
+    sklad: "Chilonzor Sklad",
+    city: "Tashkent",
+    sborshik: "Aziza Rahimova",
+    agent: "Quick Agents",
+    ekispiditor: "Malika Tosheva",
+    yetkazilgan_vaqti: new Date().toISOString(),
+    transport_number: "01B456DE",
+    kkm_number: "KKM003",
+    check_detail: mockCheckDetails[2],
+  },
+  {
+    id: "4",
+    check_id: "CHK004",
+    project: "Express Delivery",
+    sklad: "Yunusobod Sklad",
+    city: "Tashkent",
+    sborshik: "Bobur Karimov",
+    agent: "Speed Agents",
+    ekispiditor: "Malika Tosheva",
+    yetkazilgan_vaqti: new Date().toISOString(),
+    transport_number: "01B456DE",
+    kkm_number: "KKM004",
+    check_detail: mockCheckDetails[3],
+  },
+  {
+    id: "5",
+    check_id: "CHK005",
+    project: "Tashkent Delivery",
+    sklad: "Chilonzor Sklad",
+    city: "Tashkent",
+    sborshik: "Sardor Usmanov",
+    agent: "Pro Agents",
+    ekispiditor: "Sardor Umarov",
+    yetkazilgan_vaqti: new Date().toISOString(),
+    transport_number: "01E345JK",
+    kkm_number: "KKM005",
+    check_detail: mockCheckDetails[4],
   },
 ]
 
@@ -208,32 +308,29 @@ const mockLocations: Record<string, VisitedLocation[]> = {
       visitTime: "08:45",
       checkoutTime: "09:15",
       status: "delivered",
-      check: {
-        id: "3",
-        check_id: "CHK003",
-        project: "Tashkent Delivery",
-        sklad: "Chilonzor Sklad",
-        city: "Tashkent",
-        ekispiditor: "Malika Tosheva",
-        yetkazilgan_vaqti: "2024-01-15T08:45:00Z",
-        transport_number: "01B456DE",
-        kkm_number: "KKM003",
-        check_detail: {
-          id: "3",
-          check_id: "CHK003",
-          checkURL: "https://example.com/check/CHK003",
-          check_date: "2024-01-15T08:45:00Z",
-          check_lat: 41.326142,
-          check_lon: 69.228439,
-          total_sum: 180000,
-          nalichniy: 180000,
-          uzcard: 0,
-          humo: 0,
-          click: 0,
-          created_at: "2024-01-15T08:45:00Z",
-          updated_at: "2024-01-15T08:45:00Z",
-        },
-      },
+      check: mockChecks[2],
+    },
+    {
+      id: "l6",
+      clientName: "NBU Bank",
+      address: "Shakhrisabz ko'chasi, Toshkent",
+      coordinates: { lat: 41.304223, lng: 69.249755 },
+      visitTime: "11:30",
+      checkoutTime: "12:00",
+      status: "delivered",
+      check: mockChecks[3],
+    },
+  ],
+  "5": [
+    {
+      id: "l9",
+      clientName: "Carrefour Samarkand Darvoza",
+      address: "Samarkand Darvoza, Toshkent",
+      coordinates: { lat: 41.28543, lng: 69.203735 },
+      visitTime: "10:00",
+      checkoutTime: "10:30",
+      status: "delivered",
+      check: mockChecks[4],
     },
   ],
 }
@@ -259,6 +356,22 @@ export async function getCities(): Promise<City[]> {
 export async function getExpeditors(): Promise<Expeditor[]> {
   await delay(800)
   return mockExpeditors
+}
+
+export async function getExpeditorTodayChecksCount(expeditorId: string): Promise<number> {
+  await delay(300)
+
+  // Count today's checks for this expeditor
+  const todayChecks = mockChecks.filter((check) => {
+    const checkDate = new Date(check.check_detail?.check_date || check.yetkazilgan_vaqti || "")
+    const today = new Date()
+    return (
+      check.ekispiditor === mockExpeditors.find((e) => e.id === expeditorId)?.name &&
+      checkDate.toDateString() === today.toDateString()
+    )
+  })
+
+  return todayChecks.length
 }
 
 export async function getClients(expeditorId: string, filters: FilterOptions): Promise<Client[]> {

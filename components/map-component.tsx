@@ -8,15 +8,16 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LoadingSpinner } from "./loading-spinner"
 import { RealisticYandexMap } from "./realistic-yandex-map"
-import type { VisitedLocation, Expeditor } from "../lib/types"
+import type { VisitedLocation, Expeditor, Check } from "../lib/types"
 
 interface MapComponentProps {
   locations: VisitedLocation[]
   loading: boolean
   selectedExpeditor: Expeditor | null
+  onLocationClick?: (check: Check) => void
 }
 
-export function MapComponent({ locations, loading, selectedExpeditor }: MapComponentProps) {
+export function MapComponent({ locations, loading, selectedExpeditor, onLocationClick }: MapComponentProps) {
   const [selectedLocation, setSelectedLocation] = useState<VisitedLocation | null>(null)
   const [zoomLevel, setZoomLevel] = useState(12)
   const [mapProvider, setMapProvider] = useState<"yandex" | "openstreet">("yandex")
@@ -37,6 +38,21 @@ export function MapComponent({ locations, loading, selectedExpeditor }: MapCompo
 
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(18, prev + 1))
   const handleZoomOut = () => setZoomLevel((prev) => Math.max(8, prev - 1))
+
+  const handleLocationClick = (location: VisitedLocation) => {
+    setSelectedLocation(location)
+    if (onLocationClick) {
+      onLocationClick(location.check)
+    }
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("uz-UZ", {
+      style: "currency",
+      currency: "UZS",
+      minimumFractionDigits: 0,
+    }).format(amount)
+  }
 
   if (loading) {
     return (
@@ -88,7 +104,12 @@ export function MapComponent({ locations, loading, selectedExpeditor }: MapCompo
       )}
 
       {/* Map Component */}
-      <RealisticYandexMap locations={locations} loading={loading} selectedExpeditor={selectedExpeditor} />
+      <RealisticYandexMap
+        locations={locations}
+        loading={loading}
+        selectedExpeditor={selectedExpeditor}
+        onLocationClick={handleLocationClick}
+      />
 
       {/* Map Controls */}
       <div className="absolute top-4 right-4 z-20 space-y-2">
@@ -160,6 +181,45 @@ export function MapComponent({ locations, loading, selectedExpeditor }: MapCompo
                 )}
               </div>
 
+              {/* Check Information */}
+              {selectedLocation.check && selectedLocation.check.check_detail && (
+                <div className="bg-blue-50 p-3 rounded-lg space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Check ID:</span>
+                    <span className="text-sm font-mono">{selectedLocation.check.check_id}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Total Amount:</span>
+                    <span className="text-sm font-bold text-green-600">
+                      {formatCurrency(selectedLocation.check.check_detail.total_sum || 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Check Date:</span>
+                    <span className="text-sm">
+                      {new Date(selectedLocation.check.check_detail.check_date).toLocaleString("uz-UZ", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+
+                  {selectedLocation.check.check_detail.checkURL && (
+                    <Button
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => window.open(selectedLocation.check.check_detail?.checkURL, "_blank")}
+                    >
+                      View QR Code
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
                 <strong>Coordinates:</strong> {selectedLocation.coordinates.lat.toFixed(6)},{" "}
                 {selectedLocation.coordinates.lng.toFixed(6)}
@@ -178,8 +238,8 @@ export function MapComponent({ locations, loading, selectedExpeditor }: MapCompo
         <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75">
           <div className="text-center">
             <MapPin className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No locations visited in selected date range</p>
-            <p className="text-sm text-gray-500 mt-2">Select a different date range to see routes</p>
+            <p className="text-gray-600">No locations visited yet</p>
+            <p className="text-sm text-gray-500">Locations will appear here when the expeditor visits clients</p>
           </div>
         </div>
       )}

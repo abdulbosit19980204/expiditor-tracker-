@@ -1,18 +1,20 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Users, MapPin } from "lucide-react"
+import { Search, Users, MapPin, Receipt } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { MapComponent } from "@/components/map-component"
 import { AdvancedFilters } from "@/components/advanced-filters"
 import { StatisticsPanel } from "@/components/statistics-panel"
-import type { Expeditor, Client, VisitedLocation, FilterOptions } from "@/lib/types"
-import { getExpeditors, getClients, getVisitedLocations } from "@/lib/api"
+import { CheckModal } from "@/components/check-modal"
+import type { Expeditor, Client, VisitedLocation, FilterOptions, Check } from "@/lib/types"
+import { getExpeditors, getClients, getVisitedLocations, getExpeditorTodayChecksCount } from "@/lib/api"
 
 export default function ExpeditorTracker() {
   const [expeditors, setExpeditors] = useState<Expeditor[]>([])
@@ -24,6 +26,9 @@ export default function ExpeditorTracker() {
   const [loading, setLoading] = useState(true)
   const [clientsLoading, setClientsLoading] = useState(false)
   const [locationsLoading, setLocationsLoading] = useState(false)
+  const [expeditorChecksCounts, setExpeditorChecksCounts] = useState<Record<string, number>>({})
+  const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
+  const [checkModalOpen, setCheckModalOpen] = useState(false)
 
   const [filters, setFilters] = useState<FilterOptions>({
     dateRange: {
@@ -38,6 +43,13 @@ export default function ExpeditorTracker() {
       try {
         const data = await getExpeditors()
         setExpeditors(data)
+
+        // Load today's checks count for each expeditor
+        const counts: Record<string, number> = {}
+        for (const expeditor of data) {
+          counts[expeditor.id] = await getExpeditorTodayChecksCount(expeditor.id)
+        }
+        setExpeditorChecksCounts(counts)
       } catch (error) {
         console.error("Error loading expeditors:", error)
       } finally {
@@ -100,6 +112,22 @@ export default function ExpeditorTracker() {
       currency: "UZS",
       minimumFractionDigits: 0,
     }).format(amount)
+  }
+
+  const handleCheckClick = (check: Check) => {
+    setSelectedCheck(check)
+    setCheckModalOpen(true)
+  }
+
+  const handleShowCheckLocation = (check: Check) => {
+    if (check.check_detail?.check_lat && check.check_detail?.check_lon) {
+      // This would focus the map on the check location
+      console.log("Focus map on check location:", {
+        lat: check.check_detail.check_lat,
+        lng: check.check_detail.check_lon,
+        checkId: check.check_id,
+      })
+    }
   }
 
   if (loading) {
@@ -168,6 +196,14 @@ export default function ExpeditorTracker() {
                       </div>
                       <p className="text-sm text-gray-500">{expeditor.phone}</p>
                       <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
+
+                      {/* Today's checks count */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Receipt className="h-3 w-3 text-blue-500" />
+                        <span className="text-xs text-blue-600 font-medium">
+                          {expeditorChecksCounts[expeditor.id] || 0} checks today
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -178,7 +214,12 @@ export default function ExpeditorTracker() {
 
         {/* Center - Map */}
         <div className="flex-1 relative">
-          <MapComponent locations={locations} loading={locationsLoading} selectedExpeditor={selectedExpeditor} />
+          <MapComponent
+            locations={locations}
+            loading={locationsLoading}
+            selectedExpeditor={selectedExpeditor}
+            onLocationClick={handleShowCheckLocation}
+          />
         </div>
 
         {/* Right Sidebar - Statistics and Clients */}
@@ -247,9 +288,16 @@ export default function ExpeditorTracker() {
                           {/* Check Information */}
                           {client.check && (
                             <div className="mt-3 p-2 bg-gray-50 rounded text-xs space-y-1">
-                              <div className="flex justify-between">
+                              <div className="flex justify-between items-center">
                                 <span className="font-medium">Check ID:</span>
-                                <span className="font-mono">{client.check.check_id}</span>
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs font-mono text-blue-600"
+                                  onClick={() => handleCheckClick(client.check!)}
+                                >
+                                  {client.check.check_id}
+                                </Button>
                               </div>
 
                               {client.check.check_detail && (
@@ -258,6 +306,18 @@ export default function ExpeditorTracker() {
                                     <span className="font-medium">Total:</span>
                                     <span className="font-bold text-green-600">
                                       {formatCurrency(client.check.check_detail.total_sum || 0)}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex justify-between">
+                                    <span>Check Date:</span>
+                                    <span>
+                                      {new Date(client.check.check_detail.check_date).toLocaleString("uz-UZ", {
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
                                     </span>
                                   </div>
 
@@ -300,6 +360,19 @@ export default function ExpeditorTracker() {
                                 <span>KKM:</span>
                                 <span className="font-mono">{client.check.kkm_number}</span>
                               </div>
+
+                              {/* Show location button */}
+                              {client.check.check_detail?.check_lat && client.check.check_detail?.check_lon && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full mt-2 h-6 text-xs bg-transparent"
+                                  onClick={() => handleShowCheckLocation(client.check!)}
+                                >
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  Show on Map
+                                </Button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -312,6 +385,16 @@ export default function ExpeditorTracker() {
           </div>
         </div>
       </div>
+
+      {/* Check Modal */}
+      <CheckModal
+        check={selectedCheck}
+        isOpen={checkModalOpen}
+        onClose={() => {
+          setCheckModalOpen(false)
+          setSelectedCheck(null)
+        }}
+      />
     </div>
   )
 }

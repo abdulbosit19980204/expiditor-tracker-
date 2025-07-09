@@ -2,66 +2,9 @@ export interface Expeditor {
   id: string
   name: string
   phone: string
-  avatar: string
+  avatar?: string
   status: "active" | "inactive"
   transport_number: string
-}
-
-export interface Project {
-  id: string
-  project_name: string
-  project_description?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface Sklad {
-  id: string
-  sklad_name: string
-  sklad_code: string
-  description?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface City {
-  id: string
-  city_name: string
-  city_code: string
-  description?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface CheckDetail {
-  id: string
-  check_id: string
-  checkURL: string
-  check_date: string
-  check_lat?: number
-  check_lon?: number
-  total_sum?: number
-  nalichniy?: number
-  uzcard?: number
-  humo?: number
-  click?: number
-  created_at: string
-  updated_at: string
-}
-
-export interface Check {
-  id: string
-  check_id: string
-  project?: string
-  sklad?: string
-  city?: string
-  sborshik?: string
-  agent?: string
-  ekispiditor?: string
-  yetkazilgan_vaqti?: string
-  transport_number?: string
-  kkm_number?: string
-  check_detail?: CheckDetail
 }
 
 export interface Client {
@@ -89,19 +32,16 @@ export interface VisitedLocation {
   check: Check
 }
 
-export interface DateRange {
-  from: Date
-  to?: Date
-}
-
 export interface FilterOptions {
-  dateRange: DateRange
+  dateRange: {
+    from: Date
+    to: Date
+  }
   project?: string
   sklad?: string
   city?: string
-  expeditor?: string
-  status?: "delivered" | "failed" | "all"
-  paymentMethod?: "nalichniy" | "uzcard" | "humo" | "click" | "all"
+  status?: string
+  paymentMethod?: string
 }
 
 export interface Statistics {
@@ -135,4 +75,62 @@ export interface Statistics {
     checksCount: number
     totalSum: number
   }>
+}
+
+// Django Backend Models
+export interface Project {
+  id: string
+  project_name: string
+  project_description?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CheckDetail {
+  id: string
+  check_id: string
+  checkURL: string
+  check_date: string
+  check_lat?: number
+  check_lon?: number
+  total_sum?: number
+  nalichniy?: number
+  uzcard?: number
+  humo?: number
+  click?: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Sklad {
+  id: string
+  sklad_name: string
+  sklad_code: string
+  description?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface City {
+  id: string
+  city_name: string
+  city_code: string
+  description?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Check {
+  id: string
+  check_id: string
+  project?: string
+  sklad?: string
+  city?: string
+  sborshik?: string
+  agent?: string
+  ekispiditor?: string
+  yetkazilgan_vaqti?: string
+  transport_number?: string
+  kkm_number?: string
+  check_detail?: CheckDetail
 }
