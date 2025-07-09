@@ -1,4 +1,5 @@
 "use client"
+
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -20,16 +21,16 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange }: DatePicker
           <Button
             id="date"
             variant="outline"
-            className={cn("w-full justify-start text-left font-normal", !dateRange && "text-muted-foreground")}
+            className={cn("w-full justify-start text-left font-normal", !dateRange?.from && "text-muted-foreground")}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {dateRange?.from ? (
               dateRange.to ? (
                 <>
-                  {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                  {format(dateRange.from, "MMM dd, y")} - {format(dateRange.to, "MMM dd, y")}
                 </>
               ) : (
-                format(dateRange.from, "LLL dd, y")
+                format(dateRange.from, "MMM dd, y")
               )
             ) : (
               <span>Pick a date range</span>
