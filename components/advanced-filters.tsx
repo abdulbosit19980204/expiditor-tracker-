@@ -1,146 +1,137 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { CalendarDays, Building, MapPin, Warehouse, Filter, ChevronDown, ChevronUp } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { DatePickerWithRange } from "./date-range-picker"
-import { LoadingSpinner } from "./loading-spinner"
-import type { FilterOptions, Project, Sklad, City } from "../lib/types"
-import { getProjects, getSklads, getCities } from "../lib/api"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { ChevronDown, ChevronUp, Filter, X } from "lucide-react"
+import { DateRangePicker } from "./date-range-picker"
 
-interface AdvancedFiltersProps {
-  filters: FilterOptions
-  onFiltersChange: (filters: FilterOptions) => void
+interface FilterState {
+  dateRange: { from: Date | undefined; to: Date | undefined }
+  project: string
+  sklad: string
+  city: string
+  expeditor: string
+  status: string
+  paymentMethod: string
+  searchQuery: string
 }
 
-export function AdvancedFilters({ filters, onFiltersChange }: AdvancedFiltersProps) {
-  const [projects, setProjects] = useState<Project[]>([])
-  const [sklads, setSklads] = useState<Sklad[]>([])
-  const [cities, setCities] = useState<City[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isOpen, setIsOpen] = useState(false)
+interface AdvancedFiltersProps {
+  filters: FilterState
+  onFiltersChange: (filters: FilterState) => void
+  projects: Array<{ id: string; name: string }>
+  sklads: Array<{ id: string; name: string }>
+  cities: Array<{ id: string; name: string }>
+  expeditors: Array<{ id: string; name: string }>
+}
 
-  useEffect(() => {
-    const loadFilterData = async () => {
-      try {
-        const [projectsData, skladsData, citiesData] = await Promise.all([getProjects(), getSklads(), getCities()])
-        setProjects(projectsData)
-        setSklads(skladsData)
-        setCities(citiesData)
-      } catch (error) {
-        console.error("Error loading filter data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
+export function AdvancedFilters({
+  filters,
+  onFiltersChange,
+  projects,
+  sklads,
+  cities,
+  expeditors,
+}: AdvancedFiltersProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
 
-    loadFilterData()
-  }, [])
+  const updateFilter = (key: keyof FilterState, value: any) => {
+    onFiltersChange({ ...filters, [key]: value })
+  }
 
-  const handleFilterChange = (key: keyof FilterOptions, value: any) => {
+  const clearAllFilters = () => {
     onFiltersChange({
-      ...filters,
-      [key]: value,
+      dateRange: { from: undefined, to: undefined },
+      project: "",
+      sklad: "",
+      city: "",
+      expeditor: "",
+      status: "",
+      paymentMethod: "",
+      searchQuery: "",
     })
   }
 
   const getActiveFiltersCount = () => {
     let count = 0
+    if (filters.dateRange.from || filters.dateRange.to) count++
     if (filters.project) count++
     if (filters.sklad) count++
     if (filters.city) count++
-    if (filters.status && filters.status !== "all") count++
-    if (filters.paymentMethod && filters.paymentMethod !== "all") count++
+    if (filters.expeditor) count++
+    if (filters.status) count++
+    if (filters.paymentMethod) count++
+    if (filters.searchQuery) count++
     return count
   }
 
-  const clearAllFilters = () => {
-    onFiltersChange({
-      dateRange: filters.dateRange, // Keep date range
-    })
-  }
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-4 flex justify-center">
-          <LoadingSpinner />
-        </CardContent>
-      </Card>
-    )
-  }
+  const activeFiltersCount = getActiveFiltersCount()
 
   return (
-    <div className="space-y-3">
-      {/* Always visible Date Range */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <CalendarDays className="h-4 w-4 text-gray-600" />
-          <span className="text-sm font-medium">Date Range</span>
-        </div>
-        <DatePickerWithRange
-          dateRange={filters.dateRange}
-          onDateRangeChange={(dateRange) => handleFilterChange("dateRange", dateRange)}
-        />
-      </div>
-
-      {/* Collapsible Filters */}
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+    <Card className="w-full">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2 w-full justify-between bg-transparent">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span>Advanced Filters</span>
-                {getActiveFiltersCount() > 0 && (
-                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                    {getActiveFiltersCount()}
-                  </span>
-                )}
-              </div>
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          <CardTitle className="text-lg font-semibold">Filterlar</CardTitle>
+          <div className="flex items-center gap-2">
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {activeFiltersCount} faol
+              </Badge>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1"
+            >
+              <Filter className="h-4 w-4" />
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </Button>
-          </CollapsibleTrigger>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Date Range - Always visible */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Sana oralig'i</label>
+          <DateRangePicker
+            date={filters.dateRange}
+            onDateChange={(dateRange) => updateFilter("dateRange", dateRange)}
+          />
         </div>
 
-        <CollapsibleContent className="space-y-4 mt-3">
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              {/* Clear All Filters Button */}
-              {getActiveFiltersCount() > 0 && (
-                <div className="flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllFilters}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    Clear All Filters
-                  </Button>
-                </div>
-              )}
+        {/* Search - Always visible */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Qidiruv</label>
+          <Input
+            placeholder="Check ID, mijoz nomi yoki manzil..."
+            value={filters.searchQuery}
+            onChange={(e) => updateFilter("searchQuery", e.target.value)}
+            className="w-full"
+          />
+        </div>
 
+        {/* Advanced Filters - Collapsible */}
+        {isExpanded && (
+          <div className="space-y-4 pt-2 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Project Filter */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Building className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium">Project</span>
-                </div>
-                <Select
-                  value={filters.project || "all"}
-                  onValueChange={(value) => handleFilterChange("project", value === "all" ? undefined : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Loyiha</label>
+                <Select value={filters.project} onValueChange={(value) => updateFilter("project", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Projects" />
+                    <SelectValue placeholder="Loyihani tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Projects</SelectItem>
+                    <SelectItem value="all">Barchasi</SelectItem>
                     {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.project_name}>
-                        {project.project_name}
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -148,23 +139,17 @@ export function AdvancedFilters({ filters, onFiltersChange }: AdvancedFiltersPro
               </div>
 
               {/* Sklad Filter */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Warehouse className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium">Warehouse</span>
-                </div>
-                <Select
-                  value={filters.sklad || "all"}
-                  onValueChange={(value) => handleFilterChange("sklad", value === "all" ? undefined : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Sklad</label>
+                <Select value={filters.sklad} onValueChange={(value) => updateFilter("sklad", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Warehouses" />
+                    <SelectValue placeholder="Skladni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Warehouses</SelectItem>
+                    <SelectItem value="all">Barchasi</SelectItem>
                     {sklads.map((sklad) => (
-                      <SelectItem key={sklad.id} value={sklad.sklad_name}>
-                        {sklad.sklad_name} ({sklad.sklad_code})
+                      <SelectItem key={sklad.id} value={sklad.id}>
+                        {sklad.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -172,23 +157,35 @@ export function AdvancedFilters({ filters, onFiltersChange }: AdvancedFiltersPro
               </div>
 
               {/* City Filter */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium">City</span>
-                </div>
-                <Select
-                  value={filters.city || "all"}
-                  onValueChange={(value) => handleFilterChange("city", value === "all" ? undefined : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Shahar</label>
+                <Select value={filters.city} onValueChange={(value) => updateFilter("city", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Cities" />
+                    <SelectValue placeholder="Shaharni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Cities</SelectItem>
+                    <SelectItem value="all">Barchasi</SelectItem>
                     {cities.map((city) => (
-                      <SelectItem key={city.id} value={city.city_name}>
-                        {city.city_name} ({city.city_code})
+                      <SelectItem key={city.id} value={city.id}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Expeditor Filter */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Expeditor</label>
+                <Select value={filters.expeditor} onValueChange={(value) => updateFilter("expeditor", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Expeditorni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Barchasi</SelectItem>
+                    {expeditors.map((expeditor) => (
+                      <SelectItem key={expeditor.id} value={expeditor.id}>
+                        {expeditor.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -196,50 +193,56 @@ export function AdvancedFilters({ filters, onFiltersChange }: AdvancedFiltersPro
               </div>
 
               {/* Status Filter */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-medium">Delivery Status</span>
-                </div>
-                <Select
-                  value={filters.status || "all"}
-                  onValueChange={(value) => handleFilterChange("status", value === "all" ? undefined : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Status</label>
+                <Select value={filters.status} onValueChange={(value) => updateFilter("status", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Statuses" />
+                    <SelectValue placeholder="Statusni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="all">Barchasi</SelectItem>
+                    <SelectItem value="delivered">Yetkazilgan</SelectItem>
+                    <SelectItem value="pending">Kutilmoqda</SelectItem>
+                    <SelectItem value="failed">Muvaffaqiyatsiz</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Payment Method Filter */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-medium">Payment Method</span>
-                </div>
-                <Select
-                  value={filters.paymentMethod || "all"}
-                  onValueChange={(value) => handleFilterChange("paymentMethod", value === "all" ? undefined : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">To'lov usuli</label>
+                <Select value={filters.paymentMethod} onValueChange={(value) => updateFilter("paymentMethod", value)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All Payment Methods" />
+                    <SelectValue placeholder="To'lov usulini tanlang" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Methods</SelectItem>
-                    <SelectItem value="nalichniy">Cash</SelectItem>
+                    <SelectItem value="all">Barchasi</SelectItem>
+                    <SelectItem value="nalichniy">Naqd</SelectItem>
                     <SelectItem value="uzcard">UzCard</SelectItem>
                     <SelectItem value="humo">Humo</SelectItem>
                     <SelectItem value="click">Click</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            </CardContent>
-          </Card>
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            {activeFiltersCount > 0 && (
+              <div className="flex justify-end pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1 bg-transparent"
+                >
+                  <X className="h-4 w-4" />
+                  Barcha filterlarni tozalash
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

@@ -1,58 +1,61 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Calendar, CreditCard, ExternalLink, Copy, CheckIcon } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Card, CardContent } from "@/components/ui/card"
-import type { Check } from "../lib/types"
+import { Copy, ExternalLink, MapPin, Calendar, CreditCard, User, Building } from "lucide-react"
+import type { Check } from "@/lib/types"
+import { format } from "date-fns"
+import { uz } from "date-fns/locale"
 
 interface CheckModalProps {
   check: Check | null
   isOpen: boolean
   onClose: () => void
+  onShowOnMap: (lat: number, lng: number) => void
 }
 
-export function CheckModal({ check, isOpen, onClose }: CheckModalProps) {
+export function CheckModal({ check, isOpen, onClose, onShowOnMap }: CheckModalProps) {
   const [copied, setCopied] = useState(false)
 
   if (!check) return null
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("uz-UZ", {
-      style: "currency",
-      currency: "UZS",
-      minimumFractionDigits: 0,
-    }).format(amount)
+  const copyCheckId = async () => {
+    await navigator.clipboard.writeText(check.check_id)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("uz-UZ", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    })
-  }
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error("Failed to copy text: ", err)
+  const openSoliqLink = () => {
+    if (check.checkURL) {
+      window.open(check.checkURL, "_blank")
     }
   }
 
-  const openCheckURL = () => {
-    if (check.check_detail?.checkURL) {
-      window.open(check.check_detail.checkURL, "_blank")
+  const showOnMap = () => {
+    if (check.check_lat && check.check_lon) {
+      onShowOnMap(check.check_lat, check.check_lon)
+      onClose()
     }
+  }
+
+  const getPaymentMethods = () => {
+    const methods = []
+    if (check.nalichniy && check.nalichniy > 0) {
+      methods.push({ name: "Naqd", amount: check.nalichniy, color: "bg-green-500" })
+    }
+    if (check.uzcard && check.uzcard > 0) {
+      methods.push({ name: "UzCard", amount: check.uzcard, color: "bg-blue-500" })
+    }
+    if (check.humo && check.humo > 0) {
+      methods.push({ name: "Humo", amount: check.humo, color: "bg-purple-500" })
+    }
+    if (check.click && check.click > 0) {
+      methods.push({ name: "Click", amount: check.click, color: "bg-yellow-500" })
+    }
+    return methods
   }
 
   return (
@@ -60,152 +63,169 @@ export function CheckModal({ check, isOpen, onClose }: CheckModalProps) {
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Check Details
+            <span>Check Tafsilotlari</span>
+            <Badge variant="outline">{check.check_id}</Badge>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Check ID and Status */}
-          <div className="flex items-center justify-between">
+          {/* Check ID and Actions */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Check ID:</span>
-              <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">{check.check_id}</code>
-              <Button variant="ghost" size="sm" onClick={() => copyToClipboard(check.check_id)} className="h-6 w-6 p-0">
-                {copied ? <CheckIcon className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-              </Button>
+              <span className="font-medium">Check ID:</span>
+              <code className="px-2 py-1 bg-white rounded text-sm">{check.check_id}</code>
             </div>
-            <Badge variant="outline">Active</Badge>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={copyCheckId}>
+                <Copy className="h-4 w-4 mr-1" />
+                {copied ? "Nusxalandi!" : "Nusxalash"}
+              </Button>
+              {check.checkURL && (
+                <Button size="sm" variant="outline" onClick={openSoliqLink}>
+                  <ExternalLink className="h-4 w-4 mr-1" />
+                  soliq.uz
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">Sana:</span>
+                <span className="font-medium">
+                  {format(new Date(check.check_date), "dd MMM yyyy, HH:mm", { locale: uz })}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">Expeditor:</span>
+                <span className="font-medium">{check.ekispiditor || "Noma'lum"}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Building className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-gray-600">Loyiha:</span>
+                <span className="font-medium">{check.project || "Noma'lum"}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Shahar:</span>
+                <span className="font-medium">{check.city || "Noma'lum"}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Sklad:</span>
+                <span className="font-medium">{check.sklad || "Noma'lum"}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">KKM:</span>
+                <span className="font-medium">{check.kkm_number || "Noma'lum"}</span>
+              </div>
+            </div>
           </div>
 
           <Separator />
 
-          {/* Check Details */}
-          {check.check_detail && (
-            <Card>
-              <CardContent className="p-4 space-y-4">
-                <h3 className="font-semibold flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Payment Information
-                </h3>
+          {/* Payment Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-gray-500" />
+              <h3 className="text-lg font-semibold">To'lov Ma'lumotlari</h3>
+            </div>
 
-                {/* Total Amount */}
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Total Amount:</span>
-                    <span className="text-lg font-bold text-green-700">
-                      {formatCurrency(check.check_detail.total_sum || 0)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Payment Methods Breakdown */}
-                <div className="grid grid-cols-2 gap-3">
-                  {check.check_detail.nalichniy > 0 && (
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="text-xs text-gray-600">Cash</div>
-                      <div className="font-semibold">{formatCurrency(check.check_detail.nalichniy)}</div>
-                    </div>
-                  )}
-                  {check.check_detail.uzcard > 0 && (
-                    <div className="bg-blue-50 p-3 rounded">
-                      <div className="text-xs text-gray-600">UzCard</div>
-                      <div className="font-semibold text-blue-700">{formatCurrency(check.check_detail.uzcard)}</div>
-                    </div>
-                  )}
-                  {check.check_detail.humo > 0 && (
-                    <div className="bg-purple-50 p-3 rounded">
-                      <div className="text-xs text-gray-600">Humo</div>
-                      <div className="font-semibold text-purple-700">{formatCurrency(check.check_detail.humo)}</div>
-                    </div>
-                  )}
-                  {check.check_detail.click > 0 && (
-                    <div className="bg-orange-50 p-3 rounded">
-                      <div className="text-xs text-gray-600">Click</div>
-                      <div className="font-semibold text-orange-700">{formatCurrency(check.check_detail.click)}</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Date and Time */}
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Check Date:</span>
-                  <span className="text-sm font-medium">{formatDateTime(check.check_detail.check_date)}</span>
-                </div>
-
-                {/* Location */}
-                {check.check_detail.check_lat && check.check_detail.check_lon && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">Location:</span>
-                    <span className="text-sm font-mono">
-                      {check.check_detail.check_lat.toFixed(6)}, {check.check_detail.check_lon.toFixed(6)}
-                    </span>
-                  </div>
-                )}
-
-                {/* QR Code Link */}
-                {check.check_detail.checkURL && (
-                  <div className="pt-2">
-                    <Button onClick={openCheckURL} className="w-full flex items-center gap-2">
-                      <ExternalLink className="h-4 w-4" />
-                      View Check on soliq.uz
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Business Information */}
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              <h3 className="font-semibold">Business Information</h3>
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Project:</span>
-                  <div className="font-medium">{check.project || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Warehouse:</span>
-                  <div className="font-medium">{check.sklad || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">City:</span>
-                  <div className="font-medium">{check.city || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Expeditor:</span>
-                  <div className="font-medium">{check.ekispiditor || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Agent:</span>
-                  <div className="font-medium">{check.agent || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Collector:</span>
-                  <div className="font-medium">{check.sborshik || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">Transport:</span>
-                  <div className="font-medium">{check.transport_number || "N/A"}</div>
-                </div>
-                <div>
-                  <span className="text-gray-600">KKM Number:</span>
-                  <div className="font-medium font-mono">{check.kkm_number || "N/A"}</div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{check.total_sum?.toLocaleString() || "0"} so'm</div>
+                <div className="text-sm text-blue-600">Umumiy summa</div>
               </div>
 
-              {check.yetkazilgan_vaqti && (
-                <div className="pt-2 border-t">
-                  <span className="text-gray-600 text-sm">Delivery Time:</span>
-                  <div className="font-medium">{formatDateTime(check.yetkazilgan_vaqti)}</div>
+              <div className="space-y-2">
+                {getPaymentMethods().map((method, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${method.color}`}></div>
+                      <span className="text-sm">{method.name}</span>
+                    </div>
+                    <span className="font-medium">{method.amount.toLocaleString()} so'm</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Location Information */}
+          {check.check_lat && check.check_lon && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-gray-500" />
+                <h3 className="text-lg font-semibold">Lokatsiya</h3>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <span className="text-sm text-gray-600">Latitude:</span>
+                    <div className="font-mono text-sm">{check.check_lat}</div>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Longitude:</span>
+                    <div className="font-mono text-sm">{check.check_lon}</div>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <Button onClick={showOnMap} className="w-full">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Xaritada Ko'rsatish
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Additional Information */}
+          {(check.agent || check.sborshik || check.transport_number) && (
+            <>
+              <Separator />
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold">Qo'shimcha Ma'lumotlar</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {check.agent && (
+                    <div>
+                      <span className="text-sm text-gray-600">Agent:</span>
+                      <div className="font-medium">{check.agent}</div>
+                    </div>
+                  )}
+                  {check.sborshik && (
+                    <div>
+                      <span className="text-sm text-gray-600">Sborshik:</span>
+                      <div className="font-medium">{check.sborshik}</div>
+                    </div>
+                  )}
+                  {check.transport_number && (
+                    <div>
+                      <span className="text-sm text-gray-600">Transport:</span>
+                      <div className="font-medium">{check.transport_number}</div>
+                    </div>
+                  )}
+                  {check.yetkazilgan_vaqti && (
+                    <div>
+                      <span className="text-sm text-gray-600">Yetkazilgan vaqti:</span>
+                      <div className="font-medium">
+                        {format(new Date(check.yetkazilgan_vaqti), "dd MMM yyyy, HH:mm", { locale: uz })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -1,388 +1,395 @@
-import type { Expeditor, Client, VisitedLocation, FilterOptions, Statistics, Project, Sklad, City } from "./types"
+import type { Check, Expeditor, Project, Sklad, City, Statistics } from "./types"
 
-// Mock data - replace with real API calls
-const mockExpeditors: Expeditor[] = [
-  {
-    id: "1",
-    name: "Akmal Karimov",
-    phone: "+998901234567",
-    avatar: "/placeholder.svg",
-    status: "active",
-    transport_number: "01A123BC",
-  },
-  {
-    id: "2",
-    name: "Bobur Toshmatov",
-    phone: "+998907654321",
-    avatar: "/placeholder.svg",
-    status: "active",
-    transport_number: "01B456DE",
-  },
-  {
-    id: "3",
-    name: "Davron Umarov",
-    phone: "+998909876543",
-    avatar: "/placeholder.svg",
-    status: "inactive",
-    transport_number: "01C789FG",
-  },
-]
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
-const mockProjects: Project[] = [
-  {
-    id: "1",
-    project_name: "Tashkent Delivery",
-    project_description: "Main delivery project for Tashkent city",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    project_name: "Express Service",
-    project_description: "Fast delivery service",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-]
+// ───────────────────────────────────────────────────────────
+// Safe request helper – never throws, returns null on error
+// ───────────────────────────────────────────────────────────
+async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
+  const url = `${API_BASE_URL}${endpoint}`
 
-const mockSklads: Sklad[] = [
-  {
-    id: "1",
-    sklad_name: "Central Warehouse",
-    sklad_code: "CW001",
-    description: "Main warehouse in Tashkent",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    sklad_name: "North Warehouse",
-    sklad_code: "NW002",
-    description: "Northern district warehouse",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-]
-
-const mockCities: City[] = [
-  {
-    id: "1",
-    city_name: "Tashkent",
-    city_code: "TAS",
-    description: "Capital city",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    city_name: "Samarkand",
-    city_code: "SAM",
-    description: "Historic city",
-    created_at: "2024-01-01T00:00:00Z",
-    updated_at: "2024-01-01T00:00:00Z",
-  },
-]
-
-// Simulate API delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-export async function getExpeditors(): Promise<Expeditor[]> {
-  await delay(500)
-  return mockExpeditors
+  try {
+    const res = await fetch(url, { headers: { "Content-Type": "application/json" } })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return (await res.json()) as T
+  } catch (err) {
+    console.warn("API unreachable, falling back to mock →", endpoint)
+    return null
+  }
 }
 
+// Projects API
 export async function getProjects(): Promise<Project[]> {
-  await delay(300)
-  return mockProjects
+  const data = await apiRequestSafe<Project[]>("/projects/")
+
+  const projects = data ?? [
+    {
+      id: "1",
+      project_name: "Loyiha 1",
+      project_description: "Birinchi loyiha",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      project_name: "Loyiha 2",
+      project_description: "Ikkinchi loyiha",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      project_name: "Loyiha 3",
+      project_description: "Uchinchi loyiha",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]
+  return projects
 }
 
+// Sklads API
 export async function getSklads(): Promise<Sklad[]> {
-  await delay(300)
-  return mockSklads
+  const data = await apiRequestSafe<Sklad[]>("/sklad/")
+
+  const sklads = data ?? [
+    {
+      id: "1",
+      sklad_name: "Sklad 1",
+      sklad_code: "SKL001",
+      description: "Birinchi sklad",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      sklad_name: "Sklad 2",
+      sklad_code: "SKL002",
+      description: "Ikkinchi sklad",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      sklad_name: "Sklad 3",
+      sklad_code: "SKL003",
+      description: "Uchinchi sklad",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]
+  return sklads
 }
 
+// Cities API
 export async function getCities(): Promise<City[]> {
-  await delay(300)
-  return mockCities
-}
+  const data = await apiRequestSafe<City[]>("/city/")
 
-export async function getExpeditorTodayChecksCount(expeditorId: string): Promise<number> {
-  await delay(200)
-  // Mock data - return random number between 0-15
-  return Math.floor(Math.random() * 16)
-}
-
-export async function getClients(expeditorId: string, filters: FilterOptions): Promise<Client[]> {
-  await delay(800)
-
-  const mockClients: Client[] = [
+  const cities = data ?? [
     {
       id: "1",
-      name: "Oybek Market",
-      address: "Amir Temur ko'chasi 15, Tashkent",
-      visitTime: "09:30",
-      checkoutTime: "09:45",
-      status: "delivered",
-      check: {
-        id: "1",
-        check_id: "CHK001234567",
-        project: "Tashkent Delivery",
-        sklad: "Central Warehouse",
-        city: "Tashkent",
-        ekispiditor: "Akmal Karimov",
-        agent: "Agent 001",
-        sborshik: "Collector 001",
-        transport_number: "01A123BC",
-        kkm_number: "KKM001",
-        yetkazilgan_vaqti: "2024-01-15T09:30:00Z",
-        check_detail: {
-          id: "1",
-          check_id: "CHK001234567",
-          checkURL: "https://check.soliq.uz/check/CHK001234567",
-          check_date: "2024-01-15T09:30:00Z",
-          check_lat: 41.2995,
-          check_lon: 69.2401,
-          total_sum: 150000,
-          nalichniy: 100000,
-          uzcard: 50000,
-          humo: 0,
-          click: 0,
-          created_at: "2024-01-15T09:30:00Z",
-          updated_at: "2024-01-15T09:30:00Z",
-        },
-      },
+      city_name: "Toshkent",
+      city_code: "TSH",
+      description: "Poytaxt shahar",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
     {
       id: "2",
-      name: "Mega Planet",
-      address: "Buyuk Ipak Yo'li 187, Tashkent",
-      visitTime: "11:15",
-      checkoutTime: "11:30",
-      status: "delivered",
-      check: {
-        id: "2",
-        check_id: "CHK001234568",
-        project: "Express Service",
-        sklad: "North Warehouse",
-        city: "Tashkent",
-        ekispiditor: "Akmal Karimov",
-        agent: "Agent 002",
-        sborshik: "Collector 002",
-        transport_number: "01A123BC",
-        kkm_number: "KKM002",
-        yetkazilgan_vaqti: "2024-01-15T11:15:00Z",
-        check_detail: {
-          id: "2",
-          check_id: "CHK001234568",
-          checkURL: "https://check.soliq.uz/check/CHK001234568",
-          check_date: "2024-01-15T11:15:00Z",
-          check_lat: 41.3111,
-          check_lon: 69.2797,
-          total_sum: 275000,
-          nalichniy: 0,
-          uzcard: 175000,
-          humo: 100000,
-          click: 0,
-          created_at: "2024-01-15T11:15:00Z",
-          updated_at: "2024-01-15T11:15:00Z",
-        },
-      },
+      city_name: "Samarqand",
+      city_code: "SMQ",
+      description: "Tarixiy shahar",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
     {
       id: "3",
-      name: "Next Store",
-      address: "Mustaqillik ko'chasi 45, Tashkent",
-      visitTime: "14:20",
-      status: "failed",
-      check: {
-        id: "3",
-        check_id: "CHK001234569",
-        project: "Tashkent Delivery",
-        sklad: "Central Warehouse",
-        city: "Tashkent",
-        ekispiditor: "Akmal Karimov",
-        agent: "Agent 001",
-        sborshik: "Collector 001",
-        transport_number: "01A123BC",
-        kkm_number: "KKM003",
-        yetkazilgan_vaqti: "2024-01-15T14:20:00Z",
-        check_detail: {
-          id: "3",
-          check_id: "CHK001234569",
-          checkURL: "https://check.soliq.uz/check/CHK001234569",
-          check_date: "2024-01-15T14:20:00Z",
-          check_lat: 41.2856,
-          check_lon: 69.2034,
-          total_sum: 85000,
-          nalichniy: 85000,
-          uzcard: 0,
-          humo: 0,
-          click: 0,
-          created_at: "2024-01-15T14:20:00Z",
-          updated_at: "2024-01-15T14:20:00Z",
-        },
-      },
+      city_name: "Buxoro",
+      city_code: "BUX",
+      description: "Qadimiy shahar",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     },
   ]
-
-  return mockClients
+  return cities
 }
 
-export async function getVisitedLocations(expeditorId: string, filters: FilterOptions): Promise<VisitedLocation[]> {
-  await delay(600)
+// Expeditors API
+export async function getExpeditors(): Promise<Expeditor[]> {
+  const data = await apiRequestSafe<Expeditor[]>("/ekispiditor/")
 
-  const mockLocations: VisitedLocation[] = [
+  const expeditors = data ?? [
     {
       id: "1",
-      clientName: "Oybek Market",
-      address: "Amir Temur ko'chasi 15, Tashkent",
-      coordinates: { lat: 41.2995, lng: 69.2401 },
-      visitTime: "09:30",
-      checkoutTime: "09:45",
-      status: "delivered",
-      notes: "Successful delivery",
-      check: {
-        id: "1",
-        check_id: "CHK001234567",
-        project: "Tashkent Delivery",
-        sklad: "Central Warehouse",
-        city: "Tashkent",
-        ekispiditor: "Akmal Karimov",
-        agent: "Agent 001",
-        sborshik: "Collector 001",
-        transport_number: "01A123BC",
-        kkm_number: "KKM001",
-        yetkazilgan_vaqti: "2024-01-15T09:30:00Z",
-        check_detail: {
-          id: "1",
-          check_id: "CHK001234567",
-          checkURL: "https://check.soliq.uz/check/CHK001234567",
-          check_date: "2024-01-15T09:30:00Z",
-          check_lat: 41.2995,
-          check_lon: 69.2401,
-          total_sum: 150000,
-          nalichniy: 100000,
-          uzcard: 50000,
-          humo: 0,
-          click: 0,
-          created_at: "2024-01-15T09:30:00Z",
-          updated_at: "2024-01-15T09:30:00Z",
-        },
-      },
+      name: "Alisher Karimov",
+      phone_number: "+998901234567",
+      transport_number: "T001ABC",
+      photo: "/placeholder-user.jpg",
     },
     {
       id: "2",
-      clientName: "Mega Planet",
-      address: "Buyuk Ipak Yo'li 187, Tashkent",
-      coordinates: { lat: 41.3111, lng: 69.2797 },
-      visitTime: "11:15",
-      checkoutTime: "11:30",
-      status: "delivered",
-      notes: "Quick delivery",
-      check: {
-        id: "2",
-        check_id: "CHK001234568",
-        project: "Express Service",
-        sklad: "North Warehouse",
-        city: "Tashkent",
-        ekispiditor: "Akmal Karimov",
-        agent: "Agent 002",
-        sborshik: "Collector 002",
-        transport_number: "01A123BC",
-        kkm_number: "KKM002",
-        yetkazilgan_vaqti: "2024-01-15T11:15:00Z",
-        check_detail: {
-          id: "2",
-          check_id: "CHK001234568",
-          checkURL: "https://check.soliq.uz/check/CHK001234568",
-          check_date: "2024-01-15T11:15:00Z",
-          check_lat: 41.3111,
-          check_lon: 69.2797,
-          total_sum: 275000,
-          nalichniy: 0,
-          uzcard: 175000,
-          humo: 100000,
-          click: 0,
-          created_at: "2024-01-15T11:15:00Z",
-          updated_at: "2024-01-15T11:15:00Z",
-        },
-      },
+      name: "Bobur Toshmatov",
+      phone_number: "+998907654321",
+      transport_number: "T002DEF",
+      photo: "/placeholder-user.jpg",
     },
     {
       id: "3",
-      clientName: "Next Store",
-      address: "Mustaqillik ko'chasi 45, Tashkent",
-      coordinates: { lat: 41.2856, lng: 69.2034 },
-      visitTime: "14:20",
-      status: "failed",
-      notes: "Customer not available",
-      check: {
-        id: "3",
-        check_id: "CHK001234569",
-        project: "Tashkent Delivery",
-        sklad: "Central Warehouse",
-        city: "Tashkent",
-        ekispiditor: "Akmal Karimov",
-        agent: "Agent 001",
-        sborshik: "Collector 001",
-        transport_number: "01A123BC",
-        kkm_number: "KKM003",
-        yetkazilgan_vaqti: "2024-01-15T14:20:00Z",
-        check_detail: {
-          id: "3",
-          check_id: "CHK001234569",
-          checkURL: "https://check.soliq.uz/check/CHK001234569",
-          check_date: "2024-01-15T14:20:00Z",
-          check_lat: 41.2856,
-          check_lon: 69.2034,
-          total_sum: 85000,
-          nalichniy: 85000,
-          uzcard: 0,
-          humo: 0,
-          click: 0,
-          created_at: "2024-01-15T14:20:00Z",
-          updated_at: "2024-01-15T14:20:00Z",
-        },
-      },
+      name: "Sardor Rahimov",
+      phone_number: "+998909876543",
+      transport_number: "T003GHI",
+      photo: "/placeholder-user.jpg",
+    },
+    {
+      id: "4",
+      name: "Jasur Abdullayev",
+      phone_number: "+998905432109",
+      transport_number: "T004JKL",
+      photo: "/placeholder-user.jpg",
     },
   ]
-
-  return mockLocations
+  return expeditors
 }
 
-export async function getStatistics(filters: FilterOptions): Promise<Statistics> {
-  await delay(400)
+// Checks API
+export async function getChecks(filters?: {
+  dateFrom?: string
+  dateTo?: string
+  project?: string
+  sklad?: string
+  city?: string
+  expeditor?: string
+  status?: string
+  paymentMethod?: string
+  search?: string
+}): Promise<Check[]> {
+  const queryParams = new URLSearchParams()
 
-  const mockStatistics: Statistics = {
-    totalChecks: 156,
-    totalSum: 12450000,
-    deliveredChecks: 142,
-    failedChecks: 14,
-    paymentMethods: {
-      nalichniy: 4500000,
-      uzcard: 5200000,
-      humo: 2100000,
-      click: 650000,
-    },
-    topExpeditors: [
-      { name: "Akmal Karimov", checksCount: 45, totalSum: 3200000 },
-      { name: "Bobur Toshmatov", checksCount: 38, totalSum: 2800000 },
-      { name: "Davron Umarov", checksCount: 32, totalSum: 2100000 },
-    ],
-    topProjects: [
-      { name: "Tashkent Delivery", checksCount: 89, totalSum: 7200000 },
-      { name: "Express Service", checksCount: 67, totalSum: 5250000 },
-    ],
-    topCities: [
-      { name: "Tashkent", checksCount: 134, totalSum: 10200000 },
-      { name: "Samarkand", checksCount: 22, totalSum: 2250000 },
-    ],
-    dailyStats: [
-      { date: "2024-01-15", checksCount: 23, totalSum: 1850000 },
-      { date: "2024-01-14", checksCount: 19, totalSum: 1420000 },
-      { date: "2024-01-13", checksCount: 27, totalSum: 2100000 },
-    ],
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, value)
+      }
+    })
   }
 
-  return mockStatistics
+  const endpoint = `/check/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
+  const data = await apiRequestSafe<Check[]>(endpoint)
+
+  const mockChecks: Check[] = [
+    {
+      id: "1",
+      check_id: "CHK001",
+      project: "Loyiha 1",
+      sklad: "Sklad 1",
+      city: "Toshkent",
+      sborshik: "Sborshik 1",
+      agent: "Agent 1",
+      ekispiditor: "Alisher Karimov",
+      yetkazilgan_vaqti: new Date().toISOString(),
+      transport_number: "T001ABC",
+      kkm_number: "KKM001",
+      check_date: new Date().toISOString(),
+      check_lat: 41.2995,
+      check_lon: 69.2401,
+      total_sum: 150000,
+      nalichniy: 50000,
+      uzcard: 100000,
+      humo: 0,
+      click: 0,
+      checkURL: "https://soliq.uz/check/CHK001",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "2",
+      check_id: "CHK002",
+      project: "Loyiha 2",
+      sklad: "Sklad 2",
+      city: "Toshkent",
+      sborshik: "Sborshik 2",
+      agent: "Agent 2",
+      ekispiditor: "Bobur Toshmatov",
+      yetkazilgan_vaqti: new Date(Date.now() - 86400000).toISOString(),
+      transport_number: "T002DEF",
+      kkm_number: "KKM002",
+      check_date: new Date(Date.now() - 86400000).toISOString(),
+      check_lat: 41.3111,
+      check_lon: 69.2797,
+      total_sum: 200000,
+      nalichniy: 0,
+      uzcard: 150000,
+      humo: 50000,
+      click: 0,
+      checkURL: "https://soliq.uz/check/CHK002",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      check_id: "CHK003",
+      project: "Loyiha 1",
+      sklad: "Sklad 1",
+      city: "Samarqand",
+      sborshik: "Sborshik 3",
+      agent: "Agent 3",
+      ekispiditor: "Sardor Rahimov",
+      yetkazilgan_vaqti: new Date().toISOString(),
+      transport_number: "T003GHI",
+      kkm_number: "KKM003",
+      check_date: new Date().toISOString(),
+      check_lat: 39.627,
+      check_lon: 66.975,
+      total_sum: 300000,
+      nalichniy: 100000,
+      uzcard: 100000,
+      humo: 50000,
+      click: 50000,
+      checkURL: "https://soliq.uz/check/CHK003",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "4",
+      check_id: "CHK004",
+      project: "Loyiha 3",
+      sklad: "Sklad 3",
+      city: "Buxoro",
+      sborshik: "Sborshik 4",
+      agent: "Agent 4",
+      ekispiditor: "Jasur Abdullayev",
+      yetkazilgan_vaqti: new Date().toISOString(),
+      transport_number: "T004JKL",
+      kkm_number: "KKM004",
+      check_date: new Date().toISOString(),
+      check_lat: 39.7747,
+      check_lon: 64.4286,
+      total_sum: 250000,
+      nalichniy: 250000,
+      uzcard: 0,
+      humo: 0,
+      click: 0,
+      checkURL: "https://soliq.uz/check/CHK004",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]
+
+  const checks = data ?? mockChecks
+
+  // Apply filters to mock data
+  if (filters) {
+    return checks.filter((check) => {
+      if (filters.project && check.project !== filters.project) return false
+      if (filters.sklad && check.sklad !== filters.sklad) return false
+      if (filters.city && check.city !== filters.city) return false
+      if (filters.expeditor && check.ekispiditor !== filters.expeditor) return false
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase()
+        return (
+          check.check_id.toLowerCase().includes(searchLower) ||
+          check.ekispiditor?.toLowerCase().includes(searchLower) ||
+          check.project?.toLowerCase().includes(searchLower)
+        )
+      }
+      return true
+    })
+  }
+
+  return checks
+}
+
+// Check Details API
+export async function getCheckDetails(): Promise<any[]> {
+  const data = await apiRequestSafe<any[]>("/check-details/")
+  return data ?? []
+}
+
+// Statistics API
+export async function getStatistics(filters?: any): Promise<Statistics> {
+  try {
+    const queryParams = new URLSearchParams()
+
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          queryParams.append(key, String(value))
+        }
+      })
+    }
+
+    const endpoint = `/statistics/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
+    const data = await apiRequestSafe<Statistics>(endpoint)
+
+    const statistics: Statistics = data ?? {
+      totalChecks: 4,
+      totalSum: 900000,
+      todayChecks: 3,
+      successRate: 100,
+      paymentMethods: {
+        nalichniy: 400000,
+        uzcard: 350000,
+        humo: 100000,
+        click: 50000,
+      },
+      topExpeditors: [
+        { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
+        { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
+        { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
+        { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
+      ],
+      topProjects: [
+        { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
+        { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
+        { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
+      ],
+      topCities: [
+        { name: "Toshkent", checkCount: 2, totalSum: 350000 },
+        { name: "Samarqand", checkCount: 1, totalSum: 300000 },
+        { name: "Buxoro", checkCount: 1, totalSum: 250000 },
+      ],
+    }
+    return statistics
+  } catch (error) {
+    // Return mock statistics if API fails
+    return {
+      totalChecks: 4,
+      totalSum: 900000,
+      todayChecks: 3,
+      successRate: 100,
+      paymentMethods: {
+        nalichniy: 400000,
+        uzcard: 350000,
+        humo: 100000,
+        click: 50000,
+      },
+      topExpeditors: [
+        { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
+        { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
+        { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
+        { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
+      ],
+      topProjects: [
+        { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
+        { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
+        { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
+      ],
+      topCities: [
+        { name: "Toshkent", checkCount: 2, totalSum: 350000 },
+        { name: "Samarqand", checkCount: 1, totalSum: 300000 },
+        { name: "Buxoro", checkCount: 1, totalSum: 250000 },
+      ],
+    }
+  }
+}
+
+// Export all API functions
+export const api = {
+  getProjects,
+  getSklads,
+  getCities,
+  getExpeditors,
+  getChecks,
+  getCheckDetails,
+  getStatistics,
 }
