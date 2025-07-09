@@ -4,6 +4,64 @@ export interface Expeditor {
   phone: string
   avatar: string
   status: "active" | "inactive"
+  transport_number: string
+}
+
+export interface Project {
+  id: string
+  project_name: string
+  project_description?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Sklad {
+  id: string
+  sklad_name: string
+  sklad_code: string
+  description?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface City {
+  id: string
+  city_name: string
+  city_code: string
+  description?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CheckDetail {
+  id: string
+  check_id: string
+  checkURL: string
+  check_date: string
+  check_lat?: number
+  check_lon?: number
+  total_sum?: number
+  nalichniy?: number
+  uzcard?: number
+  humo?: number
+  click?: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Check {
+  id: string
+  check_id: string
+  project?: string
+  sklad?: string
+  city?: string
+  sborshik?: string
+  agent?: string
+  ekispiditor?: string
+  yetkazilgan_vaqti?: string
+  transport_number?: string
+  kkm_number?: string
+  check_detail?: CheckDetail
 }
 
 export interface Client {
@@ -13,6 +71,7 @@ export interface Client {
   visitTime: string
   checkoutTime?: string
   status: "delivered" | "failed"
+  check?: Check
 }
 
 export interface VisitedLocation {
@@ -27,9 +86,53 @@ export interface VisitedLocation {
   checkoutTime?: string
   status: "delivered" | "failed"
   notes?: string
+  check: Check
 }
 
 export interface DateRange {
   from: Date
   to?: Date
+}
+
+export interface FilterOptions {
+  dateRange: DateRange
+  project?: string
+  sklad?: string
+  city?: string
+  expeditor?: string
+  status?: "delivered" | "failed" | "all"
+  paymentMethod?: "nalichniy" | "uzcard" | "humo" | "click" | "all"
+}
+
+export interface Statistics {
+  totalChecks: number
+  totalSum: number
+  deliveredChecks: number
+  failedChecks: number
+  paymentMethods: {
+    nalichniy: number
+    uzcard: number
+    humo: number
+    click: number
+  }
+  topExpeditors: Array<{
+    name: string
+    checksCount: number
+    totalSum: number
+  }>
+  topProjects: Array<{
+    name: string
+    checksCount: number
+    totalSum: number
+  }>
+  topCities: Array<{
+    name: string
+    checksCount: number
+    totalSum: number
+  }>
+  dailyStats: Array<{
+    date: string
+    checksCount: number
+    totalSum: number
+  }>
 }

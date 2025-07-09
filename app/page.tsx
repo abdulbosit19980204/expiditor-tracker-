@@ -1,314 +1,315 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { CalendarDays, MapPin, Users, Clock, Search } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Users, MapPin } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { DatePickerWithRange } from "@/components/date-range-picker"
-import { MapComponent } from "@/components/map-component"
+import { Separator } from "@/components/ui/separator"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { MapComponent } from "@/components/map-component"
+import { AdvancedFilters } from "@/components/advanced-filters"
+import { StatisticsPanel } from "@/components/statistics-panel"
+import type { Expeditor, Client, VisitedLocation, FilterOptions } from "@/lib/types"
 import { getExpeditors, getClients, getVisitedLocations } from "@/lib/api"
-import type { Expeditor, Client, VisitedLocation, DateRange } from "@/lib/types"
 
 export default function ExpeditorTracker() {
-  const [selectedDateRange, setSelectedDateRange] = useState<DateRange>({
-    from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-    to: new Date(),
-  })
   const [expeditors, setExpeditors] = useState<Expeditor[]>([])
-  const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
   const [clients, setClients] = useState<Client[]>([])
-  const [visitedLocations, setVisitedLocations] = useState<VisitedLocation[]>([])
-  const [expeditorSearchQuery, setExpeditorSearchQuery] = useState("")
-  const [clientSearchQuery, setClientSearchQuery] = useState("")
-  const [loading, setLoading] = useState({
-    expeditors: true,
-    clients: false,
-    locations: false,
+  const [locations, setLocations] = useState<VisitedLocation[]>([])
+  const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [clientSearchTerm, setClientSearchTerm] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [clientsLoading, setClientsLoading] = useState(false)
+  const [locationsLoading, setLocationsLoading] = useState(false)
+
+  const [filters, setFilters] = useState<FilterOptions>({
+    dateRange: {
+      from: new Date(new Date().setDate(new Date().getDate() - 7)),
+      to: new Date(),
+    },
   })
 
-  // Load expeditors on component mount
+  // Load expeditors on mount
   useEffect(() => {
+    const loadExpeditors = async () => {
+      try {
+        const data = await getExpeditors()
+        setExpeditors(data)
+      } catch (error) {
+        console.error("Error loading expeditors:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     loadExpeditors()
   }, [])
 
-  // Load clients and locations when expeditor or date range changes
+  // Load clients and locations when expeditor or filters change
   useEffect(() => {
-    if (selectedExpeditor) {
-      loadClientsAndLocations()
+    if (!selectedExpeditor) {
+      setClients([])
+      setLocations([])
+      return
     }
-  }, [selectedExpeditor, selectedDateRange])
 
-  // Filter expeditors based on search query
-  const filteredExpeditors = useMemo(() => {
-    if (!expeditorSearchQuery.trim()) return expeditors
+    const loadData = async () => {
+      setClientsLoading(true)
+      setLocationsLoading(true)
 
-    const query = expeditorSearchQuery.toLowerCase()
-    return expeditors.filter(
-      (expeditor) => expeditor.name.toLowerCase().includes(query) || expeditor.phone.toLowerCase().includes(query),
-    )
-  }, [expeditors, expeditorSearchQuery])
-
-  // Filter clients based on search query
-  const filteredClients = useMemo(() => {
-    if (!clientSearchQuery.trim()) return clients
-
-    const query = clientSearchQuery.toLowerCase()
-    return clients.filter(
-      (client) =>
-        client.name.toLowerCase().includes(query) ||
-        client.address.toLowerCase().includes(query) ||
-        client.status.toLowerCase().includes(query),
-    )
-  }, [clients, clientSearchQuery])
-
-  const loadExpeditors = async () => {
-    setLoading((prev) => ({ ...prev, expeditors: true }))
-    try {
-      const data = await getExpeditors()
-      setExpeditors(data)
-      if (data.length > 0) {
-        setSelectedExpeditor(data[0])
+      try {
+        const [clientsData, locationsData] = await Promise.all([
+          getClients(selectedExpeditor.id, filters),
+          getVisitedLocations(selectedExpeditor.id, filters),
+        ])
+        setClients(clientsData)
+        setLocations(locationsData)
+      } catch (error) {
+        console.error("Error loading data:", error)
+      } finally {
+        setClientsLoading(false)
+        setLocationsLoading(false)
       }
-    } catch (error) {
-      console.error("Failed to load expeditors:", error)
-    } finally {
-      setLoading((prev) => ({ ...prev, expeditors: false }))
     }
+
+    loadData()
+  }, [selectedExpeditor, filters])
+
+  // Filter expeditors based on search
+  const filteredExpeditors = expeditors.filter(
+    (expeditor) =>
+      expeditor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      expeditor.phone.includes(searchTerm) ||
+      expeditor.transport_number.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  // Filter clients based on search
+  const filteredClients = clients.filter(
+    (client) =>
+      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.address.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.check?.check_id.toLowerCase().includes(clientSearchTerm.toLowerCase()),
+  )
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("uz-UZ", {
+      style: "currency",
+      currency: "UZS",
+      minimumFractionDigits: 0,
+    }).format(amount)
   }
 
-  const loadClientsAndLocations = async () => {
-    if (!selectedExpeditor) return
-
-    setLoading((prev) => ({ ...prev, clients: true, locations: true }))
-
-    try {
-      const [clientsData, locationsData] = await Promise.all([
-        getClients(selectedExpeditor.id, selectedDateRange),
-        getVisitedLocations(selectedExpeditor.id, selectedDateRange),
-      ])
-
-      setClients(clientsData)
-      setVisitedLocations(locationsData)
-    } catch (error) {
-      console.error("Failed to load data:", error)
-    } finally {
-      setLoading((prev) => ({ ...prev, clients: false, locations: false }))
-    }
-  }
-
-  const handleExpeditorSelect = (expeditor: Expeditor) => {
-    setSelectedExpeditor(expeditor)
-    // Clear client search when switching expeditors
-    setClientSearchQuery("")
-  }
-
-  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
-    if (dateRange) {
-      setSelectedDateRange(dateRange)
-    }
-  }
-
-  const clearExpeditorSearch = () => {
-    setExpeditorSearchQuery("")
-  }
-
-  const clearClientSearch = () => {
-    setClientSearchQuery("")
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <MapPin className="h-8 w-8 text-blue-600" />
-          <h1 className="text-2xl font-bold text-gray-900">Expeditor Movement Tracker</h1>
-        </div>
-      </header>
-
-      <div className="flex h-[calc(100vh-80px)]">
-        {/* Left Sidebar */}
+      <div className="flex h-screen">
+        {/* Left Sidebar - Expeditors */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-          {/* Date Filter */}
           <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <CalendarDays className="h-4 w-4 text-gray-600" />
-              <h3 className="font-semibold text-gray-900">Date Range</h3>
+            <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Expeditor Tracker
+            </h1>
+
+            {/* Advanced Filters */}
+            <AdvancedFilters filters={filters} onFiltersChange={setFilters} />
+
+            <Separator className="my-4" />
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search expeditors..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <DatePickerWithRange dateRange={selectedDateRange} onDateRangeChange={handleDateRangeChange} />
           </div>
 
           {/* Expeditors List */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <Users className="h-4 w-4 text-gray-600" />
-              <h3 className="font-semibold text-gray-900">Expeditors</h3>
-              <Badge variant="outline" className="text-xs">
-                {filteredExpeditors.length}/{expeditors.length}
-              </Badge>
-            </div>
-
-            {/* Expeditor Search */}
-            <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search expeditors..."
-                value={expeditorSearchQuery}
-                onChange={(e) => setExpeditorSearchQuery(e.target.value)}
-                className="pl-10 pr-8"
-              />
-              {expeditorSearchQuery && (
-                <button
-                  onClick={clearExpeditorSearch}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-
-            {loading.expeditors ? (
-              <div className="flex justify-center py-4">
-                <LoadingSpinner />
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {filteredExpeditors.length > 0 ? (
-                  filteredExpeditors.map((expeditor) => (
-                    <Card
-                      key={expeditor.id}
-                      className={`cursor-pointer transition-colors hover:bg-gray-50 ${
-                        selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
-                      }`}
-                      onClick={() => handleExpeditorSelect(expeditor)}
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={expeditor.avatar || "/placeholder.svg"} alt={expeditor.name} />
-                            <AvatarFallback>
-                              {expeditor.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{expeditor.name}</p>
-                            <p className="text-sm text-gray-500">{expeditor.phone}</p>
-                          </div>
-                          <Badge variant={expeditor.status === "active" ? "default" : "secondary"}>
-                            {expeditor.status}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="text-center py-4">
-                    <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm">No expeditors found</p>
-                    <p className="text-gray-400 text-xs">Try adjusting your search</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Clients List */}
-          <div className="flex-1 p-4 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-gray-600" />
-              <h3 className="font-semibold text-gray-900">Visited Clients</h3>
-              {selectedExpeditor && (
-                <Badge variant="outline" className="text-xs">
-                  {filteredClients.length}/{clients.length}
-                </Badge>
-              )}
-            </div>
-
-            {selectedExpeditor ? (
-              <>
-                {/* Client Search */}
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search clients..."
-                    value={clientSearchQuery}
-                    onChange={(e) => setClientSearchQuery(e.target.value)}
-                    className="pl-10 pr-8"
-                  />
-                  {clientSearchQuery && (
-                    <button
-                      onClick={clearClientSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-
-                {loading.clients ? (
-                  <div className="flex justify-center py-4">
-                    <LoadingSpinner />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredClients.length > 0 ? (
-                      filteredClients.map((client) => (
-                        <Card key={client.id} className="hover:bg-gray-50">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-start mb-2">
-                              <h4 className="font-medium text-gray-900">{client.name}</h4>
-                              <Badge variant="outline" className="text-xs">
-                                {client.visitTime}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600 mb-1">{client.address}</p>
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant={client.status === "delivered" ? "default" : "destructive"}
-                                className="text-xs"
-                              >
-                                {client.status}
-                              </Badge>
-                              {client.checkoutTime && (
-                                <span className="text-xs text-gray-500">Out: {client.checkoutTime}</span>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : clientSearchQuery ? (
-                      <div className="text-center py-4">
-                        <Search className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-500 text-sm">No clients found</p>
-                        <p className="text-gray-400 text-xs">Try adjusting your search</p>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {filteredExpeditors.map((expeditor) => (
+              <Card
+                key={expeditor.id}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
+                }`}
+                onClick={() => setSelectedExpeditor(expeditor)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <Avatar>
+                      <AvatarImage src={expeditor.avatar || "/placeholder.svg"} />
+                      <AvatarFallback>
+                        {expeditor.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
+                        <Badge variant={expeditor.status === "active" ? "default" : "secondary"}>
+                          {expeditor.status}
+                        </Badge>
                       </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No clients visited in selected date range</p>
-                    )}
+                      <p className="text-sm text-gray-500">{expeditor.phone}</p>
+                      <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
+                    </div>
                   </div>
-                )}
-              </>
-            ) : (
-              <p className="text-gray-500 text-center py-4">Select an expeditor to view clients</p>
-            )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
 
-        {/* Main Map Area */}
+        {/* Center - Map */}
         <div className="flex-1 relative">
-          <MapComponent
-            locations={visitedLocations}
-            loading={loading.locations}
-            selectedExpeditor={selectedExpeditor}
-          />
+          <MapComponent locations={locations} loading={locationsLoading} selectedExpeditor={selectedExpeditor} />
+        </div>
+
+        {/* Right Sidebar - Statistics and Clients */}
+        <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
+          {/* Statistics Panel */}
+          <div className="h-1/2 border-b border-gray-200">
+            <StatisticsPanel filters={filters} />
+          </div>
+
+          {/* Clients List */}
+          <div className="h-1/2 flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Visited Clients
+                {selectedExpeditor && <Badge variant="outline">{clients.length}</Badge>}
+              </h2>
+
+              {selectedExpeditor && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search clients..."
+                    value={clientSearchTerm}
+                    onChange={(e) => setClientSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4">
+              {!selectedExpeditor ? (
+                <div className="text-center text-gray-500 mt-8">
+                  <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>Select an expeditor to view clients</p>
+                </div>
+              ) : clientsLoading ? (
+                <div className="flex justify-center mt-8">
+                  <LoadingSpinner />
+                </div>
+              ) : filteredClients.length === 0 ? (
+                <div className="text-center text-gray-500 mt-8">
+                  <p>No clients found</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredClients.map((client) => (
+                    <Card key={client.id} className="hover:shadow-sm transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-sm">{client.name}</h3>
+                            <Badge variant={client.status === "delivered" ? "default" : "destructive"}>
+                              {client.status}
+                            </Badge>
+                          </div>
+
+                          <p className="text-xs text-gray-600">{client.address}</p>
+
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>Visit: {client.visitTime}</span>
+                            {client.checkoutTime && <span>Left: {client.checkoutTime}</span>}
+                          </div>
+
+                          {/* Check Information */}
+                          {client.check && (
+                            <div className="mt-3 p-2 bg-gray-50 rounded text-xs space-y-1">
+                              <div className="flex justify-between">
+                                <span className="font-medium">Check ID:</span>
+                                <span className="font-mono">{client.check.check_id}</span>
+                              </div>
+
+                              {client.check.check_detail && (
+                                <>
+                                  <div className="flex justify-between">
+                                    <span className="font-medium">Total:</span>
+                                    <span className="font-bold text-green-600">
+                                      {formatCurrency(client.check.check_detail.total_sum || 0)}
+                                    </span>
+                                  </div>
+
+                                  {/* Payment Methods */}
+                                  <div className="space-y-1 mt-2">
+                                    {client.check.check_detail.nalichniy > 0 && (
+                                      <div className="flex justify-between">
+                                        <span>Cash:</span>
+                                        <span>{formatCurrency(client.check.check_detail.nalichniy)}</span>
+                                      </div>
+                                    )}
+                                    {client.check.check_detail.uzcard > 0 && (
+                                      <div className="flex justify-between">
+                                        <span>UzCard:</span>
+                                        <span>{formatCurrency(client.check.check_detail.uzcard)}</span>
+                                      </div>
+                                    )}
+                                    {client.check.check_detail.humo > 0 && (
+                                      <div className="flex justify-between">
+                                        <span>Humo:</span>
+                                        <span>{formatCurrency(client.check.check_detail.humo)}</span>
+                                      </div>
+                                    )}
+                                    {client.check.check_detail.click > 0 && (
+                                      <div className="flex justify-between">
+                                        <span>Click:</span>
+                                        <span>{formatCurrency(client.check.check_detail.click)}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </>
+                              )}
+
+                              <div className="flex justify-between">
+                                <span>Project:</span>
+                                <span>{client.check.project}</span>
+                              </div>
+
+                              <div className="flex justify-between">
+                                <span>KKM:</span>
+                                <span className="font-mono">{client.check.kkm_number}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

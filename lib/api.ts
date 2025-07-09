@@ -1,6 +1,72 @@
-import type { Expeditor, Client, VisitedLocation, DateRange } from "./types"
+import type {
+  Expeditor,
+  Client,
+  VisitedLocation,
+  FilterOptions,
+  Statistics,
+  Project,
+  Sklad,
+  City,
+  Check,
+  CheckDetail,
+} from "./types"
 
-// Mock data with more entries for better search testing
+// Mock data with Django backend structure
+const mockProjects: Project[] = [
+  {
+    id: "1",
+    project_name: "Tashkent Delivery",
+    project_description: "Main delivery project for Tashkent city",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
+  {
+    id: "2",
+    project_name: "Express Delivery",
+    project_description: "Fast delivery service",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
+]
+
+const mockSklads: Sklad[] = [
+  {
+    id: "1",
+    sklad_name: "Chilonzor Sklad",
+    sklad_code: "CHI001",
+    description: "Main warehouse in Chilonzor",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
+  {
+    id: "2",
+    sklad_name: "Yunusobod Sklad",
+    sklad_code: "YUN001",
+    description: "Warehouse in Yunusobod",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
+]
+
+const mockCities: City[] = [
+  {
+    id: "1",
+    city_name: "Tashkent",
+    city_code: "TSH",
+    description: "Capital city",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
+  {
+    id: "2",
+    city_name: "Samarkand",
+    city_code: "SMR",
+    description: "Historical city",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  },
+]
+
 const mockExpeditors: Expeditor[] = [
   {
     id: "1",
@@ -8,6 +74,7 @@ const mockExpeditors: Expeditor[] = [
     phone: "+998 90 123-45-67",
     avatar: "/placeholder.svg?height=40&width=40",
     status: "active",
+    transport_number: "01A123BC",
   },
   {
     id: "2",
@@ -15,6 +82,7 @@ const mockExpeditors: Expeditor[] = [
     phone: "+998 91 234-56-78",
     avatar: "/placeholder.svg?height=40&width=40",
     status: "active",
+    transport_number: "01B456DE",
   },
   {
     id: "3",
@@ -22,6 +90,7 @@ const mockExpeditors: Expeditor[] = [
     phone: "+998 93 345-67-89",
     avatar: "/placeholder.svg?height=40&width=40",
     status: "inactive",
+    transport_number: "01C789FG",
   },
   {
     id: "4",
@@ -29,6 +98,7 @@ const mockExpeditors: Expeditor[] = [
     phone: "+998 94 456-78-90",
     avatar: "/placeholder.svg?height=40&width=40",
     status: "active",
+    transport_number: "01D012HI",
   },
   {
     id: "5",
@@ -36,109 +106,73 @@ const mockExpeditors: Expeditor[] = [
     phone: "+998 95 567-89-01",
     avatar: "/placeholder.svg?height=40&width=40",
     status: "active",
-  },
-  {
-    id: "6",
-    name: "Feruza Nazarova",
-    phone: "+998 97 678-90-12",
-    avatar: "/placeholder.svg?height=40&width=40",
-    status: "inactive",
+    transport_number: "01E345JK",
   },
 ]
 
-const mockClients: Record<string, Client[]> = {
-  "1": [
-    {
-      id: "c1",
-      name: "Tashkent Plaza",
-      address: "Amir Temur ko'chasi, Toshkent",
-      visitTime: "09:15",
-      checkoutTime: "09:45",
-      status: "delivered",
-    },
-    {
-      id: "c2",
-      name: "Mega Planet",
-      address: "Labzak ko'chasi, Toshkent",
-      visitTime: "10:30",
-      checkoutTime: "11:00",
-      status: "delivered",
-    },
-    {
-      id: "c3",
-      name: "Toshkent Tibbiyot Akademiyasi",
-      address: "Farabi ko'chasi, Toshkent",
-      visitTime: "14:15",
-      status: "failed",
-    },
-    {
-      id: "c4",
-      name: "Samarkand Darvoza",
-      address: "Samarkand Darvoza, Toshkent",
-      visitTime: "16:30",
-      checkoutTime: "17:00",
-      status: "delivered",
-    },
-  ],
-  "2": [
-    {
-      id: "c5",
-      name: "Chorsu Bozori",
-      address: "Chorsu, Eski Shahar",
-      visitTime: "08:45",
-      checkoutTime: "09:15",
-      status: "delivered",
-    },
-    {
-      id: "c6",
-      name: "NBU Bank",
-      address: "Shakhrisabz ko'chasi, Toshkent",
-      visitTime: "11:30",
-      checkoutTime: "12:00",
-      status: "delivered",
-    },
-    {
-      id: "c7",
-      name: "Uzbekistan Hotel",
-      address: "Buyuk Turon ko'chasi, Toshkent",
-      visitTime: "13:45",
-      status: "failed",
-    },
-    {
-      id: "c8",
-      name: "Next Store",
-      address: "Nukus ko'chasi, Toshkent",
-      visitTime: "15:20",
-      checkoutTime: "15:50",
-      status: "delivered",
-    },
-  ],
-  "5": [
-    {
-      id: "c9",
-      name: "Carrefour Samarkand Darvoza",
-      address: "Samarkand Darvoza, Toshkent",
-      visitTime: "10:00",
-      checkoutTime: "10:30",
-      status: "delivered",
-    },
-    {
-      id: "c10",
-      name: "Makro Market",
-      address: "Chilonzor tumani, Toshkent",
-      visitTime: "12:15",
-      checkoutTime: "12:45",
-      status: "delivered",
-    },
-    {
-      id: "c11",
-      name: "Tashkent City Mall",
-      address: "Shaykhontohur tumani, Toshkent",
-      visitTime: "14:30",
-      status: "failed",
-    },
-  ],
-}
+const mockCheckDetails: CheckDetail[] = [
+  {
+    id: "1",
+    check_id: "CHK001",
+    checkURL: "https://example.com/check/CHK001",
+    check_date: "2024-01-15T09:15:00Z",
+    check_lat: 41.311081,
+    check_lon: 69.240562,
+    total_sum: 150000,
+    nalichniy: 50000,
+    uzcard: 100000,
+    humo: 0,
+    click: 0,
+    created_at: "2024-01-15T09:15:00Z",
+    updated_at: "2024-01-15T09:15:00Z",
+  },
+  {
+    id: "2",
+    check_id: "CHK002",
+    checkURL: "https://example.com/check/CHK002",
+    check_date: "2024-01-15T10:30:00Z",
+    check_lat: 41.28543,
+    check_lon: 69.203735,
+    total_sum: 250000,
+    nalichniy: 0,
+    uzcard: 150000,
+    humo: 100000,
+    click: 0,
+    created_at: "2024-01-15T10:30:00Z",
+    updated_at: "2024-01-15T10:30:00Z",
+  },
+]
+
+const mockChecks: Check[] = [
+  {
+    id: "1",
+    check_id: "CHK001",
+    project: "Tashkent Delivery",
+    sklad: "Chilonzor Sklad",
+    city: "Tashkent",
+    sborshik: "Olim Sobirov",
+    agent: "Kamol Agents",
+    ekispiditor: "Aziz Karimov",
+    yetkazilgan_vaqti: "2024-01-15T09:15:00Z",
+    transport_number: "01A123BC",
+    kkm_number: "KKM001",
+    check_detail: mockCheckDetails[0],
+  },
+  {
+    id: "2",
+    check_id: "CHK002",
+    project: "Express Delivery",
+    sklad: "Yunusobod Sklad",
+    city: "Tashkent",
+    sborshik: "Jasur Toshev",
+    agent: "Fast Agents",
+    ekispiditor: "Malika Tosheva",
+    yetkazilgan_vaqti: "2024-01-15T10:30:00Z",
+    transport_number: "01B456DE",
+    kkm_number: "KKM002",
+    check_detail: mockCheckDetails[1],
+  },
+]
 
 const mockLocations: Record<string, VisitedLocation[]> = {
   "1": [
@@ -151,6 +185,7 @@ const mockLocations: Record<string, VisitedLocation[]> = {
       checkoutTime: "09:45",
       status: "delivered",
       notes: "Package delivered to reception",
+      check: mockChecks[0],
     },
     {
       id: "l2",
@@ -161,25 +196,7 @@ const mockLocations: Record<string, VisitedLocation[]> = {
       checkoutTime: "11:00",
       status: "delivered",
       notes: "Delivered to loading dock",
-    },
-    {
-      id: "l3",
-      clientName: "Toshkent Tibbiyot Akademiyasi",
-      address: "Farabi ko'chasi, Toshkent",
-      coordinates: { lat: 41.295543, lng: 69.267107 },
-      visitTime: "14:15",
-      status: "failed",
-      notes: "Recipient not available",
-    },
-    {
-      id: "l4",
-      clientName: "Samarkand Darvoza",
-      address: "Samarkand Darvoza, Toshkent",
-      coordinates: { lat: 41.28543, lng: 69.203735 },
-      visitTime: "16:30",
-      checkoutTime: "17:00",
-      status: "delivered",
-      notes: "Delivered successfully",
+      check: mockChecks[1],
     },
   ],
   "2": [
@@ -191,62 +208,32 @@ const mockLocations: Record<string, VisitedLocation[]> = {
       visitTime: "08:45",
       checkoutTime: "09:15",
       status: "delivered",
-    },
-    {
-      id: "l6",
-      clientName: "NBU Bank",
-      address: "Shakhrisabz ko'chasi, Toshkent",
-      coordinates: { lat: 41.304223, lng: 69.249755 },
-      visitTime: "11:30",
-      checkoutTime: "12:00",
-      status: "delivered",
-    },
-    {
-      id: "l7",
-      clientName: "Uzbekistan Hotel",
-      address: "Buyuk Turon ko'chasi, Toshkent",
-      coordinates: { lat: 41.299496, lng: 69.240562 },
-      visitTime: "13:45",
-      status: "failed",
-      notes: "Security did not allow entry",
-    },
-    {
-      id: "l8",
-      clientName: "Next Store",
-      address: "Nukus ko'chasi, Toshkent",
-      coordinates: { lat: 41.315, lng: 69.25 },
-      visitTime: "15:20",
-      checkoutTime: "15:50",
-      status: "delivered",
-    },
-  ],
-  "5": [
-    {
-      id: "l9",
-      clientName: "Carrefour Samarkand Darvoza",
-      address: "Samarkand Darvoza, Toshkent",
-      coordinates: { lat: 41.28543, lng: 69.203735 },
-      visitTime: "10:00",
-      checkoutTime: "10:30",
-      status: "delivered",
-    },
-    {
-      id: "l10",
-      clientName: "Makro Market",
-      address: "Chilonzor tumani, Toshkent",
-      coordinates: { lat: 41.275, lng: 69.21 },
-      visitTime: "12:15",
-      checkoutTime: "12:45",
-      status: "delivered",
-    },
-    {
-      id: "l11",
-      clientName: "Tashkent City Mall",
-      address: "Shaykhontohur tumani, Toshkent",
-      coordinates: { lat: 41.32, lng: 69.28 },
-      visitTime: "14:30",
-      status: "failed",
-      notes: "Mall was closed for maintenance",
+      check: {
+        id: "3",
+        check_id: "CHK003",
+        project: "Tashkent Delivery",
+        sklad: "Chilonzor Sklad",
+        city: "Tashkent",
+        ekispiditor: "Malika Tosheva",
+        yetkazilgan_vaqti: "2024-01-15T08:45:00Z",
+        transport_number: "01B456DE",
+        kkm_number: "KKM003",
+        check_detail: {
+          id: "3",
+          check_id: "CHK003",
+          checkURL: "https://example.com/check/CHK003",
+          check_date: "2024-01-15T08:45:00Z",
+          check_lat: 41.326142,
+          check_lon: 69.228439,
+          total_sum: 180000,
+          nalichniy: 180000,
+          uzcard: 0,
+          humo: 0,
+          click: 0,
+          created_at: "2024-01-15T08:45:00Z",
+          updated_at: "2024-01-15T08:45:00Z",
+        },
+      },
     },
   ],
 }
@@ -254,17 +241,99 @@ const mockLocations: Record<string, VisitedLocation[]> = {
 // Simulate API delay
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+export async function getProjects(): Promise<Project[]> {
+  await delay(500)
+  return mockProjects
+}
+
+export async function getSklads(): Promise<Sklad[]> {
+  await delay(500)
+  return mockSklads
+}
+
+export async function getCities(): Promise<City[]> {
+  await delay(500)
+  return mockCities
+}
+
 export async function getExpeditors(): Promise<Expeditor[]> {
   await delay(800)
   return mockExpeditors
 }
 
-export async function getClients(expeditorId: string, dateRange: DateRange): Promise<Client[]> {
+export async function getClients(expeditorId: string, filters: FilterOptions): Promise<Client[]> {
   await delay(600)
-  return mockClients[expeditorId] || []
+  const locations = mockLocations[expeditorId] || []
+  return locations.map((loc) => ({
+    id: loc.id,
+    name: loc.clientName,
+    address: loc.address,
+    visitTime: loc.visitTime,
+    checkoutTime: loc.checkoutTime,
+    status: loc.status,
+    check: loc.check,
+  }))
 }
 
-export async function getVisitedLocations(expeditorId: string, dateRange: DateRange): Promise<VisitedLocation[]> {
+export async function getVisitedLocations(expeditorId: string, filters: FilterOptions): Promise<VisitedLocation[]> {
   await delay(700)
   return mockLocations[expeditorId] || []
+}
+
+export async function getStatistics(filters: FilterOptions): Promise<Statistics> {
+  await delay(900)
+
+  // Calculate statistics based on filters
+  const allLocations = Object.values(mockLocations).flat()
+  const filteredLocations = allLocations.filter((loc) => {
+    if (filters.status && filters.status !== "all" && loc.status !== filters.status) return false
+    if (filters.project && loc.check.project !== filters.project) return false
+    if (filters.city && loc.check.city !== filters.city) return false
+    if (filters.sklad && loc.check.sklad !== filters.sklad) return false
+    return true
+  })
+
+  const totalSum = filteredLocations.reduce((sum, loc) => sum + (loc.check.check_detail?.total_sum || 0), 0)
+  const deliveredChecks = filteredLocations.filter((loc) => loc.status === "delivered").length
+  const failedChecks = filteredLocations.filter((loc) => loc.status === "failed").length
+
+  const paymentMethods = filteredLocations.reduce(
+    (acc, loc) => {
+      const detail = loc.check.check_detail
+      if (detail) {
+        acc.nalichniy += detail.nalichniy || 0
+        acc.uzcard += detail.uzcard || 0
+        acc.humo += detail.humo || 0
+        acc.click += detail.click || 0
+      }
+      return acc
+    },
+    { nalichniy: 0, uzcard: 0, humo: 0, click: 0 },
+  )
+
+  return {
+    totalChecks: filteredLocations.length,
+    totalSum,
+    deliveredChecks,
+    failedChecks,
+    paymentMethods,
+    topExpeditors: [
+      { name: "Aziz Karimov", checksCount: 15, totalSum: 2500000 },
+      { name: "Malika Tosheva", checksCount: 12, totalSum: 2100000 },
+      { name: "Sardor Umarov", checksCount: 8, totalSum: 1800000 },
+    ],
+    topProjects: [
+      { name: "Tashkent Delivery", checksCount: 25, totalSum: 4200000 },
+      { name: "Express Delivery", checksCount: 18, totalSum: 3100000 },
+    ],
+    topCities: [
+      { name: "Tashkent", checksCount: 35, totalSum: 6800000 },
+      { name: "Samarkand", checksCount: 8, totalSum: 1500000 },
+    ],
+    dailyStats: [
+      { date: "2024-01-15", checksCount: 12, totalSum: 1800000 },
+      { date: "2024-01-14", checksCount: 15, totalSum: 2200000 },
+      { date: "2024-01-13", checksCount: 10, totalSum: 1500000 },
+    ],
+  }
 }
