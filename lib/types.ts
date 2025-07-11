@@ -1,37 +1,3 @@
-export interface Expeditor {
-  id: string
-  name: string
-  phone_number: string
-  transport_number: string
-  photo?: string
-}
-
-export interface Project {
-  id: string
-  project_name: string
-  project_description?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface Sklad {
-  id: string
-  sklad_name: string
-  sklad_code: string
-  description?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface City {
-  id: string
-  city_name: string
-  city_code: string
-  description?: string
-  created_at: string
-  updated_at: string
-}
-
 export interface Check {
   id: string
   check_id: string
@@ -48,25 +14,47 @@ export interface Check {
   check_lat?: number
   check_lon?: number
   total_sum?: number
-  nalichniy: number
-  uzcard: number
-  humo: number
-  click: number
+  nalichniy?: number
+  uzcard?: number
+  humo?: number
+  click?: number
   checkURL?: string
-  created_at: string
-  updated_at: string
+  created_at?: string
+  updated_at?: string
 }
 
-export interface FilterOptions {
-  dateRange: {
-    from: Date | undefined
-    to: Date | undefined
-  }
-  project?: string
-  sklad?: string
-  city?: string
-  status?: string
-  paymentMethod?: string
+export interface Expeditor {
+  id: string
+  name: string
+  phone_number: string
+  transport_number: string
+  photo?: string
+}
+
+export interface Project {
+  id: string
+  project_name: string
+  project_description?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Sklad {
+  id: string
+  sklad_name: string
+  sklad_code: string
+  description?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface City {
+  id: string
+  city_name: string
+  city_code: string
+  description?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface Statistics {
@@ -97,9 +85,11 @@ export interface Statistics {
   }>
 }
 
-// Global type for Yandex Maps
-declare global {
-  interface Window {
-    ymaps: any
-  }
+export interface FilterOptions {
+  dateRange: { from: Date | undefined; to: Date | undefined }
+  project: string
+  sklad: string
+  city: string
+  status: string
+  paymentMethod: string
 }

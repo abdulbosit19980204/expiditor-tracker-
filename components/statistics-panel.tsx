@@ -1,10 +1,9 @@
 "use client"
 
-import { TrendingUp, Receipt, DollarSign, Users, MapPin, Building } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { LoadingSpinner } from "@/components/loading-spinner"
+import { Progress } from "@/components/ui/progress"
+import { TrendingUp, Users, MapPin, CreditCard, Calendar, DollarSign } from "lucide-react"
 import type { Statistics } from "@/lib/types"
 
 interface StatisticsPanelProps {
@@ -12,95 +11,104 @@ interface StatisticsPanelProps {
 }
 
 export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("uz-UZ", {
-      style: "currency",
-      currency: "UZS",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
   if (!statistics) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <LoadingSpinner />
+      <div className="p-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="space-y-2">
+            <div className="h-3 bg-gray-200 rounded"></div>
+            <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+          </div>
+        </div>
       </div>
     )
   }
 
-  const successRate =
-    statistics.totalChecks > 0 ? Math.round((statistics.successRate / statistics.totalChecks) * 100) : 0
+  const formatCurrency = (amount: number) => {
+    return (
+      new Intl.NumberFormat("uz-UZ", {
+        style: "decimal",
+        minimumFractionDigits: 0,
+      }).format(amount) + " UZS"
+    )
+  }
+
+  const totalPayments = statistics.paymentMethods
+    ? Object.values(statistics.paymentMethods).reduce((sum, amount) => sum + amount, 0)
+    : 0
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-blue-600" />
-          <h2 className="text-lg font-semibold">Statistics</h2>
-        </div>
+    <div className="p-4 space-y-4 h-full overflow-y-auto">
+      <div className="flex items-center gap-2 mb-4">
+        <TrendingUp className="h-5 w-5 text-blue-600" />
+        <h2 className="text-lg font-semibold">Statistics</h2>
+      </div>
 
-        {/* Key Metrics */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-blue-500" />
-                <div>
-                  <p className="text-xs text-gray-600">Total Checks</p>
-                  <p className="text-lg font-bold">{statistics.totalChecks}</p>
-                </div>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-500" />
+              <div>
+                <p className="text-xs text-gray-600">Total Checks</p>
+                <p className="text-lg font-bold">{statistics.totalChecks || 0}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-500" />
-                <div>
-                  <p className="text-xs text-gray-600">Total Sum</p>
-                  <p className="text-sm font-bold text-green-600">{formatCurrency(statistics.totalSum)}</p>
-                </div>
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-green-500" />
+              <div>
+                <p className="text-xs text-gray-600">Total Sum</p>
+                <p className="text-sm font-bold">{formatCurrency(statistics.totalSum || 0)}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-orange-500" />
-                <div>
-                  <p className="text-xs text-gray-600">Today</p>
-                  <p className="text-lg font-bold">{statistics.todayChecks}</p>
-                </div>
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-orange-500" />
+              <div>
+                <p className="text-xs text-gray-600">Today</p>
+                <p className="text-lg font-bold">{statistics.todayChecks || 0}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-purple-500" />
-                <div>
-                  <p className="text-xs text-gray-600">Success Rate</p>
-                  <p className="text-lg font-bold">{successRate}%</p>
-                </div>
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-purple-500" />
+              <div>
+                <p className="text-xs text-gray-600">Success Rate</p>
+                <p className="text-lg font-bold">{statistics.successRate || 0}%</p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Payment Methods */}
+      {/* Payment Methods */}
+      {statistics.paymentMethods && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Payment Methods</CardTitle>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Payment Methods
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
             {Object.entries(statistics.paymentMethods).map(([method, amount]) => {
-              const percentage = statistics.totalSum > 0 ? Math.round((amount / statistics.totalSum) * 100) : 0
-
-              const methodNames: Record<string, string> = {
+              const percentage = totalPayments > 0 ? (amount / totalPayments) * 100 : 0
+              const methodLabels: Record<string, string> = {
                 nalichniy: "Cash",
                 uzcard: "UzCard",
                 humo: "Humo",
@@ -109,18 +117,22 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
 
               return (
                 <div key={method} className="space-y-1">
-                  <div className="flex justify-between text-xs">
-                    <span>{methodNames[method]}</span>
-                    <span>{formatCurrency(amount)}</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium">{methodLabels[method] || method}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {formatCurrency(amount)}
+                    </Badge>
                   </div>
-                  <Progress value={percentage} className="h-1" />
+                  <Progress value={percentage} className="h-2" />
                 </div>
               )
             })}
           </CardContent>
         </Card>
+      )}
 
-        {/* Top Expeditors */}
+      {/* Top Expeditors */}
+      {statistics.topExpeditors && statistics.topExpeditors.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -130,49 +142,25 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           </CardHeader>
           <CardContent className="space-y-2">
             {statistics.topExpeditors.slice(0, 3).map((expeditor, index) => (
-              <div key={expeditor.name} className="flex items-center justify-between">
+              <div key={expeditor.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                  <Badge variant={index === 0 ? "default" : "secondary"} className="w-5 h-5 p-0 text-xs">
                     {index + 1}
                   </Badge>
-                  <span className="text-xs font-medium truncate">{expeditor.name}</span>
+                  <span className="font-medium truncate">{expeditor.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold">{expeditor.checkCount}</p>
-                  <p className="text-xs text-gray-500">{formatCurrency(expeditor.totalSum)}</p>
+                  <p className="font-bold">{expeditor.checkCount}</p>
+                  <p className="text-gray-500">{formatCurrency(expeditor.totalSum)}</p>
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
+      )}
 
-        {/* Top Projects */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              Top Projects
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {statistics.topProjects.slice(0, 3).map((project, index) => (
-              <div key={project.name} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
-                    {index + 1}
-                  </Badge>
-                  <span className="text-xs font-medium truncate">{project.name}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold">{project.checkCount}</p>
-                  <p className="text-xs text-gray-500">{formatCurrency(project.totalSum)}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Top Cities */}
+      {/* Top Cities */}
+      {statistics.topCities && statistics.topCities.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -182,22 +170,22 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           </CardHeader>
           <CardContent className="space-y-2">
             {statistics.topCities.slice(0, 3).map((city, index) => (
-              <div key={city.name} className="flex items-center justify-between">
+              <div key={city.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="w-6 h-6 p-0 flex items-center justify-center text-xs">
+                  <Badge variant={index === 0 ? "default" : "secondary"} className="w-5 h-5 p-0 text-xs">
                     {index + 1}
                   </Badge>
-                  <span className="text-xs font-medium truncate">{city.name}</span>
+                  <span className="font-medium">{city.name}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-bold">{city.checkCount}</p>
-                  <p className="text-xs text-gray-500">{formatCurrency(city.totalSum)}</p>
+                  <p className="font-bold">{city.checkCount}</p>
+                  <p className="text-gray-500">{formatCurrency(city.totalSum)}</p>
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   )
 }

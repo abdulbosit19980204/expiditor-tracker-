@@ -2,18 +2,27 @@ import type { Check, Expeditor, Project, Sklad, City, Statistics } from "./types
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
-// ───────────────────────────────────────────────────────────
 // Safe request helper – never throws, returns null on error
-// ───────────────────────────────────────────────────────────
 async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
   const url = `${API_BASE_URL}${endpoint}`
 
   try {
-    const res = await fetch(url, { headers: { "Content-Type": "application/json" } })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return (await res.json()) as T
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      cache: "no-store", // Disable caching for real-time data
+    })
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+    }
+
+    const data = await res.json()
+    return data as T
   } catch (err) {
-    console.warn("API unreachable, falling back to mock →", endpoint)
+    console.warn(`API request failed for ${endpoint}:`, err)
     return null
   }
 }
@@ -22,133 +31,138 @@ async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
 export async function getProjects(): Promise<Project[]> {
   const data = await apiRequestSafe<Project[]>("/projects/")
 
-  const projects = data ?? [
-    {
-      id: "1",
-      project_name: "Loyiha 1",
-      project_description: "Birinchi loyiha",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      project_name: "Loyiha 2",
-      project_description: "Ikkinchi loyiha",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      project_name: "Loyiha 3",
-      project_description: "Uchinchi loyiha",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
-  return projects
+  // Return mock data if API fails
+  return (
+    data || [
+      {
+        id: "1",
+        project_name: "Loyiha 1",
+        project_description: "Birinchi loyiha",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        project_name: "Loyiha 2",
+        project_description: "Ikkinchi loyiha",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "3",
+        project_name: "Loyiha 3",
+        project_description: "Uchinchi loyiha",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]
+  )
 }
 
 // Sklads API
 export async function getSklads(): Promise<Sklad[]> {
   const data = await apiRequestSafe<Sklad[]>("/sklad/")
 
-  const sklads = data ?? [
-    {
-      id: "1",
-      sklad_name: "Sklad 1",
-      sklad_code: "SKL001",
-      description: "Birinchi sklad",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      sklad_name: "Sklad 2",
-      sklad_code: "SKL002",
-      description: "Ikkinchi sklad",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      sklad_name: "Sklad 3",
-      sklad_code: "SKL003",
-      description: "Uchinchi sklad",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
-  return sklads
+  return (
+    data || [
+      {
+        id: "1",
+        sklad_name: "Sklad 1",
+        sklad_code: "SKL001",
+        description: "Birinchi sklad",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        sklad_name: "Sklad 2",
+        sklad_code: "SKL002",
+        description: "Ikkinchi sklad",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "3",
+        sklad_name: "Sklad 3",
+        sklad_code: "SKL003",
+        description: "Uchinchi sklad",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]
+  )
 }
 
 // Cities API
 export async function getCities(): Promise<City[]> {
   const data = await apiRequestSafe<City[]>("/city/")
 
-  const cities = data ?? [
-    {
-      id: "1",
-      city_name: "Toshkent",
-      city_code: "TSH",
-      description: "Poytaxt shahar",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      city_name: "Samarqand",
-      city_code: "SMQ",
-      description: "Tarixiy shahar",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      city_name: "Buxoro",
-      city_code: "BUX",
-      description: "Qadimiy shahar",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
-  return cities
+  return (
+    data || [
+      {
+        id: "1",
+        city_name: "Toshkent",
+        city_code: "TSH",
+        description: "Poytaxt shahar",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        city_name: "Samarqand",
+        city_code: "SMQ",
+        description: "Tarixiy shahar",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "3",
+        city_name: "Buxoro",
+        city_code: "BUX",
+        description: "Qadimiy shahar",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]
+  )
 }
 
 // Expeditors API
 export async function getExpeditors(): Promise<Expeditor[]> {
   const data = await apiRequestSafe<Expeditor[]>("/ekispiditor/")
 
-  const expeditors = data ?? [
-    {
-      id: "1",
-      name: "Alisher Karimov",
-      phone_number: "+998901234567",
-      transport_number: "T001ABC",
-      photo: "/placeholder-user.jpg",
-    },
-    {
-      id: "2",
-      name: "Bobur Toshmatov",
-      phone_number: "+998907654321",
-      transport_number: "T002DEF",
-      photo: "/placeholder-user.jpg",
-    },
-    {
-      id: "3",
-      name: "Sardor Rahimov",
-      phone_number: "+998909876543",
-      transport_number: "T003GHI",
-      photo: "/placeholder-user.jpg",
-    },
-    {
-      id: "4",
-      name: "Jasur Abdullayev",
-      phone_number: "+998905432109",
-      transport_number: "T004JKL",
-      photo: "/placeholder-user.jpg",
-    },
-  ]
-  return expeditors
+  return (
+    data || [
+      {
+        id: "1",
+        name: "Alisher Karimov",
+        phone_number: "+998901234567",
+        transport_number: "T001ABC",
+        photo: "/placeholder-user.jpg",
+      },
+      {
+        id: "2",
+        name: "Bobur Toshmatov",
+        phone_number: "+998907654321",
+        transport_number: "T002DEF",
+        photo: "/placeholder-user.jpg",
+      },
+      {
+        id: "3",
+        name: "Sardor Rahimov",
+        phone_number: "+998909876543",
+        transport_number: "T003GHI",
+        photo: "/placeholder-user.jpg",
+      },
+      {
+        id: "4",
+        name: "Jasur Abdullayev",
+        phone_number: "+998905432109",
+        transport_number: "T004JKL",
+        photo: "/placeholder-user.jpg",
+      },
+    ]
+  )
 }
 
 // Checks API
@@ -163,19 +177,24 @@ export async function getChecks(filters?: {
   paymentMethod?: string
   search?: string
 }): Promise<Check[]> {
-  const queryParams = new URLSearchParams()
+  let endpoint = "/check/"
 
   if (filters) {
+    const queryParams = new URLSearchParams()
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         queryParams.append(key, value)
       }
     })
+
+    if (queryParams.toString()) {
+      endpoint += `?${queryParams.toString()}`
+    }
   }
 
-  const endpoint = `/check/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
   const data = await apiRequestSafe<Check[]>(endpoint)
 
+  // Mock data fallback
   const mockChecks: Check[] = [
     {
       id: "1",
@@ -275,10 +294,10 @@ export async function getChecks(filters?: {
     },
   ]
 
-  const checks = data ?? mockChecks
+  const checks = data || mockChecks
 
-  // Apply filters to mock data
-  if (filters) {
+  // Apply filters to mock data if API data is not available
+  if (!data && filters) {
     return checks.filter((check) => {
       if (filters.project && check.project !== filters.project) return false
       if (filters.sklad && check.sklad !== filters.sklad) return false
@@ -302,85 +321,59 @@ export async function getChecks(filters?: {
 // Check Details API
 export async function getCheckDetails(): Promise<any[]> {
   const data = await apiRequestSafe<any[]>("/check-details/")
-  return data ?? []
+  return data || []
 }
 
 // Statistics API
 export async function getStatistics(filters?: any): Promise<Statistics> {
-  try {
+  let endpoint = "/statistics/"
+
+  if (filters) {
     const queryParams = new URLSearchParams()
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, String(value))
+      }
+    })
 
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value) {
-          queryParams.append(key, String(value))
-        }
-      })
-    }
-
-    const endpoint = `/statistics/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
-    const data = await apiRequestSafe<Statistics>(endpoint)
-
-    const statistics: Statistics = data ?? {
-      totalChecks: 4,
-      totalSum: 900000,
-      todayChecks: 3,
-      successRate: 100,
-      paymentMethods: {
-        nalichniy: 400000,
-        uzcard: 350000,
-        humo: 100000,
-        click: 50000,
-      },
-      topExpeditors: [
-        { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
-        { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
-        { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
-        { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
-      ],
-      topProjects: [
-        { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
-        { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
-        { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
-      ],
-      topCities: [
-        { name: "Toshkent", checkCount: 2, totalSum: 350000 },
-        { name: "Samarqand", checkCount: 1, totalSum: 300000 },
-        { name: "Buxoro", checkCount: 1, totalSum: 250000 },
-      ],
-    }
-    return statistics
-  } catch (error) {
-    // Return mock statistics if API fails
-    return {
-      totalChecks: 4,
-      totalSum: 900000,
-      todayChecks: 3,
-      successRate: 100,
-      paymentMethods: {
-        nalichniy: 400000,
-        uzcard: 350000,
-        humo: 100000,
-        click: 50000,
-      },
-      topExpeditors: [
-        { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
-        { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
-        { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
-        { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
-      ],
-      topProjects: [
-        { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
-        { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
-        { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
-      ],
-      topCities: [
-        { name: "Toshkent", checkCount: 2, totalSum: 350000 },
-        { name: "Samarqand", checkCount: 1, totalSum: 300000 },
-        { name: "Buxoro", checkCount: 1, totalSum: 250000 },
-      ],
+    if (queryParams.toString()) {
+      endpoint += `?${queryParams.toString()}`
     }
   }
+
+  const data = await apiRequestSafe<Statistics>(endpoint)
+
+  // Mock statistics fallback
+  return (
+    data || {
+      totalChecks: 4,
+      totalSum: 900000,
+      todayChecks: 3,
+      successRate: 100,
+      paymentMethods: {
+        nalichniy: 400000,
+        uzcard: 350000,
+        humo: 100000,
+        click: 50000,
+      },
+      topExpeditors: [
+        { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
+        { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
+        { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
+        { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
+      ],
+      topProjects: [
+        { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
+        { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
+        { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
+      ],
+      topCities: [
+        { name: "Toshkent", checkCount: 2, totalSum: 350000 },
+        { name: "Samarqand", checkCount: 1, totalSum: 300000 },
+        { name: "Buxoro", checkCount: 1, totalSum: 250000 },
+      ],
+    }
+  )
 }
 
 // Export all API functions
