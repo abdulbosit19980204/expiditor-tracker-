@@ -1,18 +1,12 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { AlertCircle } from "lucide-react"
+import { Navigation, Clock, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import type { Check, Expeditor } from "@/lib/types"
-
-/**
- * SMALL PATCH:
- * 1.  If the proxy route `/api/yandex-maps` fails (e.g. missing key) we
- *     dynamically fall back to the public CDN URL so the map still loads.
- * 2.  We now guard against loading the script multiple times.
- */
 
 interface MapComponentProps {
   checks: Check[]
@@ -29,20 +23,42 @@ declare global {
   }
 }
 
-export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick, focusLocation }: MapComponentProps) {
-  const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<any>(null)
-  const [mapStatus, setMapStatus] = useState<"idle" | "loading" | "ready" | "error">("idle")
-  const [errorMsg, setErrorMsg] = useState<string>("")
+// Helper: simple WASM probe
+const canUseWasm = async () => {
+  try {
+    // Tiny empty module
+    const modBytes = new Uint8Array([
+      0x00,
+      0x61,
+      0x73,
+      0x6d, // \0asm  – WASM magic
+      0x01,
+      0x00,
+      0x00,
+      0x00, // version
+    ])
+    // If compile fails (network / policy) it will throw
+    await WebAssembly.compile(modBytes)
+    return true
+  } catch {
+    return false
+  }
+}
 
-  // Load script once
+export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick, focusLocation }: MapComponentProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<any>(null)
+
+  const [status, setStatus] = useState<"loading" | "ready" | "fallback" | "error">("loading")
+  const [errMsg, setErrMsg] = useState("")
+
+  // Load Yandex Maps script (proxy → demo fallback)
   useEffect(() => {
     if (typeof window === "undefined" || window.ymaps) {
-      setMapStatus("ready")
+      // Script already present
+      setStatus("ready")
       return
     }
-
-    setMapStatus("loading")
 
     const loadScript = (src: string) =>
       new Promise<void>((resolve, reject) => {
@@ -56,63 +72,76 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
 
     const init = async () => {
       try {
-        // Try secure proxy first
+        // 1. Try secure proxy (keeps key hidden)
         await loadScript("/api/yandex-maps?lang=en_US&v=2.1")
       } catch {
-        // Fallback to direct CDN (demo key)
-        console.warn("[Map] proxy failed, falling back to CDN")
+        // 2. Fallback to Yandex demo key (limited quota)
         await loadScript("https://api-maps.yandex.ru/2.1/?apikey=0d3f3e04-6d70-41e3-8ad4-5b3e3e075a23&lang=en_US")
       }
 
-      // Wait until the API is ready
+      // 3. Check WASM availability – preview sandbox may block it
+      const wasmOk = await canUseWasm()
+      if (!wasmOk) {
+        console.warn("[Map] WebAssembly not available – using placeholder")
+        setStatus("fallback")
+        return
+      }
+
+      // 4. Wait until the API signals it's ready
       await new Promise((r) => window.ymaps.ready(r))
 
-      // Create map if container exists
-      if (mapRef.current && !mapInstanceRef.current) {
-        mapInstanceRef.current = new window.ymaps.Map(mapRef.current, {
+      // 5. Initialise map
+      if (mapContainerRef.current) {
+        mapRef.current = new window.ymaps.Map(mapContainerRef.current, {
           center: [41.2995, 69.2401],
           zoom: 11,
           controls: ["zoomControl", "fullscreenControl", "typeSelector", "trafficControl"],
         })
       }
 
-      setMapStatus("ready")
+      setStatus("ready")
     }
 
-    init().catch((err) => {
-      console.error(err)
-      setErrorMsg(err.message)
-      setMapStatus("error")
+    init().catch((e: unknown) => {
+      console.error("[Map] init error:", e)
+      setErrMsg((e as Error).message)
+      setStatus("error")
     })
   }, [])
 
-  /* ----------------- Marker / focus logic unchanged ----------------- */
+  // Markers / updates
   useEffect(() => {
-    if (mapStatus !== "ready" || !mapInstanceRef.current) return
-    const map = mapInstanceRef.current
+    if (status !== "ready" || !mapRef.current) return
+
+    const map = mapRef.current
     map.geoObjects.removeAll()
 
-    checks.forEach((check) => {
-      if (!check.check_lat || !check.check_lon) return
+    checks.forEach((c) => {
+      if (!c.check_lat || !c.check_lon) return
+
       const placemark = new window.ymaps.Placemark(
-        [check.check_lat, check.check_lon],
+        [c.check_lat, c.check_lon],
         {
-          balloonContentHeader: `Check ${check.check_id}`,
+          balloonContentHeader: `Check ${c.check_id}`,
           balloonContentBody: `
             <div style="font-family:sans-serif">
-              <p><b>Expeditor:</b> ${check.ekispiditor ?? "-"}</p>
-              <p><b>Total:</b> ${(check.total_sum ?? 0).toLocaleString()} UZS</p>
-              <p><b>Date:</b> ${new Date(check.check_date).toLocaleDateString()}</p>
-              <button onclick="window.selectCheck('${check.check_id}')" style="margin-top:8px;padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer">
-                Details
-              </button>
-            </div>`,
-          balloonContentFooter: `KKM ${check.kkm_number ?? "-"}`,
+              <p><strong>Expeditor:</strong> ${c.ekispiditor ?? "-"}</p>
+              <p><strong>Sum:</strong> ${(c.total_sum ?? 0).toLocaleString()} UZS</p>
+              <p><strong>Date:</strong> ${new Date(c.check_date).toLocaleDateString()}</p>
+              <button
+                onclick="window.selectCheck('${c.check_id}')"
+                style="margin-top:8px;padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer"
+              >Details</button>
+            </div>
+          `,
+          balloonContentFooter: `KKM ${c.kkm_number ?? "-"}`,
         },
-        { preset: check.total_sum ? "islands#greenDotIcon" : "islands#redDotIcon" },
+        {
+          preset: c.total_sum ? "islands#greenDotIcon" : "islands#redDotIcon",
+        },
       )
 
-      placemark.events.add("click", () => onCheckClick?.(check))
+      placemark.events.add("click", () => onCheckClick?.(c))
       map.geoObjects.add(placemark)
     })
 
@@ -124,28 +153,28 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
       } catch {}
     }
 
-    // Balloon button → React callback
+    // Balloon → React
     window.selectCheck = (id: string) => {
       const found = checks.find((c) => c.check_id === id)
       found && onCheckClick?.(found)
     }
-  }, [mapStatus, checks, onCheckClick])
+  }, [status, checks, onCheckClick])
 
-  /* ----------------- focusLocation ----------------- */
+  // Focus selected location
   useEffect(() => {
-    if (mapStatus !== "ready" || !focusLocation || !mapInstanceRef.current) return
-    mapInstanceRef.current.setCenter([focusLocation.lat, focusLocation.lng], 15)
-  }, [mapStatus, focusLocation])
+    if (status !== "ready" || !focusLocation || !mapRef.current) return
+    mapRef.current.setCenter([focusLocation.lat, focusLocation.lng], 15)
+  }, [status, focusLocation])
 
-  /* ----------------- Render ----------------- */
-  if (mapStatus === "error") {
+  // UI
+  if (status === "error") {
     return (
       <div className="h-full flex items-center justify-center bg-gray-100">
-        <Card className="w-96">
+        <Card className="w-80">
           <CardContent className="p-6 text-center space-y-3">
-            <AlertCircle className="h-10 w-10 text-red-500 mx-auto" />
-            <p className="font-semibold">Map Error</p>
-            <p className="text-sm text-gray-500">{errorMsg}</p>
+            <AlertCircle className="h-8 w-8 text-red-500 mx-auto" />
+            <p className="font-medium">Failed to load map</p>
+            <p className="text-xs text-gray-500">{errMsg}</p>
             <Button variant="outline" onClick={() => window.location.reload()}>
               Retry
             </Button>
@@ -155,17 +184,79 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
     )
   }
 
+  if (status === "fallback") {
+    return (
+      <div className="h-full flex items-center justify-center bg-gray-100 relative">
+        {/* Simple placeholder image */}
+        <img
+          src="/placeholder.svg?height=400&width=800"
+          alt="Map placeholder"
+          className="object-cover w-full h-full opacity-60"
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Card className="w-80">
+            <CardContent className="p-6 text-center">
+              <p className="text-gray-700 font-medium">Map preview unavailable in sandbox</p>
+              <p className="text-sm text-gray-500 mt-2">Will work in production</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="relative h-full">
-      <div ref={mapRef} className="w-full h-full" />
-      {(loading || mapStatus !== "ready") && (
+      <div ref={mapContainerRef} className="w-full h-full" />
+
+      {(loading || status === "loading") && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
           <LoadingSpinner size="lg" />
-          <p className="ml-3 text-gray-600">{loading ? "Loading checks…" : "Loading map…"}</p>
+          <span className="ml-2 text-gray-600">{loading ? "Loading checks…" : "Loading map…"}</span>
         </div>
       )}
 
-      {/* Legend & Expeditor info unchanged – kept for brevity */}
+      {/* Map Legend */}
+      {status === "ready" && (
+        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 space-y-2 z-10">
+          <h4 className="font-semibold text-sm">Legend</h4>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span className="text-xs">Successful Check</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span className="text-xs">Failed Check</span>
+          </div>
+        </div>
+      )}
+
+      {/* Selected Expeditor Info */}
+      {selectedExpeditor && status === "ready" && (
+        <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 min-w-64 z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <Navigation className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h4 className="font-semibold">{selectedExpeditor.name}</h4>
+              <p className="text-sm text-gray-600">{selectedExpeditor.transport_number}</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4 text-gray-500" />
+              <span className="text-sm text-gray-600">{Array.isArray(checks) ? checks.length : 0} checks</span>
+            </div>
+            <Badge variant="outline">
+              {Array.isArray(checks)
+                ? checks.reduce((sum, check) => sum + (check.total_sum || 0), 0).toLocaleString()
+                : 0}{" "}
+              UZS
+            </Badge>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
