@@ -36,11 +36,15 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
   const formatDateRange = () => {
     if (!date?.from) return "Pick a date range"
 
-    if (date.to) {
-      return `${format(date.from, "MMM dd")} - ${format(date.to, "MMM dd, yyyy")}`
+    try {
+      if (date.to) {
+        return `${format(date.from, "MMM dd")} - ${format(date.to, "MMM dd, yyyy")}`
+      }
+      return format(date.from, "MMM dd, yyyy")
+    } catch (error) {
+      console.warn("Date formatting error:", error)
+      return "Invalid date"
     }
-
-    return format(date.from, "MMM dd, yyyy")
   }
 
   return (
