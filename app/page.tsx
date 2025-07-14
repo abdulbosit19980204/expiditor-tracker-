@@ -69,22 +69,18 @@ export default function ExpeditorTracker() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [checksData, expeditorsData, projectsData, skladsData, citiesData, statisticsData] = await Promise.all([
-          api.getChecks(),
+        const [expeditorsData, projectsData, skladsData, citiesData] = await Promise.all([
           api.getExpeditors(),
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
-          api.getStatistics(),
         ])
 
         // Ensure arrays are properly set
-        setChecks(Array.isArray(checksData) ? checksData : [])
         setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
         setProjects(Array.isArray(projectsData) ? projectsData : [])
         setSklads(Array.isArray(skladsData) ? skladsData : [])
         setCities(Array.isArray(citiesData) ? citiesData : [])
-        setStatistics(statisticsData)
 
         // Select first expeditor by default
         if (Array.isArray(expeditorsData) && expeditorsData.length > 0) {
@@ -93,7 +89,6 @@ export default function ExpeditorTracker() {
       } catch (error) {
         console.error("Error loading data:", error)
         // Set empty arrays as fallback
-        setChecks([])
         setExpeditors([])
         setProjects([])
         setSklads([])
@@ -105,6 +100,39 @@ export default function ExpeditorTracker() {
 
     loadData()
   }, [])
+
+  // Load checks and statistics when filters change
+  useEffect(() => {
+    const loadChecksAndStats = async () => {
+      try {
+        // Prepare filter parameters for API
+        const apiFilters = {
+          dateFrom: filters.dateRange.from,
+          dateTo: filters.dateRange.to,
+          project: filters.project || undefined,
+          sklad: filters.sklad || undefined,
+          city: filters.city || undefined,
+          expeditor: filters.expeditor || undefined,
+          status: filters.status || undefined,
+          search: checkSearchQuery || undefined,
+        }
+
+        const [checksData, statisticsData] = await Promise.all([
+          api.getChecks(apiFilters),
+          api.getStatistics(apiFilters),
+        ])
+
+        setChecks(Array.isArray(checksData) ? checksData : [])
+        setStatistics(statisticsData)
+      } catch (error) {
+        console.error("Error loading checks and statistics:", error)
+        setChecks([])
+        setStatistics(null)
+      }
+    }
+
+    loadChecksAndStats()
+  }, [filters, checkSearchQuery])
 
   // Filter expeditors based on search
   const filteredExpeditors = Array.isArray(expeditors)
@@ -119,25 +147,13 @@ export default function ExpeditorTracker() {
       })
     : []
 
-  // Filter checks based on current filters and selected expeditor
+  // Filter checks based on selected expeditor and search
   const filteredChecks = Array.isArray(checks)
     ? checks.filter((check) => {
         // Expeditor filter
         if (selectedExpeditor && check.ekispiditor !== selectedExpeditor.name) return false
 
-        // Date range filter
-        if (filters.dateRange.from || filters.dateRange.to) {
-          const checkDate = new Date(check.check_date)
-          if (filters.dateRange.from && checkDate < filters.dateRange.from) return false
-          if (filters.dateRange.to && checkDate > filters.dateRange.to) return false
-        }
-
-        // Other filters
-        if (filters.project && check.project !== filters.project) return false
-        if (filters.sklad && check.sklad !== filters.sklad) return false
-        if (filters.city && check.city !== filters.city) return false
-
-        // Search filter
+        // Search filter (already applied in API call, but keeping for consistency)
         if (checkSearchQuery) {
           const searchLower = checkSearchQuery.toLowerCase()
           const matchesSearch =
