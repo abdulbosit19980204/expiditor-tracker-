@@ -27,222 +27,148 @@ async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
   }
 }
 
-// Transform backend data to frontend format
-function transformExpeditor(backendData: any): Expeditor {
-  return {
-    id: backendData.id?.toString() || "",
-    name: backendData.ekispiditor_name || backendData.name || "",
-    phone_number: backendData.phone_number || "",
-    transport_number: backendData.transport_number || "",
-    photo: backendData.photo || "/placeholder-user.jpg",
-  }
-}
-
-function transformCheck(backendData: any): Check {
-  // Get check detail if available
-  const checkDetail = backendData.check_detail || {}
-
-  return {
-    id: backendData.id?.toString() || "",
-    check_id: backendData.check_id || "",
-    project: backendData.project || "",
-    sklad: backendData.sklad || "",
-    city: backendData.city || "",
-    sborshik: backendData.sborshik || "",
-    agent: backendData.agent || "",
-    ekispiditor: backendData.ekispiditor || "",
-    yetkazilgan_vaqti: backendData.yetkazilgan_vaqti || backendData.created_at || new Date().toISOString(),
-    transport_number: backendData.transport_number || "",
-    kkm_number: backendData.kkm_number || "",
-    check_date: backendData.yetkazilgan_vaqti || backendData.created_at || new Date().toISOString(),
-    check_lat: backendData.check_lat || checkDetail.check_lat || null,
-    check_lon: backendData.check_lon || checkDetail.check_lon || null,
-    total_sum: checkDetail.total_sum || 0,
-    nalichniy: checkDetail.nalichniy || 0,
-    uzcard: checkDetail.uzcard || 0,
-    humo: checkDetail.humo || 0,
-    click: checkDetail.click || 0,
-    checkURL: checkDetail.checkURL || "",
-    created_at: backendData.created_at || new Date().toISOString(),
-    updated_at: backendData.updated_at || new Date().toISOString(),
-  }
-}
-
-// Format date for API requests (ISO format)
-function formatDateForAPI(date: Date): string {
-  return date.toISOString()
-}
-
 // Projects API
 export async function getProjects(): Promise<Project[]> {
-  const data = await apiRequestSafe<any[]>("/projects/")
-
-  if (data && Array.isArray(data)) {
-    return data.map((item) => ({
-      id: item.id?.toString() || "",
-      project_name: item.project_name || "",
-      project_description: item.project_description || "",
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString(),
-    }))
-  }
+  const data = await apiRequestSafe<Project[]>("/projects/")
 
   // Return mock data if API fails
-  return [
-    {
-      id: "1",
-      project_name: "Loyiha 1",
-      project_description: "Birinchi loyiha",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      project_name: "Loyiha 2",
-      project_description: "Ikkinchi loyiha",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      project_name: "Loyiha 3",
-      project_description: "Uchinchi loyiha",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
+  return (
+    data || [
+      {
+        id: "1",
+        project_name: "Loyiha 1",
+        project_description: "Birinchi loyiha",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        project_name: "Loyiha 2",
+        project_description: "Ikkinchi loyiha",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "3",
+        project_name: "Loyiha 3",
+        project_description: "Uchinchi loyiha",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]
+  )
 }
 
 // Sklads API
 export async function getSklads(): Promise<Sklad[]> {
-  const data = await apiRequestSafe<any[]>("/sklad/")
+  const data = await apiRequestSafe<Sklad[]>("/sklad/")
 
-  if (data && Array.isArray(data)) {
-    return data.map((item) => ({
-      id: item.id?.toString() || "",
-      sklad_name: item.sklad_name || "",
-      sklad_code: item.sklad_code || "",
-      description: item.description || "",
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString(),
-    }))
-  }
-
-  return [
-    {
-      id: "1",
-      sklad_name: "Sklad 1",
-      sklad_code: "SKL001",
-      description: "Birinchi sklad",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      sklad_name: "Sklad 2",
-      sklad_code: "SKL002",
-      description: "Ikkinchi sklad",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      sklad_name: "Sklad 3",
-      sklad_code: "SKL003",
-      description: "Uchinchi sklad",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
+  return (
+    data || [
+      {
+        id: "1",
+        sklad_name: "Sklad 1",
+        sklad_code: "SKL001",
+        description: "Birinchi sklad",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        sklad_name: "Sklad 2",
+        sklad_code: "SKL002",
+        description: "Ikkinchi sklad",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "3",
+        sklad_name: "Sklad 3",
+        sklad_code: "SKL003",
+        description: "Uchinchi sklad",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]
+  )
 }
 
 // Cities API
 export async function getCities(): Promise<City[]> {
-  const data = await apiRequestSafe<any[]>("/city/")
+  const data = await apiRequestSafe<City[]>("/city/")
 
-  if (data && Array.isArray(data)) {
-    return data.map((item) => ({
-      id: item.id?.toString() || "",
-      city_name: item.city_name || "",
-      city_code: item.city_code || "",
-      description: item.description || "",
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString(),
-    }))
-  }
-
-  return [
-    {
-      id: "1",
-      city_name: "Toshkent",
-      city_code: "TSH",
-      description: "Poytaxt shahar",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      city_name: "Samarqand",
-      city_code: "SMQ",
-      description: "Tarixiy shahar",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      city_name: "Buxoro",
-      city_code: "BUX",
-      description: "Qadimiy shahar",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ]
+  return (
+    data || [
+      {
+        id: "1",
+        city_name: "Toshkent",
+        city_code: "TSH",
+        description: "Poytaxt shahar",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "2",
+        city_name: "Samarqand",
+        city_code: "SMQ",
+        description: "Tarixiy shahar",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: "3",
+        city_name: "Buxoro",
+        city_code: "BUX",
+        description: "Qadimiy shahar",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ]
+  )
 }
 
 // Expeditors API
 export async function getExpeditors(): Promise<Expeditor[]> {
-  const data = await apiRequestSafe<any[]>("/ekispiditor/")
+  const data = await apiRequestSafe<Expeditor[]>("/ekispiditor/")
 
-  if (data && Array.isArray(data)) {
-    return data.map(transformExpeditor)
-  }
-
-  return [
-    {
-      id: "1",
-      name: "Alisher Karimov",
-      phone_number: "+998901234567",
-      transport_number: "T001ABC",
-      photo: "/placeholder-user.jpg",
-    },
-    {
-      id: "2",
-      name: "Bobur Toshmatov",
-      phone_number: "+998907654321",
-      transport_number: "T002DEF",
-      photo: "/placeholder-user.jpg",
-    },
-    {
-      id: "3",
-      name: "Sardor Rahimov",
-      phone_number: "+998909876543",
-      transport_number: "T003GHI",
-      photo: "/placeholder-user.jpg",
-    },
-    {
-      id: "4",
-      name: "Jasur Abdullayev",
-      phone_number: "+998905432109",
-      transport_number: "T004JKL",
-      photo: "/placeholder-user.jpg",
-    },
-  ]
+  return (
+    data || [
+      {
+        id: "1",
+        name: "Alisher Karimov",
+        phone_number: "+998901234567",
+        transport_number: "T001ABC",
+        photo: "/placeholder-user.jpg",
+      },
+      {
+        id: "2",
+        name: "Bobur Toshmatov",
+        phone_number: "+998907654321",
+        transport_number: "T002DEF",
+        photo: "/placeholder-user.jpg",
+      },
+      {
+        id: "3",
+        name: "Sardor Rahimov",
+        phone_number: "+998909876543",
+        transport_number: "T003GHI",
+        photo: "/placeholder-user.jpg",
+      },
+      {
+        id: "4",
+        name: "Jasur Abdullayev",
+        phone_number: "+998905432109",
+        transport_number: "T004JKL",
+        photo: "/placeholder-user.jpg",
+      },
+    ]
+  )
 }
 
-// Checks API with proper date formatting
+// Checks API
 export async function getChecks(filters?: {
-  dateFrom?: Date
-  dateTo?: Date
+  dateFrom?: string
+  dateTo?: string
   project?: string
   sklad?: string
   city?: string
@@ -255,34 +181,18 @@ export async function getChecks(filters?: {
 
   if (filters) {
     const queryParams = new URLSearchParams()
-
-    // Format dates properly for backend
-    if (filters.dateFrom) {
-      queryParams.append("date_from", formatDateForAPI(filters.dateFrom))
-    }
-    if (filters.dateTo) {
-      // Add 23:59:59 to include the entire day
-      const endOfDay = new Date(filters.dateTo)
-      endOfDay.setHours(23, 59, 59, 999)
-      queryParams.append("date_to", formatDateForAPI(endOfDay))
-    }
-    if (filters.project) queryParams.append("project", filters.project)
-    if (filters.sklad) queryParams.append("sklad", filters.sklad)
-    if (filters.city) queryParams.append("city", filters.city)
-    if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
-    if (filters.status) queryParams.append("status", filters.status)
-    if (filters.search) queryParams.append("search", filters.search)
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, value)
+      }
+    })
 
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
     }
   }
 
-  const data = await apiRequestSafe<any[]>(endpoint)
-
-  if (data && Array.isArray(data)) {
-    return data.map(transformCheck)
-  }
+  const data = await apiRequestSafe<Check[]>(endpoint)
 
   // Mock data fallback
   const mockChecks: Check[] = [
@@ -384,16 +294,11 @@ export async function getChecks(filters?: {
     },
   ]
 
-  // Apply filters to mock data if API data is not available
-  if (filters) {
-    return mockChecks.filter((check) => {
-      // Date range filter
-      if (filters.dateFrom || filters.dateTo) {
-        const checkDate = new Date(check.check_date)
-        if (filters.dateFrom && checkDate < filters.dateFrom) return false
-        if (filters.dateTo && checkDate > filters.dateTo) return false
-      }
+  const checks = data || mockChecks
 
+  // Apply filters to mock data if API data is not available
+  if (!data && filters) {
+    return checks.filter((check) => {
       if (filters.project && check.project !== filters.project) return false
       if (filters.sklad && check.sklad !== filters.sklad) return false
       if (filters.city && check.city !== filters.city) return false
@@ -410,7 +315,7 @@ export async function getChecks(filters?: {
     })
   }
 
-  return mockChecks
+  return checks
 }
 
 // Check Details API
@@ -419,103 +324,56 @@ export async function getCheckDetails(): Promise<any[]> {
   return data || []
 }
 
-// Statistics API with proper date formatting
-export async function getStatistics(filters?: {
-  dateFrom?: Date
-  dateTo?: Date
-  project?: string
-  sklad?: string
-  city?: string
-  expeditor?: string
-  status?: string
-}): Promise<Statistics> {
+// Statistics API
+export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
-
-    // Format dates properly for backend
-    if (filters.dateFrom) {
-      queryParams.append("date_from", formatDateForAPI(filters.dateFrom))
-    }
-    if (filters.dateTo) {
-      const endOfDay = new Date(filters.dateTo)
-      endOfDay.setHours(23, 59, 59, 999)
-      queryParams.append("date_to", formatDateForAPI(endOfDay))
-    }
-    if (filters.project) queryParams.append("project", filters.project)
-    if (filters.sklad) queryParams.append("sklad", filters.sklad)
-    if (filters.city) queryParams.append("city", filters.city)
-    if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
-    if (filters.status) queryParams.append("status", filters.status)
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, String(value))
+      }
+    })
 
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
     }
   }
 
-  const data = await apiRequestSafe<any>(endpoint)
-
-  if (data) {
-    // Transform backend statistics format to frontend format
-    return {
-      totalChecks: data.overview?.total_checks || data.totalChecks || 0,
-      totalSum: data.payment_stats?.total_sum || data.totalSum || 0,
-      todayChecks: data.overview?.delivered_checks || data.todayChecks || 0,
-      successRate: data.overview?.success_rate || data.successRate || 0,
-      paymentMethods: {
-        nalichniy: data.payment_stats?.nalichniy || data.paymentMethods?.nalichniy || 0,
-        uzcard: data.payment_stats?.uzcard || data.paymentMethods?.uzcard || 0,
-        humo: data.payment_stats?.humo || data.paymentMethods?.humo || 0,
-        click: data.payment_stats?.click || data.paymentMethods?.click || 0,
-      },
-      topExpeditors: (data.top_expeditors || data.topExpeditors || []).map((item: any) => ({
-        name: item.ekispiditor || item.name || "",
-        checkCount: item.check_count || item.checkCount || 0,
-        totalSum: item.total_sum || item.totalSum || 0,
-      })),
-      topProjects: (data.top_projects || data.topProjects || []).map((item: any) => ({
-        name: item.project || item.name || "",
-        checkCount: item.check_count || item.checkCount || 0,
-        totalSum: item.total_sum || item.totalSum || 0,
-      })),
-      topCities: (data.top_cities || data.topCities || []).map((item: any) => ({
-        name: item.city || item.name || "",
-        checkCount: item.check_count || item.checkCount || 0,
-        totalSum: item.total_sum || item.totalSum || 0,
-      })),
-    }
-  }
+  const data = await apiRequestSafe<Statistics>(endpoint)
 
   // Mock statistics fallback
-  return {
-    totalChecks: 4,
-    totalSum: 900000,
-    todayChecks: 3,
-    successRate: 100,
-    paymentMethods: {
-      nalichniy: 400000,
-      uzcard: 350000,
-      humo: 100000,
-      click: 50000,
-    },
-    topExpeditors: [
-      { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
-      { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
-      { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
-      { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
-    ],
-    topProjects: [
-      { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
-      { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
-      { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
-    ],
-    topCities: [
-      { name: "Toshkent", checkCount: 2, totalSum: 350000 },
-      { name: "Samarqand", checkCount: 1, totalSum: 300000 },
-      { name: "Buxoro", checkCount: 1, totalSum: 250000 },
-    ],
-  }
+  return (
+    data || {
+      totalChecks: 4,
+      totalSum: 900000,
+      todayChecks: 3,
+      successRate: 100,
+      paymentMethods: {
+        nalichniy: 400000,
+        uzcard: 350000,
+        humo: 100000,
+        click: 50000,
+      },
+      topExpeditors: [
+        { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
+        { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
+        { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
+        { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
+      ],
+      topProjects: [
+        { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
+        { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
+        { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
+      ],
+      topCities: [
+        { name: "Toshkent", checkCount: 2, totalSum: 350000 },
+        { name: "Samarqand", checkCount: 1, totalSum: 300000 },
+        { name: "Buxoro", checkCount: 1, totalSum: 250000 },
+      ],
+    }
+  )
 }
 
 // Export all API functions

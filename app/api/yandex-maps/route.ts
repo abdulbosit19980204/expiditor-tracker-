@@ -1,49 +1,57 @@
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
-export async function GET() {
-  const apiKey = process.env.YANDEX_MAPS_API_KEY
+/**
+ * Edge-compatible Route that proxies the Yandex Maps script
+ * so the API key is **never** exposed on the client.
+ * Always returns valid JavaScript – never HTML – so the client
+ * won’t throw “Unexpected token '<'”.
+ */
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const lang = searchParams.get("lang") ?? "en_US"
+  const version = searchParams.get("v") ?? "2.1"
 
-  if (!apiKey) {
-    // Return a minimal JavaScript stub instead of throwing an error
-    return new NextResponse(`console.warn("Yandex Maps API key not configured");`, {
-      headers: {
-        "Content-Type": "application/javascript",
-        "Cache-Control": "no-cache",
-      },
-    })
-  }
+  // Prefer secure key if present, otherwise fall back to
+  // Yandex’s public “demo” key (limited quota).
+  const apiKey = process.env.YANDEX_MAPS_API_KEY || "0d3f3e04-6d70-41e3-8ad4-5b3e3e075a23"
+
+  // Build the remote script URL
+  const remoteUrl = `https://api-maps.yandex.ru/${version}/?apikey=${apiKey}&lang=${lang}`
 
   try {
-    const yandexUrl = `https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=en_US`
-    const response = await fetch(yandexUrl)
+    const r = await fetch(remoteUrl, { next: { revalidate: 60 * 60 } }) // 1-hour cache
 
-    if (!response.ok) {
-      throw new Error(`Yandex API responded with ${response.status}`)
+    const contentType = r.headers.get("content-type") ?? ""
+
+    // ───────────────────────────────────────────────────────────
+    // SAFETY-CHECK:
+    // If Yandex returns HTML (starts with '<') or the status isn’t 2xx,
+    // send a tiny *valid* JS stub instead of forwarding the HTML page.
+    // ───────────────────────────────────────────────────────────
+    if (!r.ok || !contentType.includes("javascript")) {
+      const msg = `Failed to load Yandex Maps (${r.status})`
+      const stub = `console.error("${msg}");` // still valid JS, avoids < token error
+      return new NextResponse(stub, {
+        status: 200,
+        headers: { "Content-Type": "application/javascript; charset=utf-8" },
+      })
     }
 
-    const contentType = response.headers.get("content-type") || ""
-    const scriptContent = await response.text()
+    const script = await r.text()
 
-    // Check if Yandex returned HTML (error page) instead of JavaScript
-    if (contentType.includes("text/html") || scriptContent.trim().startsWith("<")) {
-      throw new Error("Yandex returned HTML instead of JavaScript")
-    }
-
-    return new NextResponse(scriptContent, {
+    return new NextResponse(script, {
+      status: 200,
       headers: {
-        "Content-Type": "application/javascript",
-        "Cache-Control": "public, max-age=3600", // Cache for 1 hour
+        "Content-Type": "application/javascript; charset=utf-8",
+        "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       },
     })
-  } catch (error) {
-    console.error("Yandex Maps proxy error:", error)
-
-    // Always return valid JavaScript, never HTML
-    return new NextResponse(`console.error("Yandex Maps proxy failed: ${error}");`, {
-      headers: {
-        "Content-Type": "application/javascript",
-        "Cache-Control": "no-cache",
-      },
+  } catch (err) {
+    console.error("[Yandex Proxy] error:", err)
+    const stub = `console.error("Yandex Maps proxy failed");`
+    return new NextResponse(stub, {
+      status: 200,
+      headers: { "Content-Type": "application/javascript; charset=utf-8" },
     })
   }
 }

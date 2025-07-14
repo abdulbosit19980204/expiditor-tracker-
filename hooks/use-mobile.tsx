@@ -1,23 +1,33 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
+/**
+ * Returns true when the viewport width is ≤ 768 px.
+ * Works in both mobile browsers and Telegram WebApps.
+ */
+export function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState<boolean>(
+    typeof window !== "undefined" ? window.innerWidth <= breakpoint : false,
+  )
 
   useEffect(() => {
-    const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
+    const media = window.matchMedia(`(max-width: ${breakpoint}px)`)
 
-    checkDevice()
-    window.addEventListener("resize", checkDevice)
+    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    // Initial check
+    setIsMobile(media.matches)
 
-    return () => window.removeEventListener("resize", checkDevice)
-  }, [])
+    // Listen for changes
+    media.addEventListener("change", listener)
+    return () => media.removeEventListener("change", listener)
+  }, [breakpoint])
 
   return isMobile
 }
 
-// Backward compatibility alias
+/* ──────────────────────────────────────────────────────────
+   Optional backward-compatibility export (prevents future
+   “useMobile not found” errors if it’s referenced elsewhere)
+─────────────────────────────────────────────────────────── */
 export const useMobile = useIsMobile

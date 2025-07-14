@@ -4,49 +4,40 @@ from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check
 class ProjectsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Projects
-        fields = ['id', 'project_name', 'project_description', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class CheckDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = CheckDetail
-        fields = ['id', 'check_id', 'checkURL', 'check_date', 'check_lat', 'check_lon', 
-                 'total_sum', 'nalichniy', 'uzcard', 'humo', 'click', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class SkladSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sklad
-        fields = ['id', 'sklad_name', 'sklad_code', 'description', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
-        fields = ['id', 'city_name', 'city_code', 'description', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class EkispiditorSerializer(serializers.ModelSerializer):
     today_checks_count = serializers.ReadOnlyField()
-    name = serializers.CharField(source='ekispiditor_name', read_only=True)
     
     class Meta:
         model = Ekispiditor
-        fields = ['id', 'ekispiditor_name', 'name', 'transport_number', 'phone_number', 
-                 'photo', 'is_active', 'today_checks_count', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class CheckSerializer(serializers.ModelSerializer):
     check_detail = CheckDetailSerializer(read_only=True)
     
     class Meta:
         model = Check
-        fields = ['id', 'check_id', 'project', 'sklad', 'city', 'sborshik', 'agent', 
-                 'ekispiditor', 'yetkazilgan_vaqti', 'transport_number', 'kkm_number',
-                 'client_name', 'client_address', 'check_lat', 'check_lon', 'status',
-                 'check_detail', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class CheckWithLocationSerializer(serializers.ModelSerializer):
     check_detail = CheckDetailSerializer(read_only=True)
     
     class Meta:
         model = Check
-        fields = ['id', 'check_id', 'project', 'sklad', 'city', 'sborshik', 'agent', 
-                 'ekispiditor', 'yetkazilgan_vaqti', 'transport_number', 'kkm_number',
-                 'client_name', 'client_address', 'check_lat', 'check_lon', 'status',
-                 'check_detail', 'created_at', 'updated_at']
+        fields = '__all__'
