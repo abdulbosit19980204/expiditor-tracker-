@@ -68,11 +68,6 @@ function transformCheck(backendData: any): Check {
   }
 }
 
-// Format date for API requests (ISO format)
-function formatDateForAPI(date: Date): string {
-  return date.toISOString()
-}
-
 // Projects API
 export async function getProjects(): Promise<Project[]> {
   const data = await apiRequestSafe<any[]>("/projects/")
@@ -239,10 +234,10 @@ export async function getExpeditors(): Promise<Expeditor[]> {
   ]
 }
 
-// Checks API with proper date formatting
+// Checks API
 export async function getChecks(filters?: {
-  dateFrom?: Date
-  dateTo?: Date
+  dateFrom?: string
+  dateTo?: string
   project?: string
   sklad?: string
   city?: string
@@ -256,16 +251,9 @@ export async function getChecks(filters?: {
   if (filters) {
     const queryParams = new URLSearchParams()
 
-    // Format dates properly for backend
-    if (filters.dateFrom) {
-      queryParams.append("date_from", formatDateForAPI(filters.dateFrom))
-    }
-    if (filters.dateTo) {
-      // Add 23:59:59 to include the entire day
-      const endOfDay = new Date(filters.dateTo)
-      endOfDay.setHours(23, 59, 59, 999)
-      queryParams.append("date_to", formatDateForAPI(endOfDay))
-    }
+    // Map frontend filter names to backend parameter names
+    if (filters.dateFrom) queryParams.append("date_from", filters.dateFrom)
+    if (filters.dateTo) queryParams.append("date_to", filters.dateTo)
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
@@ -387,13 +375,6 @@ export async function getChecks(filters?: {
   // Apply filters to mock data if API data is not available
   if (filters) {
     return mockChecks.filter((check) => {
-      // Date range filter
-      if (filters.dateFrom || filters.dateTo) {
-        const checkDate = new Date(check.check_date)
-        if (filters.dateFrom && checkDate < filters.dateFrom) return false
-        if (filters.dateTo && checkDate > filters.dateTo) return false
-      }
-
       if (filters.project && check.project !== filters.project) return false
       if (filters.sklad && check.sklad !== filters.sklad) return false
       if (filters.city && check.city !== filters.city) return false
@@ -419,35 +400,17 @@ export async function getCheckDetails(): Promise<any[]> {
   return data || []
 }
 
-// Statistics API with proper date formatting
-export async function getStatistics(filters?: {
-  dateFrom?: Date
-  dateTo?: Date
-  project?: string
-  sklad?: string
-  city?: string
-  expeditor?: string
-  status?: string
-}): Promise<Statistics> {
+// Statistics API
+export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
-
-    // Format dates properly for backend
-    if (filters.dateFrom) {
-      queryParams.append("date_from", formatDateForAPI(filters.dateFrom))
-    }
-    if (filters.dateTo) {
-      const endOfDay = new Date(filters.dateTo)
-      endOfDay.setHours(23, 59, 59, 999)
-      queryParams.append("date_to", formatDateForAPI(endOfDay))
-    }
-    if (filters.project) queryParams.append("project", filters.project)
-    if (filters.sklad) queryParams.append("sklad", filters.sklad)
-    if (filters.city) queryParams.append("city", filters.city)
-    if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
-    if (filters.status) queryParams.append("status", filters.status)
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        queryParams.append(key, String(value))
+      }
+    })
 
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`

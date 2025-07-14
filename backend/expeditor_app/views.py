@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 import django_filters
-from django.utils.dateparse import parse_datetime
 
 from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check
 from .serializers import (
@@ -78,31 +77,6 @@ class CheckViewSet(viewsets.ModelViewSet):
     ordering_fields = ['yetkazilgan_vaqti', 'created_at']
     ordering = ['-yetkazilgan_vaqti']
     
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        # Handle date filtering with proper timezone handling
-        date_from = self.request.query_params.get('date_from')
-        date_to = self.request.query_params.get('date_to')
-        
-        if date_from:
-            try:
-                parsed_date_from = parse_datetime(date_from)
-                if parsed_date_from:
-                    queryset = queryset.filter(yetkazilgan_vaqti__gte=parsed_date_from)
-            except (ValueError, TypeError):
-                pass
-                
-        if date_to:
-            try:
-                parsed_date_to = parse_datetime(date_to)
-                if parsed_date_to:
-                    queryset = queryset.filter(yetkazilgan_vaqti__lte=parsed_date_to)
-            except (ValueError, TypeError):
-                pass
-        
-        return queryset
-    
     @action(detail=False, methods=['get'])
     def today_checks(self, request):
         today = timezone.now().date()
@@ -134,21 +108,19 @@ class StatisticsView(APIView):
         checks_qs = Check.objects.all()
         check_details_qs = CheckDetail.objects.all()
         
-        # Apply filters with proper date parsing
+        # Apply filters
         if date_from:
             try:
-                parsed_date_from = parse_datetime(date_from)
-                if parsed_date_from:
-                    checks_qs = checks_qs.filter(yetkazilgan_vaqti__gte=parsed_date_from)
-            except (ValueError, TypeError):
+                date_from_parsed = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                checks_qs = checks_qs.filter(yetkazilgan_vaqti__gte=date_from_parsed)
+            except:
                 pass
                 
         if date_to:
             try:
-                parsed_date_to = parse_datetime(date_to)
-                if parsed_date_to:
-                    checks_qs = checks_qs.filter(yetkazilgan_vaqti__lte=parsed_date_to)
-            except (ValueError, TypeError):
+                date_to_parsed = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                checks_qs = checks_qs.filter(yetkazilgan_vaqti__lte=date_to_parsed)
+            except:
                 pass
                 
         if project:
