@@ -2,22 +2,22 @@
 
 import { useEffect, useState } from "react"
 
-/**
- * Small utility that returns `true` when the viewport width
- * is 640 px or smaller (Tailwind’s `sm` breakpoint).
- */
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 640)
-    check() // initial
-    window.addEventListener("resize", check)
-    return () => window.removeEventListener("resize", check)
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkDevice()
+    window.addEventListener("resize", checkDevice)
+
+    return () => window.removeEventListener("resize", checkDevice)
   }, [])
 
   return isMobile
 }
 
-/* ▸ Back-compat alias (some files imported `useMobile`) */
-export { useIsMobile as useMobile }
+// Backward compatibility alias
+export const useMobile = useIsMobile
