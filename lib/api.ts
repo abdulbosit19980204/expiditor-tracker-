@@ -38,76 +38,73 @@ function transformExpeditor(backendData: any): Expeditor {
   }
 }
 
-function transformCheck(backendData: any): Check {
-  // Get check detail if available
-  const checkDetail = backendData.check_detail || {}
+// function transformCheck(backendData: any): Check {
+//   // Get check detail if available
+//   const checkDetail = backendData.check_detail || {}
 
+//   return {
+//     id: backendData.id?.toString() || "",
+//     check_id: backendData.check_id || "",
+//     project: backendData.project || "",
+//     sklad: backendData.sklad || "",
+//     city: backendData.city || "",
+//     sborshik: backendData.sborshik || "",
+//     agent: backendData.agent || "",
+//     ekispiditor: backendData.ekispiditor || "",
+//     yetkazilgan_vaqti: backendData.yetkazilgan_vaqti || backendData.created_at || new Date().toISOString(),
+//     transport_number: backendData.transport_number || "",
+//     kkm_number: backendData.kkm_number || "",
+//     check_date: backendData.yetkazilgan_vaqti || backendData.created_at || new Date().toISOString(),
+//     check_lat: backendData.check_lat || checkDetail.check_lat || null,
+//     check_lon: backendData.check_lon || checkDetail.check_lon || null,
+//     total_sum: checkDetail.total_sum || 0,
+//     nalichniy: checkDetail.nalichniy || 0,
+//     uzcard: checkDetail.uzcard || 0,
+//     humo: checkDetail.humo || 0,
+//     click: checkDetail.click || 0,
+//     checkURL: checkDetail.checkURL || "",
+//     created_at: backendData.created_at || new Date().toISOString(),
+//     updated_at: backendData.updated_at || new Date().toISOString(),
+//   }
+// }
+
+// Helper to transform each check item
+function transformCheck(item: any): Check {
   return {
-    id: backendData.id?.toString() || "",
-    check_id: backendData.check_id || "",
-    project: backendData.project || "",
-    sklad: backendData.sklad || "",
-    city: backendData.city || "",
-    sborshik: backendData.sborshik || "",
-    agent: backendData.agent || "",
-    ekispiditor: backendData.ekispiditor || "",
-    yetkazilgan_vaqti: backendData.yetkazilgan_vaqti || backendData.created_at || new Date().toISOString(),
-    transport_number: backendData.transport_number || "",
-    kkm_number: backendData.kkm_number || "",
-    check_date: backendData.yetkazilgan_vaqti || backendData.created_at || new Date().toISOString(),
-    check_lat: backendData.check_lat || checkDetail.check_lat || null,
-    check_lon: backendData.check_lon || checkDetail.check_lon || null,
-    total_sum: checkDetail.total_sum || 0,
-    nalichniy: checkDetail.nalichniy || 0,
-    uzcard: checkDetail.uzcard || 0,
-    humo: checkDetail.humo || 0,
-    click: checkDetail.click || 0,
-    checkURL: checkDetail.checkURL || "",
-    created_at: backendData.created_at || new Date().toISOString(),
-    updated_at: backendData.updated_at || new Date().toISOString(),
+    id: item.id?.toString() || "",
+    check_id: item.check_id || "",
+    project: item.project || "",
+    sklad: item.sklad || "",
+    city: item.city || "",
+    sborshik: item.sborshik || "",
+    agent: item.agent || "",
+    ekispiditor: item.ekispiditor || "",
+    yetkazilgan_vaqti: item.yetkazilgan_vaqti || "",
+    transport_number: item.transport_number || "",
+    kkm_number: item.kkm_number || "",
+    client_name: item.client_name || "",
+    client_address: item.client_address || "",
+    status: item.status || "",
+
+    // check_detail
+    check_date: item.check_detail?.check_date || "",
+    check_lat: item.check_detail?.check_lat || 0,
+    check_lon: item.check_detail?.check_lon || 0,
+    total_sum: item.check_detail?.total_sum || 0,
+    nalichniy: item.check_detail?.nalichniy || 0,
+    uzcard: item.check_detail?.uzcard || 0,
+    humo: item.check_detail?.humo || 0,
+    click: item.check_detail?.click || 0,
+    checkURL: item.check_detail?.checkURL || "",
+
+    created_at: item.created_at || "",
+    updated_at: item.updated_at || "",
   }
 }
 
+
+
 // Projects API
-// export async function getProjects(): Promise<Project[]> {
-//   const data = await apiRequestSafe<any[]>("/projects/")
-
-//   if (data && Array.isArray(data)) {
-//     return data.map((item) => ({
-//       id: item.id?.toString() || "",
-//       project_name: item.project_name || "",
-//       project_description: item.project_description || "",
-//       created_at: item.created_at || new Date().toISOString(),
-//       updated_at: item.updated_at || new Date().toISOString(),
-//     }))
-//   }
-
-//   // Return mock data if API fails
-//   return [
-//     {
-//       id: "1",
-//       project_name: "Loyiha 1",
-//       project_description: "Birinchi loyiha",
-//       created_at: new Date().toISOString(),
-//       updated_at: new Date().toISOString(),
-//     },
-//     {
-//       id: "2",
-//       project_name: "Loyiha 2",
-//       project_description: "Ikkinchi loyiha",
-//       created_at: new Date().toISOString(),
-//       updated_at: new Date().toISOString(),
-//     },
-//     {
-//       id: "3",
-//       project_name: "Loyiha 3",
-//       project_description: "Uchinchi loyiha",
-//       created_at: new Date().toISOString(),
-//       updated_at: new Date().toISOString(),
-//     },
-//   ]
-// }
-
 export async function getProjects(): Promise<Project[]> {
   const data = await apiRequestSafe<{
     count: number
@@ -295,6 +292,164 @@ export async function getExpeditors(): Promise<Expeditor[]> {
 }
 
 // Checks API
+// export async function getChecks(filters?: {
+//   dateFrom?: string
+//   dateTo?: string
+//   project?: string
+//   sklad?: string
+//   city?: string
+//   expeditor?: string
+//   status?: string
+//   paymentMethod?: string
+//   search?: string
+// }): Promise<Check[]> {
+//   let endpoint = "/check/"
+
+//   if (filters) {
+//     const queryParams = new URLSearchParams()
+
+//     // Map frontend filter names to backend parameter names
+//     if (filters.dateFrom) queryParams.append("date_from", filters.dateFrom)
+//     if (filters.dateTo) queryParams.append("date_to", filters.dateTo)
+//     if (filters.project) queryParams.append("project", filters.project)
+//     if (filters.sklad) queryParams.append("sklad", filters.sklad)
+//     if (filters.city) queryParams.append("city", filters.city)
+//     if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
+//     if (filters.status) queryParams.append("status", filters.status)
+//     if (filters.search) queryParams.append("search", filters.search)
+
+//     if (queryParams.toString()) {
+//       endpoint += `?${queryParams.toString()}`
+//     }
+//   }
+
+//   const data = await apiRequestSafe<any[]>(endpoint)
+
+//   if (data && Array.isArray(data)) {
+//     return data.map(transformCheck)
+//   }
+
+//   // Mock data fallback
+//   const mockChecks: Check[] = [
+//     {
+//       id: "1",
+//       check_id: "CHK001",
+//       project: "Loyiha 1",
+//       sklad: "Sklad 1",
+//       city: "Toshkent",
+//       sborshik: "Sborshik 1",
+//       agent: "Agent 1",
+//       ekispiditor: "Alisher Karimov",
+//       yetkazilgan_vaqti: new Date().toISOString(),
+//       transport_number: "T001ABC",
+//       kkm_number: "KKM001",
+//       check_date: new Date().toISOString(),
+//       check_lat: 41.2995,
+//       check_lon: 69.2401,
+//       total_sum: 150000,
+//       nalichniy: 50000,
+//       uzcard: 100000,
+//       humo: 0,
+//       click: 0,
+//       checkURL: "https://soliq.uz/check/CHK001",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//     {
+//       id: "2",
+//       check_id: "CHK002",
+//       project: "Loyiha 2",
+//       sklad: "Sklad 2",
+//       city: "Toshkent",
+//       sborshik: "Sborshik 2",
+//       agent: "Agent 2",
+//       ekispiditor: "Bobur Toshmatov",
+//       yetkazilgan_vaqti: new Date(Date.now() - 86400000).toISOString(),
+//       transport_number: "T002DEF",
+//       kkm_number: "KKM002",
+//       check_date: new Date(Date.now() - 86400000).toISOString(),
+//       check_lat: 41.3111,
+//       check_lon: 69.2797,
+//       total_sum: 200000,
+//       nalichniy: 0,
+//       uzcard: 150000,
+//       humo: 50000,
+//       click: 0,
+//       checkURL: "https://soliq.uz/check/CHK002",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//     {
+//       id: "3",
+//       check_id: "CHK003",
+//       project: "Loyiha 1",
+//       sklad: "Sklad 1",
+//       city: "Samarqand",
+//       sborshik: "Sborshik 3",
+//       agent: "Agent 3",
+//       ekispiditor: "Sardor Rahimov",
+//       yetkazilgan_vaqti: new Date().toISOString(),
+//       transport_number: "T003GHI",
+//       kkm_number: "KKM003",
+//       check_date: new Date().toISOString(),
+//       check_lat: 39.627,
+//       check_lon: 66.975,
+//       total_sum: 300000,
+//       nalichniy: 100000,
+//       uzcard: 100000,
+//       humo: 50000,
+//       click: 50000,
+//       checkURL: "https://soliq.uz/check/CHK003",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//     {
+//       id: "4",
+//       check_id: "CHK004",
+//       project: "Loyiha 3",
+//       sklad: "Sklad 3",
+//       city: "Buxoro",
+//       sborshik: "Sborshik 4",
+//       agent: "Agent 4",
+//       ekispiditor: "Jasur Abdullayev",
+//       yetkazilgan_vaqti: new Date().toISOString(),
+//       transport_number: "T004JKL",
+//       kkm_number: "KKM004",
+//       check_date: new Date().toISOString(),
+//       check_lat: 39.7747,
+//       check_lon: 64.4286,
+//       total_sum: 250000,
+//       nalichniy: 250000,
+//       uzcard: 0,
+//       humo: 0,
+//       click: 0,
+//       checkURL: "https://soliq.uz/check/CHK004",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//   ]
+
+//   // Apply filters to mock data if API data is not available
+//   if (filters) {
+//     return mockChecks.filter((check) => {
+//       if (filters.project && check.project !== filters.project) return false
+//       if (filters.sklad && check.sklad !== filters.sklad) return false
+//       if (filters.city && check.city !== filters.city) return false
+//       if (filters.expeditor && check.ekispiditor !== filters.expeditor) return false
+//       if (filters.search) {
+//         const searchLower = filters.search.toLowerCase()
+//         return (
+//           check.check_id.toLowerCase().includes(searchLower) ||
+//           check.ekispiditor?.toLowerCase().includes(searchLower) ||
+//           check.project?.toLowerCase().includes(searchLower)
+//         )
+//       }
+//       return true
+//     })
+//   }
+
+//   return mockChecks
+// }
 export async function getChecks(filters?: {
   dateFrom?: string
   dateTo?: string
@@ -311,7 +466,6 @@ export async function getChecks(filters?: {
   if (filters) {
     const queryParams = new URLSearchParams()
 
-    // Map frontend filter names to backend parameter names
     if (filters.dateFrom) queryParams.append("date_from", filters.dateFrom)
     if (filters.dateTo) queryParams.append("date_to", filters.dateTo)
     if (filters.project) queryParams.append("project", filters.project)
@@ -326,13 +480,19 @@ export async function getChecks(filters?: {
     }
   }
 
-  const data = await apiRequestSafe<any[]>(endpoint)
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>(endpoint)
 
-  if (data && Array.isArray(data)) {
-    return data.map(transformCheck)
+  if (data && Array.isArray(data.results)) {
+    return data.results.map(transformCheck)
   }
 
   // Mock data fallback
+  const now = new Date().toISOString()
   const mockChecks: Check[] = [
     {
       id: "1",
@@ -343,10 +503,12 @@ export async function getChecks(filters?: {
       sborshik: "Sborshik 1",
       agent: "Agent 1",
       ekispiditor: "Alisher Karimov",
-      yetkazilgan_vaqti: new Date().toISOString(),
+      yetkazilgan_vaqti: now,
       transport_number: "T001ABC",
       kkm_number: "KKM001",
-      check_date: new Date().toISOString(),
+      client_name: "Mijoz 1",
+      client_address: "Toshkent, Chilonzor 1",
+      check_date: now,
       check_lat: 41.2995,
       check_lon: 69.2401,
       total_sum: 150000,
@@ -355,96 +517,53 @@ export async function getChecks(filters?: {
       humo: 0,
       click: 0,
       checkURL: "https://soliq.uz/check/CHK001",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: now,
+      updated_at: now,
+      status: "delivered",
     },
     {
       id: "2",
       check_id: "CHK002",
       project: "Loyiha 2",
       sklad: "Sklad 2",
-      city: "Toshkent",
+      city: "Samarqand",
       sborshik: "Sborshik 2",
       agent: "Agent 2",
       ekispiditor: "Bobur Toshmatov",
-      yetkazilgan_vaqti: new Date(Date.now() - 86400000).toISOString(),
-      transport_number: "T002DEF",
+      yetkazilgan_vaqti: now,
+      transport_number: "T002XYZ",
       kkm_number: "KKM002",
-      check_date: new Date(Date.now() - 86400000).toISOString(),
-      check_lat: 41.3111,
-      check_lon: 69.2797,
-      total_sum: 200000,
-      nalichniy: 0,
-      uzcard: 150000,
-      humo: 50000,
-      click: 0,
-      checkURL: "https://soliq.uz/check/CHK002",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "3",
-      check_id: "CHK003",
-      project: "Loyiha 1",
-      sklad: "Sklad 1",
-      city: "Samarqand",
-      sborshik: "Sborshik 3",
-      agent: "Agent 3",
-      ekispiditor: "Sardor Rahimov",
-      yetkazilgan_vaqti: new Date().toISOString(),
-      transport_number: "T003GHI",
-      kkm_number: "KKM003",
-      check_date: new Date().toISOString(),
+      client_name: "Mijoz 2",
+      client_address: "Samarqand, Registon",
+      check_date: now,
       check_lat: 39.627,
       check_lon: 66.975,
-      total_sum: 300000,
+      total_sum: 200000,
       nalichniy: 100000,
       uzcard: 100000,
-      humo: 50000,
-      click: 50000,
-      checkURL: "https://soliq.uz/check/CHK003",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-    {
-      id: "4",
-      check_id: "CHK004",
-      project: "Loyiha 3",
-      sklad: "Sklad 3",
-      city: "Buxoro",
-      sborshik: "Sborshik 4",
-      agent: "Agent 4",
-      ekispiditor: "Jasur Abdullayev",
-      yetkazilgan_vaqti: new Date().toISOString(),
-      transport_number: "T004JKL",
-      kkm_number: "KKM004",
-      check_date: new Date().toISOString(),
-      check_lat: 39.7747,
-      check_lon: 64.4286,
-      total_sum: 250000,
-      nalichniy: 250000,
-      uzcard: 0,
       humo: 0,
       click: 0,
-      checkURL: "https://soliq.uz/check/CHK004",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      checkURL: "https://soliq.uz/check/CHK002",
+      created_at: now,
+      updated_at: now,
+      status: "pending",
     },
   ]
 
-  // Apply filters to mock data if API data is not available
+  // Optional: filter mock data locally
   if (filters) {
     return mockChecks.filter((check) => {
       if (filters.project && check.project !== filters.project) return false
       if (filters.sklad && check.sklad !== filters.sklad) return false
       if (filters.city && check.city !== filters.city) return false
       if (filters.expeditor && check.ekispiditor !== filters.expeditor) return false
+      if (filters.status && check.status !== filters.status) return false
       if (filters.search) {
-        const searchLower = filters.search.toLowerCase()
+        const s = filters.search.toLowerCase()
         return (
-          check.check_id.toLowerCase().includes(searchLower) ||
-          check.ekispiditor?.toLowerCase().includes(searchLower) ||
-          check.project?.toLowerCase().includes(searchLower)
+          check.check_id.toLowerCase().includes(s) ||
+          check.ekispiditor?.toLowerCase().includes(s) ||
+          check.project?.toLowerCase().includes(s)
         )
       }
       return true
@@ -453,6 +572,7 @@ export async function getChecks(filters?: {
 
   return mockChecks
 }
+
 
 // Check Details API
 export async function getCheckDetails(): Promise<any[]> {
