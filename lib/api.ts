@@ -69,11 +69,55 @@ function transformCheck(backendData: any): Check {
 }
 
 // Projects API
-export async function getProjects(): Promise<Project[]> {
-  const data = await apiRequestSafe<any[]>("/projects/")
+// export async function getProjects(): Promise<Project[]> {
+//   const data = await apiRequestSafe<any[]>("/projects/")
 
-  if (data && Array.isArray(data)) {
-    return data.map((item) => ({
+//   if (data && Array.isArray(data)) {
+//     return data.map((item) => ({
+//       id: item.id?.toString() || "",
+//       project_name: item.project_name || "",
+//       project_description: item.project_description || "",
+//       created_at: item.created_at || new Date().toISOString(),
+//       updated_at: item.updated_at || new Date().toISOString(),
+//     }))
+//   }
+
+//   // Return mock data if API fails
+//   return [
+//     {
+//       id: "1",
+//       project_name: "Loyiha 1",
+//       project_description: "Birinchi loyiha",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//     {
+//       id: "2",
+//       project_name: "Loyiha 2",
+//       project_description: "Ikkinchi loyiha",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//     {
+//       id: "3",
+//       project_name: "Loyiha 3",
+//       project_description: "Uchinchi loyiha",
+//       created_at: new Date().toISOString(),
+//       updated_at: new Date().toISOString(),
+//     },
+//   ]
+// }
+
+export async function getProjects(): Promise<Project[]> {
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>("/projects/")
+
+  if (data && Array.isArray(data.results)) {
+    return data.results.map((item) => ({
       id: item.id?.toString() || "",
       project_name: item.project_name || "",
       project_description: item.project_description || "",
@@ -82,7 +126,7 @@ export async function getProjects(): Promise<Project[]> {
     }))
   }
 
-  // Return mock data if API fails
+  // Return mock data if API fails or unexpected response
   return [
     {
       id: "1",
@@ -108,12 +152,18 @@ export async function getProjects(): Promise<Project[]> {
   ]
 }
 
+
 // Sklads API
 export async function getSklads(): Promise<Sklad[]> {
-  const data = await apiRequestSafe<any[]>("/sklad/")
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>("/sklad/")
 
-  if (data && Array.isArray(data)) {
-    return data.map((item) => ({
+  if (data && Array.isArray(data.results)) {
+    return data.results.map((item) => ({
       id: item.id?.toString() || "",
       sklad_name: item.sklad_name || "",
       sklad_code: item.sklad_code || "",
@@ -153,10 +203,15 @@ export async function getSklads(): Promise<Sklad[]> {
 
 // Cities API
 export async function getCities(): Promise<City[]> {
-  const data = await apiRequestSafe<any[]>("/city/")
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>("/city/")
 
-  if (data && Array.isArray(data)) {
-    return data.map((item) => ({
+  if (data && Array.isArray(data.results)) {
+    return data.results.map((item) => ({
       id: item.id?.toString() || "",
       city_name: item.city_name || "",
       city_code: item.city_code || "",
@@ -196,10 +251,15 @@ export async function getCities(): Promise<City[]> {
 
 // Expeditors API
 export async function getExpeditors(): Promise<Expeditor[]> {
-  const data = await apiRequestSafe<any[]>("/ekispiditor/")
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>("/ekispiditor/")
 
-  if (data && Array.isArray(data)) {
-    return data.map(transformExpeditor)
+  if (data && Array.isArray(data.results)) {
+    return data.results.map(transformExpeditor)
   }
 
   return [
