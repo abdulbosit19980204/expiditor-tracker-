@@ -76,7 +76,7 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
         await loadScript("/api/yandex-maps?lang=en_US&v=2.1")
       } catch {
         // 2. Fallback to Yandex demo key (limited quota)
-        await loadScript("https://api-maps.yandex.ru/2.1/?apikey=0d3f3e04-6d70-41e3-8ad4-5b3e3e075a23&lang=en_US")
+        await loadScript("https://api-maps.yandex.ru/2.1/?apikey=a8e37f30-3f0e-4a0e-a3ff-351150883bb1&lang=en_US")
       }
 
       // 3. Check WASM availability – preview sandbox may block it
