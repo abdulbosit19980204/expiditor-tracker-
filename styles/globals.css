@@ -1,6 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* globals.css */
+@import "leaflet/dist/leaflet.css";
+@import "react-datepicker/dist/react-datepicker.css";
 
 body {
   font-family: Arial, Helvetica, sans-serif;
