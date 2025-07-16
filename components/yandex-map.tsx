@@ -151,6 +151,8 @@ export function YandexMap({ locations, loading, selectedExpeditor }: YandexMapPr
   }, [mapLoaded, map, locations])
 
   const addMarkerToMap = (location: VisitedLocation, index: number) => {
+    console.log(location);
+    
     if (!map) return
 
     // Convert coordinates to pixel position (simplified)

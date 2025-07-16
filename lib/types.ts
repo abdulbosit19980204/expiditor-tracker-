@@ -121,3 +121,16 @@ export interface FilterOptions {
   status: string
   paymentMethod: string
 }
+
+export interface VisitedLocation {
+  lat: number
+  lng: number
+  timestamp: string // ISO date string
+} 
+export interface MapLocation {
+  lat: number
+  lng: number
+  name?: string
+  description?: string
+  icon?: string // URL to custom icon
+}
