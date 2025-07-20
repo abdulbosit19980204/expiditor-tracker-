@@ -1,0 +1,1 @@
+URL = "http://192.168.1.241:5443/EVYAP_UT/EVYAP_UT.1cws?wsdl"

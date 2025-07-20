@@ -415,7 +415,7 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     return {
       totalChecks: data.overview?.total_checks || data.totalChecks || 0,
       totalSum: data.payment_stats?.total_sum || data.totalSum || 0,
-      todayChecks: data.overview?.delivered_checks || data.todayChecks || 0,
+      todayChecks: data.overview?.today_checks_count || data.todayChecks || 0,
       successRate: data.overview?.success_rate || data.successRate || 0,
       paymentMethods: {
         nalichniy: data.payment_stats?.nalichniy || data.paymentMethods?.nalichniy || 0,

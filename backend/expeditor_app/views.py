@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Count, Sum, Q, Avg
 from django.utils import timezone
+from django.utils.timezone import now
 from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -14,6 +15,8 @@ from .serializers import (
     ProjectsSerializer, CheckDetailSerializer, SkladSerializer, 
     CitySerializer, EkispiditorSerializer, CheckSerializer
 )
+
+
 
 class CheckFilter(django_filters.FilterSet):
     date_from = django_filters.DateTimeFilter(field_name='yetkazilgan_vaqti', lookup_expr='gte')
@@ -107,7 +110,10 @@ class StatisticsView(APIView):
         # Base queryset
         checks_qs = Check.objects.all()
         check_details_qs = CheckDetail.objects.all()
-        
+        today = now().date()
+        today_checks_count = Check.objects.filter(
+            yetkazilgan_vaqti__date=today
+        ).count()
         # Apply filters
         if date_from:
             try:
@@ -237,7 +243,9 @@ class StatisticsView(APIView):
                 'delivered_checks': delivered_checks,
                 'failed_checks': failed_checks,
                 'pending_checks': pending_checks,
-                'success_rate': round(success_rate, 2)
+                'success_rate': round(success_rate, 2),
+                'today_checks_count': today_checks_count
+
             },
             'payment_stats': {
                 'total_sum': payment_stats['total_sum'],
@@ -249,5 +257,5 @@ class StatisticsView(APIView):
             'top_expeditors': top_expeditors,
             'top_projects': top_projects,
             'top_cities': top_cities,
-            'daily_stats': daily_stats
+            'daily_stats': daily_stats,
         })
