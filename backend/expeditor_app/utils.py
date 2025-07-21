@@ -15,4 +15,3 @@ def save_last_update_date(date_str):
     path = settings.LAST_UPDATE_DATE_PATH
     with open(path, 'w') as file:
         file.write(date_str)
-
