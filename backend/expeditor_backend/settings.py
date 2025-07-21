@@ -144,3 +144,6 @@ CORS_ALLOWED_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+# settings.py
+LAST_UPDATE_DATE_PATH = BASE_DIR / 'last_update.txt'

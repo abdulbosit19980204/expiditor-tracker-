@@ -35,7 +35,7 @@ class CheckDetail(models.Model):
 
 class Sklad(models.Model):
     sklad_name = models.CharField(max_length=100, unique=True)
-    sklad_code = models.CharField(max_length=50, unique=True)
+    sklad_code = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -48,7 +48,7 @@ class Sklad(models.Model):
 
 class City(models.Model):
     city_name = models.CharField(max_length=100, unique=True)
-    city_code = models.CharField(max_length=50, unique=True)
+    city_code = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -62,7 +62,7 @@ class City(models.Model):
 class Ekispiditor(models.Model):
     ekispiditor_name = models.CharField(max_length=100, unique=True)
     transport_number = models.CharField(max_length=50, unique=True)
-    phone_number = models.CharField(max_length=15, unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
     photo = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
