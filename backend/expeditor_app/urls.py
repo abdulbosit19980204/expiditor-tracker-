@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     StatisticsView, ProjectsViewSet, CheckDetailViewSet, 
-    SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet
+    SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet,
 )
 from .integration import UpdateChecksView
 

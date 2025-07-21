@@ -85,8 +85,51 @@ export interface City {
   updated_at?: string
 }
 
+
+
+export interface FilterOptions {
+  dateRange: { from: Date | undefined; to: Date | undefined }
+  project: string
+  sklad: string
+  city: string
+  status: string
+  paymentMethod: string
+}
+
+// export interface Statistics {
+//   totalChecks: number
+//   totalSum: number
+//   todayChecks: number
+//   successRate: number
+//   paymentMethods: {
+//     nalichniy: number
+//     uzcard: number
+//     humo: number
+//     click: number
+//   }
+//   topExpeditors: Array<{
+//     name: string
+//     checkCount: number
+//     totalSum: number
+//   }>
+//   topProjects: Array<{
+//     name: string
+//     checkCount: number
+//     totalSum: number
+//   }>
+//   topCities: Array<{
+//     name: string
+//     checkCount: number
+//     totalSum: number
+//   }>
+// }
+
+// Updated Statistics interface
 export interface Statistics {
   totalChecks: number
+  deliveredChecks: number
+  failedChecks: number
+  pendingChecks: number
   totalSum: number
   todayChecks: number
   successRate: number
@@ -111,13 +154,8 @@ export interface Statistics {
     checkCount: number
     totalSum: number
   }>
-}
-
-export interface FilterOptions {
-  dateRange: { from: Date | undefined; to: Date | undefined }
-  project: string
-  sklad: string
-  city: string
-  status: string
-  paymentMethod: string
+  dailyStats: Array<{
+    date: string
+    checks: number
+  }>
 }

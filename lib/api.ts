@@ -392,6 +392,86 @@ export async function getCheckDetails(): Promise<any[]> {
 }
 
 // Statistics API
+// export async function getStatistics(filters?: any): Promise<Statistics> {
+//   let endpoint = "/statistics/"
+
+//   if (filters) {
+//     const queryParams = new URLSearchParams()
+//     Object.entries(filters).forEach(([key, value]) => {
+//       if (value) {
+//         queryParams.append(key, String(value))
+//       }
+//     })
+
+//     if (queryParams.toString()) {
+//       endpoint += `?${queryParams.toString()}`
+//     }
+//   }
+
+//   const data = await apiRequestSafe<any>(endpoint)
+
+//   if (data) {
+//     // Transform backend statistics format to frontend format
+//     return {
+//       totalChecks: data.overview?.total_checks || data.totalChecks || 0,
+//       totalSum: data.payment_stats?.total_sum || data.totalSum || 0,
+//       todayChecks: data.overview?.today_checks_count || data.todayChecks || 0,
+//       successRate: data.overview?.success_rate || data.successRate || 0,
+//       paymentMethods: {
+//         nalichniy: data.payment_stats?.nalichniy || data.paymentMethods?.nalichniy || 0,
+//         uzcard: data.payment_stats?.uzcard || data.paymentMethods?.uzcard || 0,
+//         humo: data.payment_stats?.humo || data.paymentMethods?.humo || 0,
+//         click: data.payment_stats?.click || data.paymentMethods?.click || 0,
+//       },
+//       topExpeditors: (data.top_expeditors || data.topExpeditors || []).map((item: any) => ({
+//         name: item.ekispiditor || item.name || "",
+//         checkCount: item.check_count || item.checkCount || 0,
+//         totalSum: item.total_sum || item.totalSum || 0,
+//       })),
+//       topProjects: (data.top_projects || data.topProjects || []).map((item: any) => ({
+//         name: item.project || item.name || "",
+//         checkCount: item.check_count || item.checkCount || 0,
+//         totalSum: item.total_sum || item.totalSum || 0,
+//       })),
+//       topCities: (data.top_cities || data.topCities || []).map((item: any) => ({
+//         name: item.city || item.name || "",
+//         checkCount: item.check_count || item.checkCount || 0,
+//         totalSum: item.total_sum || item.totalSum || 0,
+//       })),
+//     }
+//   }
+
+//   // Mock statistics fallback
+//   return {
+//     totalChecks: 4,
+//     totalSum: 900000,
+//     todayChecks: 3,
+//     successRate: 100,
+//     paymentMethods: {
+//       nalichniy: 400000,
+//       uzcard: 350000,
+//       humo: 100000,
+//       click: 50000,
+//     },
+//     topExpeditors: [
+//       { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
+//       { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
+//       { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
+//       { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
+//     ],
+//     topProjects: [
+//       { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
+//       { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
+//       { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
+//     ],
+//     topCities: [
+//       { name: "Toshkent", checkCount: 2, totalSum: 350000 },
+//       { name: "Samarqand", checkCount: 1, totalSum: 300000 },
+//       { name: "Buxoro", checkCount: 1, totalSum: 250000 },
+//     ],
+//   }
+// }
+// Updated getStatistics function
 export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
 
@@ -411,9 +491,11 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
   const data = await apiRequestSafe<any>(endpoint)
 
   if (data) {
-    // Transform backend statistics format to frontend format
     return {
       totalChecks: data.overview?.total_checks || data.totalChecks || 0,
+      deliveredChecks: data.overview?.delivered_checks || data.deliveredChecks || 0,
+      failedChecks: data.overview?.failed_checks || data.failedChecks || 0,
+      pendingChecks: data.overview?.pending_checks || data.pendingChecks || 0,
       totalSum: data.payment_stats?.total_sum || data.totalSum || 0,
       todayChecks: data.overview?.today_checks_count || data.todayChecks || 0,
       successRate: data.overview?.success_rate || data.successRate || 0,
@@ -438,12 +520,19 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
         checkCount: item.check_count || item.checkCount || 0,
         totalSum: item.total_sum || item.totalSum || 0,
       })),
+      dailyStats: (data.daily_stats || data.dailyStats || []).map((item: any) => ({
+        date: item.date || "",
+        checks: item.checks || 0,
+      })),
     }
   }
 
   // Mock statistics fallback
   return {
     totalChecks: 4,
+    deliveredChecks: 4,
+    failedChecks: 0,
+    pendingChecks: 0,
     totalSum: 900000,
     todayChecks: 3,
     successRate: 100,
@@ -457,21 +546,21 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
       { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
       { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
       { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
-      { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
     ],
     topProjects: [
       { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
       { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
-      { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
     ],
     topCities: [
       { name: "Toshkent", checkCount: 2, totalSum: 350000 },
       { name: "Samarqand", checkCount: 1, totalSum: 300000 },
-      { name: "Buxoro", checkCount: 1, totalSum: 250000 },
+    ],
+    dailyStats: [
+      { date: "2025-07-21", checks: 3 },
+      { date: "2025-07-20", checks: 1 },
     ],
   }
 }
-
 // Export all API functions
 export const api = {
   getProjects,
