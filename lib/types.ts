@@ -184,3 +184,7 @@ export interface Client {
   status: "delivered" | "failed"
   check?: Check
 }
+export interface DateRange {
+  from: Date
+  to?: Date
+}
