@@ -114,16 +114,16 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
 
   return (
     <div className={cn("relative", className)}>
-      <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
       <DatePicker
-        selectsRange
+        showIcon
+        selectsRange ={true}
         startDate={startDate}
         endDate={endDate}
         onChange={handleChange}
         isClearable
         placeholderText="Pick a date range"
         className="pl-10 w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        dateFormat="MMM dd, yyyy"
+        dateFormat="dd MM, yyyy"
       />
     </div>
   )
