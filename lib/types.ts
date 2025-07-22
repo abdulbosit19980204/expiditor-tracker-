@@ -159,3 +159,18 @@ export interface Statistics {
     checks: number
   }>
 }
+
+export interface VisitedLocation {
+  id: string
+  clientName: string
+  address: string
+  coordinates: {
+    lat: number
+    lng: number
+  }
+  visitTime: string
+  checkoutTime?: string
+  status: "delivered" | "failed"
+  notes?: string
+  check: Check
+}
