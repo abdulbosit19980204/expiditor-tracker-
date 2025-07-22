@@ -5,12 +5,16 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { TrendingUp, Users, MapPin, CreditCard, Calendar, DollarSign } from "lucide-react"
 import type { Statistics } from "@/lib/types"
+import { useState, useEffect, useRef } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface StatisticsPanelProps {
   statistics: Statistics | null
 }
 
 export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
+  const [selectedMonth, setSelectedMonth] = useState("6") // July (0-based)
+
   if (!statistics) {
     return (
       <div className="p-4">
@@ -40,44 +44,49 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
       year: "numeric",
     }).format(new Date(dateStr))
   }
-  // Generate calendar for the current month (July 2025)
-  const generateCalendarDays = () => {
-    const today = new Date("2025-07-22"); // Fixed date based on provided context
-    const year = today.getFullYear();
-    const month = today.getMonth(); // July is 6 (0-based)
-    const firstDayOfMonth = new Date(year, month, 1);
-    const lastDayOfMonth = new Date(year, month + 1, 0);
-    const daysInMonth = lastDayOfMonth.getDate();
-    const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 (Sunday) to 6 (Saturday)
+  // Generate calendar for a specific month
+  const generateMonthDays = (year: number, month: number) => {
+    const firstDayOfMonth = new Date(year, month, 1)
+    const lastDayOfMonth = new Date(year, month + 1, 0)
+    const daysInMonth = lastDayOfMonth.getDate()
+    const firstDayOfWeek = firstDayOfMonth.getDay() // 0 (Sunday) to 6 (Saturday)
 
     // Adjust for Monday start (0 = Monday, 6 = Sunday)
-    const startDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-    
-    // Create array of days, including padding for the first week
-    const days: Array<{ date: number | null; checks: number }> = [];
-    
+    const startDay = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1
+
+    // Create array of days, including padding
+    const days: Array<{ date: number | null; checks: number }> = []
+
     // Add padding for days before the 1st
     for (let i = 0; i < startDay; i++) {
-      days.push({ date: null, checks: 0 });
+      days.push({ date: null, checks: 0 })
     }
 
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const stat = statistics.dailyStats.find((s) => s.date === dateStr);
-      days.push({ date: day, checks: stat ? stat.checks : 0 });
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+      const stat = statistics.dailyStats.find((s) => s.date === dateStr)
+      days.push({ date: day, checks: stat ? stat.checks : 0 })
     }
 
     // Pad the end to complete the last week
-    const totalDays = days.length;
-    const remainingDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7);
+    const totalDays = days.length
+    const remainingDays = totalDays % 7 === 0 ? 0 : 7 - (totalDays % 7)
     for (let i = 0; i < remainingDays; i++) {
-      days.push({ date: null, checks: 0 });
+      days.push({ date: null, checks: 0 })
     }
 
-    return days;
+    return days
   }
 
+  // Generate month names for dropdown
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const monthName = new Intl.DateTimeFormat("uz-UZ", { month: "long" }).format(new Date(2025, i, 1))
+    return {
+      index: i,
+      name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
+    }
+  })
 
   const totalPayments = statistics.paymentMethods
     ? Object.values(statistics.paymentMethods).reduce((sum, amount) => sum + amount, 0)
@@ -263,8 +272,23 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Kunlik statistika (2025-yil, Iyul)
+              Kunlik statistika (2025)
             </CardTitle>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-40 mt-2">
+                <SelectValue placeholder="Oy tanlang" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const monthName = new Intl.DateTimeFormat("uz-UZ", { month: "long" }).format(new Date(2025, i, 1))
+                  return (
+                    <SelectItem key={i} value={String(i)}>
+                      {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-7 gap-1 text-xs text-center">
@@ -275,7 +299,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
                 </div>
               ))}
               {/* Calendar days */}
-              {generateCalendarDays().map((day, index) => (
+              {generateMonthDays(2025, parseInt(selectedMonth)).map((day, index) => (
                 <div
                   key={index}
                   className={`p-2 h-12 flex items-center justify-center border rounded ${
