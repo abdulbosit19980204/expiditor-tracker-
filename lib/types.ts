@@ -174,3 +174,13 @@ export interface VisitedLocation {
   notes?: string
   check: Check
 }
+
+export interface Client {
+  id: string
+  name: string
+  address: string
+  visitTime: string
+  checkoutTime?: string
+  status: "delivered" | "failed"
+  check?: Check
+}
