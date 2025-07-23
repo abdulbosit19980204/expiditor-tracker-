@@ -672,10 +672,6 @@ export default function ExpeditorTracker() {
         setSklads(Array.isArray(skladsData) ? skladsData : [])
         setCities(Array.isArray(citiesData) ? citiesData : [])
         setStatistics(statisticsData)
-
-        if (Array.isArray(expeditorsData) && expeditorsData.length > 0) {
-          setSelectedExpeditor(expeditorsData[0])
-        }
       } catch (error) {
         console.error("Error loading data:", error)
         setChecks([])
@@ -691,7 +687,7 @@ export default function ExpeditorTracker() {
     loadData()
   }, [])
 
-  // Filter checks based on current filters and selected expeditor
+  // Filter checks based on all filters (expeditor filter faqat tanlanganda check panelida ishlatiladi)
   const filteredChecks = Array.isArray(checks)
     ? checks.filter((check) => {
         // Date range filter
@@ -744,11 +740,11 @@ export default function ExpeditorTracker() {
           return countB - countA
         })
     : []
-    // Ekispiditor tanlanganda, faqat shu expeditorning filterlangan checklarini ko‘rsatish
-    const selectedExpeditorChecks = selectedExpeditor
+
+  // Ekispiditor tanlanganda, faqat shu expeditorning filterlangan checklarini ko‘rsatish
+  const selectedExpeditorChecks = selectedExpeditor
     ? filteredChecks.filter((check) => check.ekispiditor === selectedExpeditor.name)
     : []
-
 
   // Filterga mos ravishda ekispiditorning zakazlar sonini hisoblash
   const getFilteredChecksCount = (expeditorName: string) => expeditorCheckCountMap[expeditorName] || 0
@@ -1045,7 +1041,7 @@ export default function ExpeditorTracker() {
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
                   Checks
-                  {selectedExpeditor && <Badge variant="outline">{filteredChecks.length}</Badge>}
+                  {selectedExpeditor && <Badge variant="outline">{selectedExpeditorChecks.length}</Badge>}
                 </h2>
 
                 {selectedExpeditor && (
@@ -1067,13 +1063,13 @@ export default function ExpeditorTracker() {
                     <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                     <p>Select an expeditor to view checks</p>
                   </div>
-                ) : filteredChecks.length === 0 ? (
+                ) : selectedExpeditorChecks.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
-                    <p>No checks found</p >
+                    <p>No checks found</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredChecks.map((check) => (
+                    {selectedExpeditorChecks.map((check) => (
                       <Card key={check.id} className="hover:shadow-sm transition-shadow">
                         <CardContent className="p-4">
                           <div className="space-y-2">
