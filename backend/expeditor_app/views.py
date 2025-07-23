@@ -77,7 +77,7 @@ class CheckViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CheckFilter
     search_fields = ['check_id', 'client_name', 'client_address', 'ekispiditor', 'project']
-    ordering_fields = ['yetkazilgan_vaqti', 'created_at']
+    ordering_fields = ['yetkazilgan_vaqti', 'created_at', 'status','ekispiditor', 'project']
     ordering = ['-yetkazilgan_vaqti']
     
     @action(detail=False, methods=['get'])
