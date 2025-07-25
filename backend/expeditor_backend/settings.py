@@ -127,6 +127,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://your-frontend-domain.vercel.app",
+    "http://192.168.0.111:8000",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
