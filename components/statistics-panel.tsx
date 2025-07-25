@@ -87,6 +87,14 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
       name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
     }
   })
+  // const months = Array.from({ length: 12 }, (_, i) => {
+  //   // "uz-UZ" locale uchun to'liq oyni nomi
+  //   const monthName = new Intl.DateTimeFormat("uz-UZ", { month: "long" }).format(new Date(2025, i, 1))
+  //   return {
+  //     index: i,
+  //     name: monthName.charAt(0).toUpperCase() + monthName.slice(1), // Masalan: "Iyul", "Avgust"
+  //   }
+  // })
 
   const totalPayments = statistics.paymentMethods
     ? Object.values(statistics.paymentMethods).reduce((sum, amount) => sum + amount, 0)
@@ -279,8 +287,20 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
                 <SelectValue placeholder="Oy tanlang" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => {
+                {/* {Array.from({ length: 12 }, (_, i) => {
                   const monthName = new Intl.DateTimeFormat("uz-UZ", { month: "long" }).format(new Date(2025, i, 1))
+                  return (
+                    <SelectItem key={i} value={String(i)}>
+                      {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                    </SelectItem>
+                  )
+                })} */}
+                {Array.from({ length: 12 }, (_, i) => {
+                  // "uz-UZ" locale uchun to'liq oyni nomi
+                  const monthName = new Intl.DateTimeFormat("locales", { month: "long" }).format(new Date(2025, i, 1))
+                  console.log(monthName);
+                  
+                  // Masalan: "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", ...
                   return (
                     <SelectItem key={i} value={String(i)}>
                       {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
