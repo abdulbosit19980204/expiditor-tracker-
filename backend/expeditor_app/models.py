@@ -133,4 +133,3 @@ class Filial(models.Model):
     
     def __str__(self):
         return self.filial_name
-
