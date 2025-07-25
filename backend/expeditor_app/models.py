@@ -52,7 +52,7 @@ class City(models.Model):
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+    filial = models.ForeignKey('Filial', on_delete=models.CASCADE, related_name='cities', blank=True, null=True)
     class Meta:
         verbose_name_plural = "Cities"
     
@@ -63,6 +63,7 @@ class Ekispiditor(models.Model):
     ekispiditor_name = models.CharField(max_length=100, unique=True)
     transport_number = models.CharField(max_length=50, unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    filial = models.ForeignKey('Filial', on_delete=models.CASCADE, related_name='ekispiditors', blank=True, null=True)
     photo = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,6 +92,7 @@ class Check(models.Model):
     agent = models.CharField(max_length=100, blank=True, null=True)
     ekispiditor = models.CharField(max_length=100, blank=True, null=True)
     yetkazilgan_vaqti = models.DateTimeField(blank=True, null=True)
+    receiptIdDate = models.DateTimeField(blank=True, null=True)
     transport_number = models.CharField(max_length=50, blank=True, null=True)
     kkm_number = models.CharField(max_length=50, blank=True, null=True)
     client_name = models.CharField(max_length=200, blank=True, null=True)
@@ -118,3 +120,17 @@ class Check(models.Model):
             return CheckDetail.objects.get(check_id=self.check_id)
         except CheckDetail.DoesNotExist:
             return None
+
+class Filial(models.Model):
+    filial_name = models.CharField(max_length=100, unique=True)
+    filial_code = models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Filiallar"
+    
+    def __str__(self):
+        return self.filial_name
+

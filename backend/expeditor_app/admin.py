@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check
+from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial
 
 @admin.register(Projects)
 class ProjectsAdmin(admin.ModelAdmin):
@@ -26,6 +26,13 @@ class CityAdmin(admin.ModelAdmin):
     search_fields = ['city_name', 'city_code']
     list_filter = ['created_at']
 
+@admin.register(Filial)
+class FilialAdmin(admin.ModelAdmin):
+    list_display = ['filial_name', 'created_at']
+    search_fields = ['filial_name']
+    list_filter = ['created_at']
+    readonly_fields = ['created_at', 'updated_at']
+
 @admin.register(Ekispiditor)
 class EkispiditorAdmin(admin.ModelAdmin):
     list_display = ['ekispiditor_name', 'transport_number', 'phone_number', 'is_active', 'today_checks_count']
@@ -42,3 +49,4 @@ class CheckAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related()
+

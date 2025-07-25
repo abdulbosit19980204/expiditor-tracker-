@@ -33,7 +33,7 @@ class UpdateChecksView(APIView):
             # Get last update date
             last_update = get_last_update_date()
             response = client.service.GetAllCurierInfo(last_update)
-
+            print("Response: " ,response)
             if not response or not hasattr(response, 'Rows') or not response.Rows:
                 logger.info("No data received from SOAP service")
                 return Response({'detail': 'No data received'}, status=status.HTTP_204_NO_CONTENT)
@@ -62,7 +62,9 @@ class UpdateChecksView(APIView):
                             'sborshik': getattr(row, 'OrderPicker', None),
                             'agent': getattr(row, 'agent', None),
                             'ekispiditor': getattr(row, 'curier', None),
-                            'yetkazilgan_vaqti': delivery_date,
+                            # 'yetkazilgan_vaqti': delivery_date,
+                            'yetkazilgan_vaqti': delivery_date if delivery_date else getattr(row, 'receiptIdDate', None),
+                            'receiptIdDate': receipt_date,
                             'transport_number': getattr(row, 'auto', None),
                             'kkm_number': getattr(row, 'kkm', None),
                             'client_name': getattr(row, 'client', None),
