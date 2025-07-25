@@ -1,6 +1,6 @@
 import type { Check, Expeditor, Project, Sklad, City, Statistics } from "./types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.110:8000/api" || "http://localhost:8000/api"
 
 // Safe request helper – never throws, returns null on error
 async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
