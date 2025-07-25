@@ -225,18 +225,30 @@ class StatisticsView(APIView):
             })
         
         # Daily statistics (last 7 days)
+        # today = timezone.now().date()
+        # daily_stats = []
+        # for i in range(50):
+        #     date = today - timedelta(days=i)
+        #     day_checks = checks_qs.filter(yetkazilgan_vaqti__date=date).count()
+        #     daily_stats.append({
+        #         'date': date.isoformat(),
+        #         'checks': day_checks
+        #     })
+        
+        # daily_stats.reverse()
         today = timezone.now().date()
+        year_start = today.replace(month=1, day=1)
+        days_count = (today - year_start).days + 1  # +1 for today
+
         daily_stats = []
-        for i in range(7):
-            date = today - timedelta(days=i)
+        for i in range(days_count):
+            date = year_start + timedelta(days=i)
             day_checks = checks_qs.filter(yetkazilgan_vaqti__date=date).count()
             daily_stats.append({
                 'date': date.isoformat(),
                 'checks': day_checks
             })
-        
-        daily_stats.reverse()
-        
+            
         return Response({
             'overview': {
                 'total_checks': total_checks,

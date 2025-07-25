@@ -16,7 +16,8 @@ class Projects(models.Model):
 class CheckDetail(models.Model):
     check_id = models.CharField(max_length=100, unique=True)
     checkURL = models.URLField(max_length=200, unique=True)
-    check_date = models.DateTimeField(auto_now_add=True)
+    check_date = models.DateTimeField(blank=True, null=True)
+    receiptIdDate = models.DateTimeField(blank=True, null=True)
     check_lat = models.FloatField(blank=True, null=True)
     check_lon = models.FloatField(blank=True, null=True)
     total_sum = models.FloatField(blank=True, null=True)
