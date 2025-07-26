@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Search, Users, MapPin, Receipt, Filter, ChevronDown, ChevronUp, X, Menu } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -18,6 +18,7 @@ import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
+import { se } from "date-fns/locale"
 
 interface FilterState {
   dateRange: { from: Date | undefined; to: Date | undefined }
@@ -72,8 +73,7 @@ export default function ExpeditorTracker() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [checksData, expeditorsData, projectsData, skladsData, citiesData, filialData, statisticsData] = await Promise.all([
-          api.getChecks(),
+        const [expeditorsData, projectsData, skladsData, citiesData, filialData, statisticsData] = await Promise.all([
           api.getExpeditors(),
           api.getProjects(),
           api.getSklads(),
@@ -82,7 +82,6 @@ export default function ExpeditorTracker() {
           api.getStatistics(),
         ])
         // Ensure arrays are properly set
-        setChecks(Array.isArray(checksData) ? checksData : [])
         setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
         setProjects(Array.isArray(projectsData) ? projectsData : [])
         setSklads(Array.isArray(skladsData) ? skladsData : [])
@@ -97,7 +96,6 @@ export default function ExpeditorTracker() {
       } catch (error) {
         console.error("Error loading data:", error)
         // Set empty arrays as fallback
-        setChecks([])
         setExpeditors([])
         setProjects([])
         setSklads([])
@@ -110,6 +108,28 @@ export default function ExpeditorTracker() {
 
     loadData()
   }, [])
+
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true)
+      try {
+        const [checksData] = await Promise.all([
+          api.getChecks({id:selectedExpeditor?.id, ...filters}),
+        ])
+        // Ensure arrays are properly set
+        setChecks(Array.isArray(checksData) ? checksData : [])
+      } catch (error) {
+        console.error("Error loading data:", error)
+        // Set empty arrays as fallback
+        setChecks([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+    console.log("filters:", filters);
+    
+  },[selectedExpeditor, filters])
 
   
   // Filter expeditors based on search and selected filial
