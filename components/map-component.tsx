@@ -539,7 +539,7 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
       {/* Map Legend */}
       {status === "ready" && (
         <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 space-y-2 z-10">
-          <h4 className="font-semibold text-sm">Legend</h4>
+          {/* <h4 className="font-semibold text-sm">Legend</h4>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-green-500 rounded-full"></div>
             <span className="text-xs">Successful Check</span>
@@ -547,8 +547,8 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-red-500 rounded-full"></div>
             <span className="text-xs">Failed Check</span>
-          </div>
-          <div className="mt-2">
+          </div> */}
+          {/* <div className="mt-2">
             <div className="flex flex-wrap gap-2">
               {pathColors.map((color, idx) => (
                 <div key={color} className="flex items-center gap-1">
@@ -556,6 +556,29 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
                   <span className="text-xs">Day {idx + 1}</span>
                 </div>
               ))}
+            </div>
+          </div> */}
+          <div className="mt-2">
+            <div className="flex flex-wrap gap-2">
+              {selectedExpeditor && (() => {
+                // Expeditorning checklarini kunlarga guruhlash
+                const expChecks = checks.filter(
+                  (c) =>
+                    c.ekispiditor === selectedExpeditor.name &&
+                    c.check_lat &&
+                    c.check_lon
+                )
+                const grouped = groupChecksByDay(expChecks)
+                const days = Object.keys(grouped).sort()
+                return days.map((day, idx) => (
+                  <div key={day} className="flex items-center gap-1">
+                    <div className="w-4 h-1.5 rounded" style={{ background: getPathColor(idx) }} />
+                    <span className="text-xs">
+                      {new Date(day).toLocaleDateString("uz-UZ")}
+                    </span>
+                  </div>
+                ))
+              })()}
             </div>
           </div>
         </div>
