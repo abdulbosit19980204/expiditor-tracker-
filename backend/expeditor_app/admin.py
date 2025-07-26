@@ -35,9 +35,9 @@ class FilialAdmin(admin.ModelAdmin):
 
 @admin.register(Ekispiditor)
 class EkispiditorAdmin(admin.ModelAdmin):
-    list_display = ['ekispiditor_name', 'transport_number', 'phone_number', 'is_active', 'today_checks_count']
-    search_fields = ['ekispiditor_name', 'transport_number', 'phone_number']
-    list_filter = ['is_active', 'created_at']
+    list_display = ['ekispiditor_name','filial', 'transport_number', 'phone_number', 'is_active', 'today_checks_count']
+    search_fields = ['ekispiditor_name','filial', 'transport_number', 'phone_number']
+    list_filter = ['filial','is_active', 'created_at']
     readonly_fields = ['today_checks_count']
 
 @admin.register(Check)
