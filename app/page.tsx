@@ -351,7 +351,6 @@ export default function ExpeditorTracker() {
                     <SelectItem value="all">All Filials</SelectItem>
                     {Array.isArray(filial) &&
                       filial.map((filial) => (
-                        console.log("page filials:",filial),
                         // Ensure filial has id and name properties                        
                         <SelectItem key={filial.id} value={String(filial.id)}>
                           {filial.filial_name}

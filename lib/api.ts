@@ -333,6 +333,8 @@ export async function getChecks(filters?: {
 
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
+      console.log(`Fetching checks with filters: ${endpoint}`) // Debug log;
+      
     }
   }
 
