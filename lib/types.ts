@@ -54,6 +54,7 @@ export interface Check {
 export interface Expeditor {
   id: string
   name: string
+  filial: string
   phone_number: string
   transport_number: string
   photo?: string

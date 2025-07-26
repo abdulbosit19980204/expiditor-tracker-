@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check
+from .models import  Filial,Projects, CheckDetail, Sklad, City, Ekispiditor, Check
 
 class ProjectsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,6 +17,10 @@ class SkladSerializer(serializers.ModelSerializer):
         model = Sklad
         fields = ['id', 'sklad_name', 'sklad_code', 'description', 'created_at', 'updated_at']
 
+class FilialSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Filial
+        fields = ['filial_name' ]
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
@@ -25,10 +29,14 @@ class CitySerializer(serializers.ModelSerializer):
 class EkispiditorSerializer(serializers.ModelSerializer):
     today_checks_count = serializers.ReadOnlyField()
     name = serializers.CharField(source='ekispiditor_name', read_only=True)
-    
+    filial = serializers.SerializerMethodField()
+    def get_filial(self, obj):
+        if obj.filial:
+            return obj.filial.filial_name
+        return "Filaiga tegishli emas"
     class Meta:
         model = Ekispiditor
-        fields = ['id', 'ekispiditor_name', 'name', 'transport_number', 'phone_number', 
+        fields = ['id', 'ekispiditor_name','filial', 'name', 'transport_number', 'phone_number', 
                  'photo', 'is_active', 'today_checks_count', 'created_at', 'updated_at']
 
 class CheckSerializer(serializers.ModelSerializer):

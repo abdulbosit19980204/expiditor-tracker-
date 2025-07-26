@@ -67,7 +67,7 @@ class EkispiditorViewSet(viewsets.ModelViewSet):
     queryset = Ekispiditor.objects.filter(is_active=True)
     serializer_class = EkispiditorSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['ekispiditor_name', 'transport_number', 'phone_number']
+    search_fields = ['ekispiditor_name', 'transport_number', 'phone_number', 'filial']
     ordering_fields = ['ekispiditor_name', 'created_at']
     ordering = ['ekispiditor_name']
 

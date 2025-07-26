@@ -115,6 +115,7 @@ export default function ExpeditorTracker() {
           expeditor.name?.toLowerCase().includes(searchLower) ||
           expeditor.phone_number?.includes(searchLower) ||
           expeditor.transport_number?.toLowerCase().includes(searchLower)
+          || expeditor.filial?.toLowerCase().includes(searchLower)
         )
       })
     : []
@@ -338,12 +339,13 @@ export default function ExpeditorTracker() {
 
         {/* Expeditor Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
           <Input
             placeholder="Search expeditors..."
             value={expeditorSearchQuery}
             onChange={(e) => setExpeditorSearchQuery(e.target.value)}
             className="pl-10"
+            autoFocus
           />
         </div>
       </div>
@@ -363,28 +365,36 @@ export default function ExpeditorTracker() {
               }
             }}
           >
+            
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
-                  <AvatarFallback>
-                    {expeditor.name
-                      ?.split(" ")
-                      .map((n) => n[0])
-                      .join("") || "EX"}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar>
+                    <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
+                    <AvatarFallback>
+                      {expeditor.name?.split(" ").map((n) => n[0]).join("") || "EX"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Bugungi checklar soni badge */}
+                  <span
+                    className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5 shadow"
+                    title="Today's checks"
+                  >
+                    {getTodayChecksCount(expeditor.name)}
+                  </span>
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
                   <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
                   <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
-
-                  {/* Today's checks count */}
+                  <p className="text-xs text-gray-500 mt-1">
+                    <strong>Filial:</strong> {expeditor.filial || "Biriktirilmagan"}
+                  </p>
+                  {/* Filterga mos checklar soni */}
                   <div className="flex items-center gap-2 mt-2">
-                    <Receipt className="h-3 w-3 text-blue-500" />
-                    <span className="text-xs text-blue-600 font-medium">
-                      {getTodayChecksCount(expeditor.name)} checks today
-                    </span>
+                    <Badge variant="outline" className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+                      {filteredChecks.filter((check) => check.ekispiditor === expeditor.name).length} checks
+                    </Badge>
                   </div>
                 </div>
               </div>

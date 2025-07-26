@@ -32,6 +32,7 @@ function transformExpeditor(backendData: any): Expeditor {
   return {
     id: backendData.id?.toString() || "",
     name: backendData.ekispiditor_name || backendData.name || "",
+    filial: backendData.filial || "Biriktirilmagan",
     phone_number: backendData.phone_number || "",
     transport_number: backendData.transport_number || "",
     photo: backendData.photo || "/placeholder-user.jpg",
