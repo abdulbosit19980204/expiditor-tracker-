@@ -10,10 +10,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 import django_filters
 
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check
+from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial
 from .serializers import (
     ProjectsSerializer, CheckDetailSerializer, SkladSerializer, 
-    CitySerializer, EkispiditorSerializer, CheckSerializer
+    CitySerializer, EkispiditorSerializer, CheckSerializer,FilialSerializer
 )
 
 
@@ -62,6 +62,14 @@ class CityViewSet(viewsets.ModelViewSet):
     search_fields = ['city_name', 'city_code']
     ordering_fields = ['city_name', 'created_at']
     ordering = ['city_name']
+
+class FilialViewSet(viewsets.ModelViewSet):
+    queryset = Filial.objects.all()
+    serializer_class = FilialSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ['filial_name', 'filial_code']
+    ordering_fields = ['filial_name']
+    ordering = ['filial_name']
 
 class EkispiditorViewSet(viewsets.ModelViewSet):
     queryset = Ekispiditor.objects.filter(is_active=True)

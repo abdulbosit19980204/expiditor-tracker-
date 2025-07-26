@@ -1,4 +1,4 @@
-import type { Check, Expeditor, Project, Sklad, City, Statistics } from "./types"
+import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from "./types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -69,6 +69,13 @@ function transformCheck(item: any): Check {
 
     created_at: item.created_at || "",
     updated_at: item.updated_at || "",
+  }
+}
+function transformFilial(item: any): Filial {
+  return {
+    id: item.id?.toString() || "",
+    filial_name: item.filial_name || "",
+    filial_code: item.filial_code || "",
   }
 }
 
@@ -212,6 +219,43 @@ export async function getCities(): Promise<City[]> {
       description: "Qadimiy shahar",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+    },
+  ]
+}
+
+//Filials API
+export async function getFilials(): Promise<Filial[]> {
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>("/filial/")
+  
+  if (data && Array.isArray(data.results)) {
+    return data.results.map((item) => ({
+      id: item.id?.toString() || "",
+      filial_name: item.filial_name || "",
+      filial_code: item.filial_code || "",
+    }))
+  }
+
+  // Mock data fallback
+  return [
+    {
+      id: "1",
+      filial_name: "Filial 1",
+      filial_code: "FIL001",
+    },
+    {
+      id: "2",
+      filial_name: "Filial 2",
+      filial_code: "FIL002",
+    },
+    {
+      id: "3",
+      filial_name: "Filial 3",
+      filial_code: "FIL003",
     },
   ]
 }
@@ -571,4 +615,5 @@ export const api = {
   getChecks,
   getCheckDetails,
   getStatistics,
+  getFilials,
 }

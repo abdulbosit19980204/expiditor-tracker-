@@ -16,7 +16,7 @@ import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
-import type { Check, Expeditor, Project, Sklad, City, Statistics } from "@/lib/types"
+import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
 interface FilterState {
@@ -24,6 +24,7 @@ interface FilterState {
   project: string
   sklad: string
   city: string
+  filial: string
   expeditor: string
   status: string
   paymentMethod: string
@@ -39,6 +40,7 @@ export default function ExpeditorTracker() {
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
   const [cities, setCities] = useState<City[]>([])
+  const [filial, setFilial] = useState<Filial[]>([])
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
   const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
@@ -58,6 +60,7 @@ export default function ExpeditorTracker() {
     project: "",
     sklad: "",
     city: "",
+    filial: "",
     expeditor: "",
     status: "",
     paymentMethod: "",
@@ -69,12 +72,13 @@ export default function ExpeditorTracker() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [checksData, expeditorsData, projectsData, skladsData, citiesData, statisticsData] = await Promise.all([
+        const [checksData, expeditorsData, projectsData, skladsData, citiesData, filialData, statisticsData] = await Promise.all([
           api.getChecks(),
           api.getExpeditors(),
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
+          api.getFilials(),
           api.getStatistics(),
         ])
 
@@ -84,6 +88,7 @@ export default function ExpeditorTracker() {
         setProjects(Array.isArray(projectsData) ? projectsData : [])
         setSklads(Array.isArray(skladsData) ? skladsData : [])
         setCities(Array.isArray(citiesData) ? citiesData : [])
+        setFilial(Array.isArray(filialData) ? filialData : [])
         setStatistics(statisticsData)
 
         // Select first expeditor by default
@@ -98,6 +103,7 @@ export default function ExpeditorTracker() {
         setProjects([])
         setSklads([])
         setCities([])
+        setFilial([])
       } finally {
         setIsLoading(false)
       }
@@ -169,6 +175,7 @@ export default function ExpeditorTracker() {
       project: "",
       sklad: "",
       city: "",
+      filial: "",
       expeditor: "",
       status: "",
       paymentMethod: "",
@@ -313,6 +320,30 @@ export default function ExpeditorTracker() {
                       cities.map((city) => (
                         <SelectItem key={city.id} value={city.city_name}>
                           {city.city_name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Filial filter */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
+                <Select
+                  value={filters.filial}  
+                  onValueChange={(value) => setFilters((prev) => ({ ...prev, filial: value === "all" ? "" : value }))}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="All Filials" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Filials</SelectItem>
+                    {Array.isArray(filial) &&
+                      filial.map((filial) => (
+                        console.log("page filials:",filial),
+                        // Ensure filial has id and name properties                        
+                        <SelectItem key={filial.id} value={String(filial.id)}>
+                          {filial.filial_name}
                         </SelectItem>
                       ))}
                   </SelectContent>
