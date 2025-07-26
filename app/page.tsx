@@ -392,9 +392,18 @@ export default function ExpeditorTracker() {
                   </p>
                   {/* Filterga mos checklar soni */}
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="outline" className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
-                      {filteredChecks.filter((check) => check.ekispiditor === expeditor.name).length} checks
-                    </Badge>
+                  <Badge variant="outline" className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+                    {
+                      checks.filter((check) => check.ekispiditor === expeditor.name &&
+                        // filterlar bo‘yicha ham hisoblash kerak bo‘lsa:
+                        (!filters.project || check.project === filters.project) &&
+                        (!filters.sklad || check.sklad === filters.sklad) &&
+                        (!filters.city || check.city === filters.city) &&
+                        (!filters.dateRange.from || new Date(check.check_date) >= filters.dateRange.from) &&
+                        (!filters.dateRange.to || new Date(check.check_date) <= filters.dateRange.to)
+                      ).length
+                    } checks filtered  
+                  </Badge>
                   </div>
                 </div>
               </div>
