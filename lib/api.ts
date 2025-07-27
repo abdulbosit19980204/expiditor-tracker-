@@ -331,7 +331,7 @@ export async function getChecks(filters?: {
     if (filters.status) queryParams.append("status", filters.status)
     if (filters.search) queryParams.append("search", filters.search)
     if (filters.id) queryParams.append("id", filters.id.toString())
-
+    
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
       console.log(`Fetching checks with filters: ${endpoint}`) // Debug log;
@@ -345,7 +345,8 @@ export async function getChecks(filters?: {
     previous: string | null
     results: any[]
   }>(endpoint)
-
+  console.log(`API Response for checks:`, data) // Debug log;
+  
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformCheck)
   }

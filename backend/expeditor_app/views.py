@@ -26,10 +26,10 @@ class CheckFilter(django_filters.FilterSet):
     city = django_filters.CharFilter(field_name='city', lookup_expr='icontains')
     ekispiditor = django_filters.CharFilter(field_name='ekispiditor', lookup_expr='icontains')
     status = django_filters.CharFilter(field_name='status')
-    
+    ekispiditor_id = django_filters.CharFilter(field_name='ekispiditor__id', lookup_expr='exact')
     class Meta:
         model = Check
-        fields = ['date_from', 'date_to', 'project', 'sklad', 'city', 'ekispiditor', 'status']
+        fields = ['date_from', 'date_to', 'project', 'sklad', 'city', 'ekispiditor', 'ekispiditor_id', 'status']
 
 class ProjectsViewSet(viewsets.ModelViewSet):
     queryset = Projects.objects.all()

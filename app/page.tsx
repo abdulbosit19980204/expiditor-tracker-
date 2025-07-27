@@ -114,7 +114,7 @@ export default function ExpeditorTracker() {
       setIsLoading(true)
       try {
         const [checksData] = await Promise.all([
-          api.getChecks({id:selectedExpeditor?.id, ...filters}),
+          api.getChecks({id:selectedExpeditor?.id, ...filters }),
         ])
         // Ensure arrays are properly set
         setChecks(Array.isArray(checksData) ? checksData : [])
@@ -127,7 +127,7 @@ export default function ExpeditorTracker() {
       }
     }
     loadData()
-    console.log("filters:", filters);
+    console.log("filters_eseEffect:", filters);
     
   },[selectedExpeditor, filters])
 
