@@ -268,7 +268,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
     previous: string | null
     results: any[]
   }>("/ekispiditor/")
-
+  
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformExpeditor)
   }
@@ -307,32 +307,35 @@ export async function getExpeditors(): Promise<Expeditor[]> {
 
 // Checks API
 export async function getChecks(filters?: {
-  dateFrom?: string
-  dateTo?: string
+  dataRange?: { from: Date | undefined; to: Date | undefined }
   project?: string
   sklad?: string
   city?: string
   expeditor?: string
   status?: string
   paymentMethod?: string
-  search?: string
+  search?: string,
+  id?: string | number | null// Added for filtering by expeditor ID
 }): Promise<Check[]> {
   let endpoint = "/check/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
 
-    if (filters.dateFrom) queryParams.append("date_from", filters.dateFrom)
-    if (filters.dateTo) queryParams.append("date_to", filters.dateTo)
+    if (filters.dataRange) queryParams.append("date_from", filters.dataRange.from?.toISOString() || "561")
+    if (filters.dataRange) queryParams.append("date_to", filters.dataRange.to?.toISOString() || "")
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
     if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
     if (filters.status) queryParams.append("status", filters.status)
     if (filters.search) queryParams.append("search", filters.search)
-
+    if (filters.id) queryParams.append("id", filters.id.toString())
+    
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
+      console.log(`Fetching checks with filters: ${endpoint}`) // Debug log;
+      
     }
   }
 
@@ -342,7 +345,8 @@ export async function getChecks(filters?: {
     previous: string | null
     results: any[]
   }>(endpoint)
-
+  console.log(`API Response for checks:`, data) // Debug log;
+  
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformCheck)
   }
