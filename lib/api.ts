@@ -268,7 +268,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
     previous: string | null
     results: any[]
   }>("/ekispiditor/")
-  
+
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformExpeditor)
   }

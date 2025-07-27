@@ -81,6 +81,7 @@ export default function ExpeditorTracker() {
           api.getFilials(),
           api.getStatistics(),
         ])
+
         // Ensure arrays are properly set
         setChecks(Array.isArray(checksData) ? checksData : [])
         setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
@@ -111,31 +112,19 @@ export default function ExpeditorTracker() {
     loadData()
   }, [])
 
-  
-  // Filter expeditors based on search and selected filial
+  // Filter expeditors based on search
   const filteredExpeditors = Array.isArray(expeditors)
-  ? expeditors.filter((expeditor) => {
-      // Find the filial name corresponding to filters.filial (ID)
-      const selectedFilialName = filters.filial
-        ? filial.find((f) => String(f.id) === filters.filial)?.filial_name
-        : undefined;
-
-      // Filial filter: Compare expeditor.filial with the selected filial name
-      if (filters.filial && selectedFilialName && expeditor.filial !== selectedFilialName) {
-        return false;
-      }
-
-      // Search query filter
-      if (!expeditorSearchQuery) return true;
-      const searchLower = expeditorSearchQuery.toLowerCase();
-      return (
-        expeditor.name?.toLowerCase().includes(searchLower) ||
-        expeditor.phone_number?.includes(searchLower) ||
-        expeditor.transport_number?.toLowerCase().includes(searchLower) ||
-        expeditor.filial?.toLowerCase().includes(searchLower)
-      );
-    })
-  : [];
+    ? expeditors.filter((expeditor) => {
+        if (!expeditorSearchQuery) return true
+        const searchLower = expeditorSearchQuery.toLowerCase()
+        return (
+          expeditor.name?.toLowerCase().includes(searchLower) ||
+          expeditor.phone_number?.includes(searchLower) ||
+          expeditor.transport_number?.toLowerCase().includes(searchLower)
+          || expeditor.filial?.toLowerCase().includes(searchLower)
+        )
+      })
+    : []
 
   // Filter checks based on current filters and selected expeditor
   const filteredChecks = Array.isArray(checks)
