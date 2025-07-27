@@ -280,6 +280,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998901234567",
       transport_number: "T001ABC",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 1" // Default value, can be updated later
     },
     {
       id: "2",
@@ -287,6 +288,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998907654321",
       transport_number: "T002DEF",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 2" // Default value, can be updated later
     },
     {
       id: "3",
@@ -294,6 +296,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998909876543",
       transport_number: "T003GHI",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 3" // Default value, can be updated later
     },
     {
       id: "4",
@@ -301,6 +304,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998905432109",
       transport_number: "T004JKL",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 1" // Default value, can be updated later
     },
   ]
 }
