@@ -405,7 +405,7 @@ export default function ExpeditorTracker() {
             value={expeditorSearchQuery}
             onChange={(e) => setExpeditorSearchQuery(e.target.value)}
             className="pl-10"
-            // autoFocus
+            autoFocus
           />
         </div>
       </div>
