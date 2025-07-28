@@ -127,7 +127,6 @@ export default function ExpeditorTracker() {
       }
     }
     loadData()
-    console.log("filters_eseEffect:", filters);
     
   },[selectedExpeditor, filters])
 
@@ -475,14 +474,20 @@ export default function ExpeditorTracker() {
     </div>
   )
 
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <LoadingSpinner size="lg" />
+  //     </div>
+  //   )
+  // }
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10">
         <LoadingSpinner size="lg" />
       </div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}

@@ -20,13 +20,26 @@ from .serializers import (
 
 class CheckFilter(django_filters.FilterSet):
     date_from = django_filters.DateTimeFilter(field_name='yetkazilgan_vaqti', lookup_expr='gte')
-    date_to = django_filters.DateTimeFilter(field_name='yetkazilgan_vaqti', lookup_expr='lte')
+    # date_to = django_filters.DateTimeFilter(field_name='yetkazilgan_vaqti', lookup_expr='lte')
+    date_to = django_filters.DateTimeFilter(
+    field_name='yetkazilgan_vaqti',
+    lookup_expr='lte',
+    method='filter_date_to_end_of_day'
+    )
     project = django_filters.CharFilter(field_name='project', lookup_expr='icontains')
     sklad = django_filters.CharFilter(field_name='sklad', lookup_expr='icontains')
     city = django_filters.CharFilter(field_name='city', lookup_expr='icontains')
     ekispiditor = django_filters.CharFilter(field_name='ekispiditor', lookup_expr='icontains')
     status = django_filters.CharFilter(field_name='status')
     ekispiditor_id = django_filters.CharFilter(field_name='ekispiditor__id', lookup_expr='exact')
+    
+    def filter_date_to_end_of_day(self, queryset, name, value):
+        if value:
+            # Agar `date_to` berilgan bo‘lsa, unga 23:59:59 qo‘shamiz
+            end_of_day = value.replace(hour=23, minute=59, second=59)
+            print(f"Filtering {name} to end of day: {end_of_day}")
+            return queryset.filter(**{f"{name}__lte": end_of_day})
+        return queryset
     class Meta:
         model = Check
         fields = ['date_from', 'date_to', 'project', 'sklad', 'city', 'ekispiditor', 'ekispiditor_id', 'status']

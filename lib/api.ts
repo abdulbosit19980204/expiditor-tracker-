@@ -311,7 +311,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
 
 // Checks API
 export async function getChecks(filters?: {
-  dataRange?: { from: Date | undefined; to: Date | undefined }
+  dateRange?: { from: Date | undefined; to: Date | undefined }
   project?: string
   sklad?: string
   city?: string
@@ -326,8 +326,15 @@ export async function getChecks(filters?: {
   if (filters) {
     const queryParams = new URLSearchParams()
 
-    if (filters.dataRange) queryParams.append("date_from", filters.dataRange.from?.toISOString() || "561")
-    if (filters.dataRange) queryParams.append("date_to", filters.dataRange.to?.toISOString() || "")
+    // if (filters.dataRange) queryParams.append("date_from", filters.dataRange.from?.toISOString() || "561")
+    // if (filters.dataRange) queryParams.append("date_to", filters.dataRange.to?.toISOString() || "")
+    // Date range filters
+    if (filters.dateRange?.from) {
+      queryParams.append('date_from', filters.dateRange.from.toISOString())
+    }
+    if (filters.dateRange?.to) {
+      queryParams.append('date_to', filters.dateRange.to.toISOString())
+    }
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
