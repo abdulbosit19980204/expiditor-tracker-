@@ -86,13 +86,18 @@ export interface City {
   updated_at?: string
 }
 
-
+export interface Filial {
+  id: string 
+  filial_name: string
+  filial_code: string
+}
 
 export interface FilterOptions {
   dateRange: { from: Date | undefined; to: Date | undefined }
   project: string
   sklad: string
   city: string
+  filial: string // Added filial filter
   status: string
   paymentMethod: string
 }

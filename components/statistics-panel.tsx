@@ -298,8 +298,6 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
                 {Array.from({ length: 12 }, (_, i) => {
                   // "uz-UZ" locale uchun to'liq oyni nomi
                   const monthName = new Intl.DateTimeFormat("locales", { month: "long" }).format(new Date(2025, i, 1))
-                  console.log(monthName);
-                  
                   // Masalan: "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", ...
                   return (
                     <SelectItem key={i} value={String(i)}>

@@ -1,4 +1,4 @@
-import type { Check, Expeditor, Project, Sklad, City, Statistics } from "./types"
+import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from "./types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
@@ -69,6 +69,13 @@ function transformCheck(item: any): Check {
 
     created_at: item.created_at || "",
     updated_at: item.updated_at || "",
+  }
+}
+function transformFilial(item: any): Filial {
+  return {
+    id: item.id?.toString() || "",
+    filial_name: item.filial_name || "",
+    filial_code: item.filial_code || "",
   }
 }
 
@@ -216,6 +223,43 @@ export async function getCities(): Promise<City[]> {
   ]
 }
 
+//Filials API
+export async function getFilials(): Promise<Filial[]> {
+  const data = await apiRequestSafe<{
+    count: number
+    next: string | null
+    previous: string | null
+    results: any[]
+  }>("/filial/")
+  
+  if (data && Array.isArray(data.results)) {
+    return data.results.map((item) => ({
+      id: item.id?.toString() || "",
+      filial_name: item.filial_name || "",
+      filial_code: item.filial_code || "",
+    }))
+  }
+
+  // Mock data fallback
+  return [
+    {
+      id: "1",
+      filial_name: "Filial 1",
+      filial_code: "FIL001",
+    },
+    {
+      id: "2",
+      filial_name: "Filial 2",
+      filial_code: "FIL002",
+    },
+    {
+      id: "3",
+      filial_name: "Filial 3",
+      filial_code: "FIL003",
+    },
+  ]
+}
+
 // Expeditors API
 export async function getExpeditors(): Promise<Expeditor[]> {
   const data = await apiRequestSafe<{
@@ -224,7 +268,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
     previous: string | null
     results: any[]
   }>("/ekispiditor/")
-
+  
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformExpeditor)
   }
@@ -236,6 +280,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998901234567",
       transport_number: "T001ABC",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 1" // Default value, can be updated later
     },
     {
       id: "2",
@@ -243,6 +288,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998907654321",
       transport_number: "T002DEF",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 2" // Default value, can be updated later
     },
     {
       id: "3",
@@ -250,6 +296,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998909876543",
       transport_number: "T003GHI",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 3" // Default value, can be updated later
     },
     {
       id: "4",
@@ -257,38 +304,49 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998905432109",
       transport_number: "T004JKL",
       photo: "/placeholder-user.jpg",
+      filial: "Filial 1" // Default value, can be updated later
     },
   ]
 }
 
 // Checks API
 export async function getChecks(filters?: {
-  dateFrom?: string
-  dateTo?: string
+  dateRange?: { from: Date | undefined; to: Date | undefined }
   project?: string
   sklad?: string
   city?: string
   expeditor?: string
   status?: string
   paymentMethod?: string
-  search?: string
+  search?: string,
+  id?: string | number | null// Added for filtering by expeditor ID
 }): Promise<Check[]> {
   let endpoint = "/check/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
 
-    if (filters.dateFrom) queryParams.append("date_from", filters.dateFrom)
-    if (filters.dateTo) queryParams.append("date_to", filters.dateTo)
+    // if (filters.dataRange) queryParams.append("date_from", filters.dataRange.from?.toISOString() || "561")
+    // if (filters.dataRange) queryParams.append("date_to", filters.dataRange.to?.toISOString() || "")
+    // Date range filters
+    if (filters.dateRange?.from) {
+      queryParams.append('date_from', filters.dateRange.from.toISOString())
+    }
+    if (filters.dateRange?.to) {
+      queryParams.append('date_to', filters.dateRange.to.toISOString())
+    }
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
     if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
     if (filters.status) queryParams.append("status", filters.status)
     if (filters.search) queryParams.append("search", filters.search)
-
+    if (filters.id) queryParams.append("id", filters.id.toString())
+    
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
+      console.log(`Fetching checks with filters: ${endpoint}`) // Debug log;
+      
     }
   }
 
@@ -298,7 +356,8 @@ export async function getChecks(filters?: {
     previous: string | null
     results: any[]
   }>(endpoint)
-
+  console.log(`API Response for checks:`, data) // Debug log;
+  
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformCheck)
   }
@@ -571,4 +630,5 @@ export const api = {
   getChecks,
   getCheckDetails,
   getStatistics,
+  getFilials,
 }

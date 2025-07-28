@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Search, Users, MapPin, Receipt, Filter, ChevronDown, ChevronUp, X, Menu } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,14 +16,16 @@ import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
-import type { Check, Expeditor, Project, Sklad, City, Statistics } from "@/lib/types"
+import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
+import { se } from "date-fns/locale"
 
 interface FilterState {
   dateRange: { from: Date | undefined; to: Date | undefined }
   project: string
   sklad: string
   city: string
+  filial: string
   expeditor: string
   status: string
   paymentMethod: string
@@ -39,6 +41,7 @@ export default function ExpeditorTracker() {
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
   const [cities, setCities] = useState<City[]>([])
+  const [filial, setFilial] = useState<Filial[]>([])
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
   const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
@@ -58,6 +61,7 @@ export default function ExpeditorTracker() {
     project: "",
     sklad: "",
     city: "",
+    filial: "",
     expeditor: "",
     status: "",
     paymentMethod: "",
@@ -69,21 +73,20 @@ export default function ExpeditorTracker() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [checksData, expeditorsData, projectsData, skladsData, citiesData, statisticsData] = await Promise.all([
-          api.getChecks(),
+        const [expeditorsData, projectsData, skladsData, citiesData, filialData, statisticsData] = await Promise.all([
           api.getExpeditors(),
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
+          api.getFilials(),
           api.getStatistics(),
         ])
-
         // Ensure arrays are properly set
-        setChecks(Array.isArray(checksData) ? checksData : [])
         setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
         setProjects(Array.isArray(projectsData) ? projectsData : [])
         setSklads(Array.isArray(skladsData) ? skladsData : [])
         setCities(Array.isArray(citiesData) ? citiesData : [])
+        setFilial(Array.isArray(filialData) ? filialData : [])
         setStatistics(statisticsData)
 
         // Select first expeditor by default
@@ -93,11 +96,11 @@ export default function ExpeditorTracker() {
       } catch (error) {
         console.error("Error loading data:", error)
         // Set empty arrays as fallback
-        setChecks([])
         setExpeditors([])
         setProjects([])
         setSklads([])
         setCities([])
+        setFilial([])
       } finally {
         setIsLoading(false)
       }
@@ -106,19 +109,52 @@ export default function ExpeditorTracker() {
     loadData()
   }, [])
 
-  // Filter expeditors based on search
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true)
+      try {
+        const [checksData] = await Promise.all([
+          api.getChecks({id:selectedExpeditor?.id, ...filters }),
+        ])
+        // Ensure arrays are properly set
+        setChecks(Array.isArray(checksData) ? checksData : [])
+      } catch (error) {
+        console.error("Error loading data:", error)
+        // Set empty arrays as fallback
+        setChecks([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+    
+  },[selectedExpeditor, filters])
+
+  
+  // Filter expeditors based on search and selected filial
   const filteredExpeditors = Array.isArray(expeditors)
-    ? expeditors.filter((expeditor) => {
-        if (!expeditorSearchQuery) return true
-        const searchLower = expeditorSearchQuery.toLowerCase()
-        return (
-          expeditor.name?.toLowerCase().includes(searchLower) ||
-          expeditor.phone_number?.includes(searchLower) ||
-          expeditor.transport_number?.toLowerCase().includes(searchLower)
-          || expeditor.filial?.toLowerCase().includes(searchLower)
-        )
-      })
-    : []
+  ? expeditors.filter((expeditor) => {
+      // Find the filial name corresponding to filters.filial (ID)
+      const selectedFilialName = filters.filial
+        ? filial.find((f) => String(f.id) === filters.filial)?.filial_name
+        : undefined;
+
+      // Filial filter: Compare expeditor.filial with the selected filial name
+      if (filters.filial && selectedFilialName && expeditor.filial !== selectedFilialName) {
+        return false;
+      }
+
+      // Search query filter
+      if (!expeditorSearchQuery) return true;
+      const searchLower = expeditorSearchQuery.toLowerCase();
+      return (
+        expeditor.name?.toLowerCase().includes(searchLower) ||
+        expeditor.phone_number?.includes(searchLower) ||
+        expeditor.transport_number?.toLowerCase().includes(searchLower) ||
+        expeditor.filial?.toLowerCase().includes(searchLower)
+      );
+    })
+  : [];
 
   // Filter checks based on current filters and selected expeditor
   const filteredChecks = Array.isArray(checks)
@@ -169,6 +205,7 @@ export default function ExpeditorTracker() {
       project: "",
       sklad: "",
       city: "",
+      filial: "",
       expeditor: "",
       status: "",
       paymentMethod: "",
@@ -319,6 +356,29 @@ export default function ExpeditorTracker() {
                 </Select>
               </div>
 
+              {/* Filial filter */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
+                <Select
+                  value={filters.filial}  
+                  onValueChange={(value) => setFilters((prev) => ({ ...prev, filial: value === "all" ? "" : value }))}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="All Filials" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Filials</SelectItem>
+                    {Array.isArray(filial) &&
+                      filial.map((filial) => (
+                        // Ensure filial has id and name properties                        
+                        <SelectItem key={filial.id} value={String(filial.id)}>
+                          {filial.filial_name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Clear Filters Button */}
               {activeFiltersCount > 0 && (
                 <Button
@@ -414,14 +474,20 @@ export default function ExpeditorTracker() {
     </div>
   )
 
+  // if (isLoading) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <LoadingSpinner size="lg" />
+  //     </div>
+  //   )
+  // }
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10">
         <LoadingSpinner size="lg" />
       </div>
     )
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
