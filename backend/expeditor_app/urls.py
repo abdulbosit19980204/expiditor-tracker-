@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     StatisticsView, ProjectsViewSet, CheckDetailViewSet, 
-    SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet,FilialViewSet,
+    SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet,
 )
 from .integration import UpdateChecksView
 
@@ -12,7 +12,6 @@ router.register(r'projects', ProjectsViewSet)
 router.register(r'check-details', CheckDetailViewSet)
 router.register(r'sklad', SkladViewSet)
 router.register(r'city', CityViewSet)
-router.register(r'filial', FilialViewSet)  # Registering FilialViewSet
 router.register(r'ekispiditor', EkispiditorViewSet)
 router.register(r'check', CheckViewSet)
 

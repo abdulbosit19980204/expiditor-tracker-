@@ -271,7 +271,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import type { Check, Expeditor } from "@/lib/types"
-import { log } from "console"
 
 interface MapComponentProps {
   checks: Check[]
@@ -347,7 +346,7 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
 
   const [status, setStatus] = useState<"loading" | "ready" | "fallback" | "error">("loading")
   const [errMsg, setErrMsg] = useState("")
-  
+
   // Load Yandex Maps script (proxy → demo fallback)
   useEffect(() => {
     if (typeof window === "undefined" || window.ymaps) {
@@ -369,9 +368,7 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
     const init = async () => {
       try {
         // 1. Try secure proxy (keeps key hidden)
-        // await loadScript("/api/yandex-maps?lang=en_US&v=2.1")
-        await loadScript("https://api-maps.yandex.ru/2.1/?apikey=5080fe14-e264-4e2a-9e31-164d4b96da6e&lang=en_US")
-
+        await loadScript("/api/yandex-maps?lang=en_US&v=2.1")
       } catch {
         // 2. Fallback to Yandex demo key (limited quota)
         await loadScript("https://api-maps.yandex.ru/2.1/?apikey=5080fe14-e264-4e2a-9e31-164d4b96da6e&lang=en_US")
@@ -413,7 +410,7 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
 
     const map = mapRef.current
     map.geoObjects.removeAll()
-    
+
     // Draw placemarks
     checks.forEach((c) => {
       if (!c.check_lat || !c.check_lon) return
@@ -446,8 +443,6 @@ export function MapComponent({ checks, selectedExpeditor, loading, onCheckClick,
 
     // Draw polylines for selected expeditor, colored by day
     if (selectedExpeditor) {
-      console.log(checks, selectedExpeditor);
-      
       const expChecks = checks
         .filter(
           (c) =>

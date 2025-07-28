@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePickerWithRange } from "@/components/date-range-picker"
-import type { FilterOptions, Project, Sklad, City, Filial } from "@/lib/types"
+import type { FilterOptions, Project, Sklad, City } from "@/lib/types"
 
 interface AdvancedFiltersProps {
   filters: FilterOptions
@@ -14,7 +14,6 @@ interface AdvancedFiltersProps {
   projects?: Project[]
   sklads?: Sklad[]
   cities?: City[]
-  filials?: Filial[] // Added filials prop
 }
 
 export function AdvancedFilters({
@@ -23,7 +22,6 @@ export function AdvancedFilters({
   projects = [],
   sklads = [],
   cities = [],
-  filials = [], // Added filials default value
 }: AdvancedFiltersProps) {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -43,7 +41,6 @@ export function AdvancedFilters({
       project: "",
       sklad: "",
       city: "",
-      filial: "", // Reset filial filter
       status: "",
       paymentMethod: "",
     })
@@ -120,26 +117,7 @@ export function AdvancedFilters({
               </SelectContent>
             </Select>
           </div>
-          {/* Filial Filter */}
-          <div>
-          <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
-          <Select
-            value={filters.filial || "all"}
-            onValueChange={(value) => onFiltersChange({ ...filters, filial: value === "all" ? "" : value })}
-          >
-            <SelectTrigger className="h-8">
-              <SelectValue placeholder="All Filial" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Filial</SelectItem>
-              {filials.map((filial) => (
-                <SelectItem key={filial.id} value={String(filial.id)}>
-                  {filial.filial_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+
           {/* City Filter */}
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
@@ -160,7 +138,6 @@ export function AdvancedFilters({
               </SelectContent>
             </Select>
           </div>
-          
 
           {/* Status Filter */}
           <div>

@@ -20,7 +20,7 @@ class SkladSerializer(serializers.ModelSerializer):
 class FilialSerializer(serializers.ModelSerializer):
     class Meta:
         model = Filial
-        fields = ['id','filial_name','filial_code' ]
+        fields = ['filial_name' ]
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
