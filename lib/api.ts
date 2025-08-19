@@ -38,6 +38,7 @@ function transformExpeditor(backendData: any): Expeditor {
     photo: backendData.photo || "/placeholder-user.jpg",
   }
 }
+
 // Helper to transform each check item
 function transformCheck(item: any): Check {
   return {
@@ -57,9 +58,9 @@ function transformCheck(item: any): Check {
     status: item.status || "",
 
     // check_detail
-    check_date: item.check_detail?.check_date || "",
-    check_lat: item.check_detail?.check_lat || 0,
-    check_lon: item.check_detail?.check_lon || 0,
+    check_date: item.check_detail?.check_date || item.yetkazilgan_vaqti || "",
+    check_lat: item.check_detail?.check_lat || item.check_lat || 0,
+    check_lon: item.check_detail?.check_lon || item.check_lon || 0,
     total_sum: item.check_detail?.total_sum || 0,
     nalichniy: item.check_detail?.nalichniy || 0,
     uzcard: item.check_detail?.uzcard || 0,
@@ -71,15 +72,6 @@ function transformCheck(item: any): Check {
     updated_at: item.updated_at || "",
   }
 }
-function transformFilial(item: any): Filial {
-  return {
-    id: item.id?.toString() || "",
-    filial_name: item.filial_name || "",
-    filial_code: item.filial_code || "",
-  }
-}
-
-
 
 // Projects API
 export async function getProjects(): Promise<Project[]> {
@@ -125,7 +117,6 @@ export async function getProjects(): Promise<Project[]> {
     },
   ]
 }
-
 
 // Sklads API
 export async function getSklads(): Promise<Sklad[]> {
@@ -223,7 +214,7 @@ export async function getCities(): Promise<City[]> {
   ]
 }
 
-//Filials API
+// Filials API
 export async function getFilials(): Promise<Filial[]> {
   const data = await apiRequestSafe<{
     count: number
@@ -231,7 +222,7 @@ export async function getFilials(): Promise<Filial[]> {
     previous: string | null
     results: any[]
   }>("/filial/")
-  
+
   if (data && Array.isArray(data.results)) {
     return data.results.map((item) => ({
       id: item.id?.toString() || "",
@@ -268,7 +259,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
     previous: string | null
     results: any[]
   }>("/ekispiditor/")
-  
+
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformExpeditor)
   }
@@ -280,7 +271,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998901234567",
       transport_number: "T001ABC",
       photo: "/placeholder-user.jpg",
-      filial: "Filial 1" // Default value, can be updated later
+      filial: "Filial 1",
     },
     {
       id: "2",
@@ -288,7 +279,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998907654321",
       transport_number: "T002DEF",
       photo: "/placeholder-user.jpg",
-      filial: "Filial 2" // Default value, can be updated later
+      filial: "Filial 2",
     },
     {
       id: "3",
@@ -296,7 +287,7 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998909876543",
       transport_number: "T003GHI",
       photo: "/placeholder-user.jpg",
-      filial: "Filial 3" // Default value, can be updated later
+      filial: "Filial 3",
     },
     {
       id: "4",
@@ -304,51 +295,52 @@ export async function getExpeditors(): Promise<Expeditor[]> {
       phone_number: "+998905432109",
       transport_number: "T004JKL",
       photo: "/placeholder-user.jpg",
-      filial: "Filial 1" // Default value, can be updated later
+      filial: "Filial 1",
     },
   ]
 }
 
-// Checks API
+// Checks API - Now properly handles backend filtering
 export async function getChecks(filters?: {
+  expeditor_id?: string
   dateRange?: { from: Date | undefined; to: Date | undefined }
   project?: string
   sklad?: string
   city?: string
-  expeditor?: string
   status?: string
-  paymentMethod?: string
-  search?: string,
-  id?: string | number | null// Added for filtering by expeditor ID
+  search?: string
 }): Promise<Check[]> {
   let endpoint = "/check/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
 
-    // if (filters.dataRange) queryParams.append("date_from", filters.dataRange.from?.toISOString() || "561")
-    // if (filters.dataRange) queryParams.append("date_to", filters.dataRange.to?.toISOString() || "")
+    // Expeditor ID filter
+    if (filters.expeditor_id) {
+      queryParams.append("ekispiditor_id", filters.expeditor_id)
+    }
+
     // Date range filters
     if (filters.dateRange?.from) {
-      queryParams.append('date_from', filters.dateRange.from.toISOString())
+      queryParams.append("date_from", filters.dateRange.from.toISOString())
     }
     if (filters.dateRange?.to) {
-      queryParams.append('date_to', filters.dateRange.to.toISOString())
+      queryParams.append("date_to", filters.dateRange.to.toISOString())
     }
+
+    // Other filters
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
-    if (filters.expeditor) queryParams.append("ekispiditor", filters.expeditor)
     if (filters.status) queryParams.append("status", filters.status)
     if (filters.search) queryParams.append("search", filters.search)
-    if (filters.id) queryParams.append("id", filters.id.toString())
-    
+
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
-      console.log(`Fetching checks with filters: ${endpoint}`) // Debug log;
-      
     }
   }
+
+  console.log(`Fetching checks from: ${endpoint}`)
 
   const data = await apiRequestSafe<{
     count: number
@@ -356,8 +348,7 @@ export async function getChecks(filters?: {
     previous: string | null
     results: any[]
   }>(endpoint)
-  console.log(`API Response for checks:`, data) // Debug log;
-  
+
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformCheck)
   }
@@ -421,127 +412,34 @@ export async function getChecks(filters?: {
     },
   ]
 
-  // Optional: filter mock data locally
-  if (filters) {
-    return mockChecks.filter((check) => {
-      if (filters.project && check.project !== filters.project) return false
-      if (filters.sklad && check.sklad !== filters.sklad) return false
-      if (filters.city && check.city !== filters.city) return false
-      if (filters.expeditor && check.ekispiditor !== filters.expeditor) return false
-      if (filters.status && check.status !== filters.status) return false
-      if (filters.search) {
-        const s = filters.search.toLowerCase()
-        return (
-          check.check_id.toLowerCase().includes(s) ||
-          check.ekispiditor?.toLowerCase().includes(s) ||
-          check.project?.toLowerCase().includes(s)
-        )
-      }
-      return true
-    })
-  }
-
   return mockChecks
 }
 
-
-// Check Details API
-export async function getCheckDetails(): Promise<any[]> {
-  const data = await apiRequestSafe<any[]>("/check-details/")
-  return data || []
-}
-
-// Statistics API
-// export async function getStatistics(filters?: any): Promise<Statistics> {
-//   let endpoint = "/statistics/"
-
-//   if (filters) {
-//     const queryParams = new URLSearchParams()
-//     Object.entries(filters).forEach(([key, value]) => {
-//       if (value) {
-//         queryParams.append(key, String(value))
-//       }
-//     })
-
-//     if (queryParams.toString()) {
-//       endpoint += `?${queryParams.toString()}`
-//     }
-//   }
-
-//   const data = await apiRequestSafe<any>(endpoint)
-
-//   if (data) {
-//     // Transform backend statistics format to frontend format
-//     return {
-//       totalChecks: data.overview?.total_checks || data.totalChecks || 0,
-//       totalSum: data.payment_stats?.total_sum || data.totalSum || 0,
-//       todayChecks: data.overview?.today_checks_count || data.todayChecks || 0,
-//       successRate: data.overview?.success_rate || data.successRate || 0,
-//       paymentMethods: {
-//         nalichniy: data.payment_stats?.nalichniy || data.paymentMethods?.nalichniy || 0,
-//         uzcard: data.payment_stats?.uzcard || data.paymentMethods?.uzcard || 0,
-//         humo: data.payment_stats?.humo || data.paymentMethods?.humo || 0,
-//         click: data.payment_stats?.click || data.paymentMethods?.click || 0,
-//       },
-//       topExpeditors: (data.top_expeditors || data.topExpeditors || []).map((item: any) => ({
-//         name: item.ekispiditor || item.name || "",
-//         checkCount: item.check_count || item.checkCount || 0,
-//         totalSum: item.total_sum || item.totalSum || 0,
-//       })),
-//       topProjects: (data.top_projects || data.topProjects || []).map((item: any) => ({
-//         name: item.project || item.name || "",
-//         checkCount: item.check_count || item.checkCount || 0,
-//         totalSum: item.total_sum || item.totalSum || 0,
-//       })),
-//       topCities: (data.top_cities || data.topCities || []).map((item: any) => ({
-//         name: item.city || item.name || "",
-//         checkCount: item.check_count || item.checkCount || 0,
-//         totalSum: item.total_sum || item.totalSum || 0,
-//       })),
-//     }
-//   }
-
-//   // Mock statistics fallback
-//   return {
-//     totalChecks: 4,
-//     totalSum: 900000,
-//     todayChecks: 3,
-//     successRate: 100,
-//     paymentMethods: {
-//       nalichniy: 400000,
-//       uzcard: 350000,
-//       humo: 100000,
-//       click: 50000,
-//     },
-//     topExpeditors: [
-//       { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
-//       { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
-//       { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
-//       { name: "Jasur Abdullayev", checkCount: 1, totalSum: 250000 },
-//     ],
-//     topProjects: [
-//       { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
-//       { name: "Loyiha 2", checkCount: 1, totalSum: 200000 },
-//       { name: "Loyiha 3", checkCount: 1, totalSum: 250000 },
-//     ],
-//     topCities: [
-//       { name: "Toshkent", checkCount: 2, totalSum: 350000 },
-//       { name: "Samarqand", checkCount: 1, totalSum: 300000 },
-//       { name: "Buxoro", checkCount: 1, totalSum: 250000 },
-//     ],
-//   }
-// }
-// Updated getStatistics function
+// Statistics API - Updated to handle backend filtering
 export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        queryParams.append(key, String(value))
-      }
-    })
+
+    // Expeditor ID filter
+    if (filters.expeditor_id) {
+      queryParams.append("ekispiditor_id", filters.expeditor_id)
+    }
+
+    // Date range filters
+    if (filters.dateRange?.from) {
+      queryParams.append("date_from", filters.dateRange.from.toISOString())
+    }
+    if (filters.dateRange?.to) {
+      queryParams.append("date_to", filters.dateRange.to.toISOString())
+    }
+
+    // Other filters
+    if (filters.project) queryParams.append("project", filters.project)
+    if (filters.sklad) queryParams.append("sklad", filters.sklad)
+    if (filters.city) queryParams.append("city", filters.city)
+    if (filters.status) queryParams.append("status", filters.status)
 
     if (queryParams.toString()) {
       endpoint += `?${queryParams.toString()}`
@@ -616,11 +514,12 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
       { name: "Samarqand", checkCount: 1, totalSum: 300000 },
     ],
     dailyStats: [
-      { date: "2025-07-21", checks: 3 },
-      { date: "2025-07-20", checks: 1 },
+      { date: "2025-01-19", checks: 3 },
+      { date: "2025-01-18", checks: 1 },
     ],
   }
 }
+
 // Export all API functions
 export const api = {
   getProjects,
@@ -628,7 +527,6 @@ export const api = {
   getCities,
   getExpeditors,
   getChecks,
-  getCheckDetails,
   getStatistics,
   getFilials,
 }

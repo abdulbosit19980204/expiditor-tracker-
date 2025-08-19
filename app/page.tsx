@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
-import { Search, Users, MapPin, Receipt, Filter, ChevronDown, ChevronUp, X, Menu } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,7 +18,6 @@ import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
-import { se } from "date-fns/locale"
 
 interface FilterState {
   dateRange: { from: Date | undefined; to: Date | undefined }
@@ -41,7 +40,7 @@ export default function ExpeditorTracker() {
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
   const [cities, setCities] = useState<City[]>([])
-  const [filial, setFilial] = useState<Filial[]>([])
+  const [filials, setFilials] = useState<Filial[]>([])
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
   const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
@@ -73,21 +72,19 @@ export default function ExpeditorTracker() {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [expeditorsData, projectsData, skladsData, citiesData, filialData, statisticsData] = await Promise.all([
+        const [expeditorsData, projectsData, skladsData, citiesData, filialsData] = await Promise.all([
           api.getExpeditors(),
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
           api.getFilials(),
-          api.getStatistics(),
         ])
-        // Ensure arrays are properly set
+
         setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
         setProjects(Array.isArray(projectsData) ? projectsData : [])
         setSklads(Array.isArray(skladsData) ? skladsData : [])
         setCities(Array.isArray(citiesData) ? citiesData : [])
-        setFilial(Array.isArray(filialData) ? filialData : [])
-        setStatistics(statisticsData)
+        setFilials(Array.isArray(filialsData) ? filialsData : [])
 
         // Select first expeditor by default
         if (Array.isArray(expeditorsData) && expeditorsData.length > 0) {
@@ -95,12 +92,11 @@ export default function ExpeditorTracker() {
         }
       } catch (error) {
         console.error("Error loading data:", error)
-        // Set empty arrays as fallback
         setExpeditors([])
         setProjects([])
         setSklads([])
         setCities([])
-        setFilial([])
+        setFilials([])
       } finally {
         setIsLoading(false)
       }
@@ -109,80 +105,62 @@ export default function ExpeditorTracker() {
     loadData()
   }, [])
 
+  // Load checks and statistics when expeditor or filters change
   useEffect(() => {
-    const loadData = async () => {
+    const loadChecksAndStats = async () => {
+      if (!selectedExpeditor) return
+
       setIsLoading(true)
       try {
-        const [checksData] = await Promise.all([
-          api.getChecks({id:selectedExpeditor?.id, ...filters }),
+        // Prepare filters for backend
+        const backendFilters = {
+          expeditor_id: selectedExpeditor.id,
+          dateRange: filters.dateRange,
+          project: filters.project,
+          sklad: filters.sklad,
+          city: filters.city,
+          status: filters.status,
+          search: checkSearchQuery,
+        }
+
+        const [checksData, statisticsData] = await Promise.all([
+          api.getChecks(backendFilters),
+          api.getStatistics(backendFilters),
         ])
-        // Ensure arrays are properly set
+
         setChecks(Array.isArray(checksData) ? checksData : [])
+        setStatistics(statisticsData)
       } catch (error) {
-        console.error("Error loading data:", error)
-        // Set empty arrays as fallback
+        console.error("Error loading checks and statistics:", error)
         setChecks([])
       } finally {
         setIsLoading(false)
       }
     }
-    loadData()
-    
-  },[selectedExpeditor, filters])
 
-  
-  // Filter expeditors based on search and selected filial
+    loadChecksAndStats()
+  }, [selectedExpeditor, filters, checkSearchQuery])
+
+  // Filter expeditors based on search and filial (frontend filtering for expeditors only)
   const filteredExpeditors = Array.isArray(expeditors)
-  ? expeditors.filter((expeditor) => {
-      // Find the filial name corresponding to filters.filial (ID)
-      const selectedFilialName = filters.filial
-        ? filial.find((f) => String(f.id) === filters.filial)?.filial_name
-        : undefined;
-
-      // Filial filter: Compare expeditor.filial with the selected filial name
-      if (filters.filial && selectedFilialName && expeditor.filial !== selectedFilialName) {
-        return false;
-      }
-
-      // Search query filter
-      if (!expeditorSearchQuery) return true;
-      const searchLower = expeditorSearchQuery.toLowerCase();
-      return (
-        expeditor.name?.toLowerCase().includes(searchLower) ||
-        expeditor.phone_number?.includes(searchLower) ||
-        expeditor.transport_number?.toLowerCase().includes(searchLower) ||
-        expeditor.filial?.toLowerCase().includes(searchLower)
-      );
-    })
-  : [];
-
-  // Filter checks based on current filters and selected expeditor
-  const filteredChecks = Array.isArray(checks)
-    ? checks.filter((check) => {
-        // Expeditor filter
-        if (selectedExpeditor && check.ekispiditor !== selectedExpeditor.name) return false
-
-        // Date range filter
-        if (filters.dateRange.from || filters.dateRange.to) {
-          const checkDate = new Date(check.check_date)
-          if (filters.dateRange.from && checkDate < filters.dateRange.from) return false
-          if (filters.dateRange.to && checkDate > filters.dateRange.to) return false
+    ? expeditors.filter((expeditor) => {
+        // Filial filter
+        if (filters.filial) {
+          const selectedFilial = filials.find((f) => String(f.id) === filters.filial)
+          if (selectedFilial && expeditor.filial !== selectedFilial.filial_name) {
+            return false
+          }
         }
 
-        // Other filters
-        if (filters.project && check.project !== filters.project) return false
-        if (filters.sklad && check.sklad !== filters.sklad) return false
-        if (filters.city && check.city !== filters.city) return false
-
-        // Search filter
-        if (checkSearchQuery) {
-          const searchLower = checkSearchQuery.toLowerCase()
-          const matchesSearch =
-            check.check_id?.toLowerCase().includes(searchLower) ||
-            check.project?.toLowerCase().includes(searchLower) ||
-            check.city?.toLowerCase().includes(searchLower) ||
-            check.kkm_number?.toLowerCase().includes(searchLower)
-          if (!matchesSearch) return false
+        // Search query filter
+        if (expeditorSearchQuery) {
+          const searchLower = expeditorSearchQuery.toLowerCase()
+          return (
+            expeditor.name?.toLowerCase().includes(searchLower) ||
+            expeditor.phone_number?.includes(searchLower) ||
+            expeditor.transport_number?.toLowerCase().includes(searchLower) ||
+            expeditor.filial?.toLowerCase().includes(searchLower)
+          )
         }
 
         return true
@@ -237,21 +215,6 @@ export default function ExpeditorTracker() {
     )
   }
 
-  // Get today's checks count for expeditor
-  const getTodayChecksCount = (expeditorName: string) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    return Array.isArray(checks)
-      ? checks.filter((check) => {
-          const checkDate = new Date(check.check_date)
-          return check.ekispiditor === expeditorName && checkDate >= today && checkDate < tomorrow
-        }).length
-      : 0
-  }
-
   // Sidebar content component
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
@@ -302,12 +265,11 @@ export default function ExpeditorTracker() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Projects</SelectItem>
-                    {Array.isArray(projects) &&
-                      projects.map((project) => (
-                        <SelectItem key={project.id} value={project.project_name}>
-                          {project.project_name}
-                        </SelectItem>
-                      ))}
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.project_name}>
+                        {project.project_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -324,12 +286,11 @@ export default function ExpeditorTracker() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Warehouses</SelectItem>
-                    {Array.isArray(sklads) &&
-                      sklads.map((sklad) => (
-                        <SelectItem key={sklad.id} value={sklad.sklad_name}>
-                          {sklad.sklad_name}
-                        </SelectItem>
-                      ))}
+                    {sklads.map((sklad) => (
+                      <SelectItem key={sklad.id} value={sklad.sklad_name}>
+                        {sklad.sklad_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -346,21 +307,20 @@ export default function ExpeditorTracker() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Cities</SelectItem>
-                    {Array.isArray(cities) &&
-                      cities.map((city) => (
-                        <SelectItem key={city.id} value={city.city_name}>
-                          {city.city_name}
-                        </SelectItem>
-                      ))}
+                    {cities.map((city) => (
+                      <SelectItem key={city.id} value={city.city_name}>
+                        {city.city_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Filial filter */}
+              {/* Filial Filter */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
                 <Select
-                  value={filters.filial}  
+                  value={filters.filial}
                   onValueChange={(value) => setFilters((prev) => ({ ...prev, filial: value === "all" ? "" : value }))}
                 >
                   <SelectTrigger className="h-8">
@@ -368,13 +328,30 @@ export default function ExpeditorTracker() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Filials</SelectItem>
-                    {Array.isArray(filial) &&
-                      filial.map((filial) => (
-                        // Ensure filial has id and name properties                        
-                        <SelectItem key={filial.id} value={String(filial.id)}>
-                          {filial.filial_name}
-                        </SelectItem>
-                      ))}
+                    {filials.map((filial) => (
+                      <SelectItem key={filial.id} value={String(filial.id)}>
+                        {filial.filial_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
+                <Select
+                  value={filters.status}
+                  onValueChange={(value) => setFilters((prev) => ({ ...prev, status: value === "all" ? "" : value }))}
+                >
+                  <SelectTrigger className="h-8">
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -411,95 +388,64 @@ export default function ExpeditorTracker() {
       </div>
 
       {/* Expeditors List */}
-      
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
-      {filteredExpeditors.length === 0 ? (
-          <div className="p-4">
-            <div className="animate-pulse space-y-4">
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded"></div>
-                <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-              </div>
-            </div>
+        {filteredExpeditors.length === 0 ? (
+          <div className="text-center text-gray-500 mt-8">
+            <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p>No expeditors found</p>
           </div>
-        ) : null}
-        {filteredExpeditors.map((expeditor) => (
-          <Card
-            key={expeditor.id}
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
-            }`}
-            onClick={() => {
-              setSelectedExpeditor(expeditor)
-              if (isMobile) {
-                setIsSidebarOpen(false)
-              }
-            }}
-          >
-            
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="relative">
+        ) : (
+          filteredExpeditors.map((expeditor) => (
+            <Card
+              key={expeditor.id}
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
+              }`}
+              onClick={() => {
+                setSelectedExpeditor(expeditor)
+                if (isMobile) {
+                  setIsSidebarOpen(false)
+                }
+              }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-3">
                   <Avatar>
                     <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
                     <AvatarFallback>
-                      {expeditor.name?.split(" ").map((n) => n[0]).join("") || "EX"}
+                      {expeditor.name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("") || "EX"}
                     </AvatarFallback>
                   </Avatar>
-                  {/* Bugungi checklar soni badge */}
-                  <span
-                    className="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-bold rounded-full px-2 py-0.5 shadow"
-                    title="Today's checks"
-                  >
-                    {getTodayChecksCount(expeditor.name)}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
-                  <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
-                  <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    <strong>Filial:</strong> {expeditor.filial || "Biriktirilmagan"}
-                  </p>
-                  {/* Filterga mos checklar soni */}
-                  <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="outline" className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
-                    {
-                      checks.filter((check) => check.ekispiditor === expeditor.name &&
-                        // filterlar bo‘yicha ham hisoblash kerak bo‘lsa:
-                        (!filters.project || check.project === filters.project) &&
-                        (!filters.sklad || check.sklad === filters.sklad) &&
-                        (!filters.city || check.city === filters.city) &&
-                        (!filters.dateRange.from || new Date(check.check_date) >= filters.dateRange.from) &&
-                        (!filters.dateRange.to || new Date(check.check_date) <= filters.dateRange.to)
-                      ).length
-                    } checks filtered  
-                  </Badge>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
+                    <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
+                    <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
+                    {expeditor.filial && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        <strong>Filial:</strong> {expeditor.filial}
+                      </p>
+                    )}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   )
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <LoadingSpinner size="lg" />
-  //     </div>
-  //   )
-  // }
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10">
+      <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     )
   }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
@@ -535,9 +481,9 @@ export default function ExpeditorTracker() {
           {/* Map */}
           <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
             <MapComponent
-              checks={filteredChecks}
+              checks={checks}
               selectedExpeditor={selectedExpeditor}
-              loading={false}
+              loading={isLoading}
               onCheckClick={handleCheckClick}
               focusLocation={focusLocation}
             />
@@ -556,7 +502,7 @@ export default function ExpeditorTracker() {
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
                   Checks
-                  {selectedExpeditor && <Badge variant="outline">{filteredChecks.length}</Badge>}
+                  {selectedExpeditor && <Badge variant="outline">{checks.length}</Badge>}
                 </h2>
 
                 {selectedExpeditor && (
@@ -578,13 +524,13 @@ export default function ExpeditorTracker() {
                     <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                     <p>Select an expeditor to view checks</p>
                   </div>
-                ) : filteredChecks.length === 0 ? (
+                ) : checks.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
                     <p>No checks found</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredChecks.map((check) => (
+                    {checks.map((check) => (
                       <Card key={check.id} className="hover:shadow-sm transition-shadow">
                         <CardContent className="p-4">
                           <div className="space-y-2">
