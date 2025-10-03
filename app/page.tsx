@@ -1,630 +1,389 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { MapComponent } from "@/components/map-component"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { MapPin, Phone, Package, Building, DollarSign, Users, CheckCircle } from "lucide-react"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
+import { MapComponent } from "@/components/map-component"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { useIsMobile } from "@/hooks/use-mobile"
-import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
-import { api } from "@/lib/api"
-
-interface FilterState {
-  dateRange: { from: Date | undefined; to: Date | undefined }
-  project: string
-  sklad: string
-  city: string
-  filial: string
-  expeditor: string
-  status: string
-  paymentMethod: string
-  searchQuery: string
-}
+import {
+  getExpeditors,
+  getChecks,
+  getFilials,
+  getStatistics,
+  type Expeditor,
+  type Check,
+  type Filial,
+  type Statistics,
+  type FilterParams,
+} from "@/lib/api"
 
 export default function ExpeditorTracker() {
-  const isMobile = useIsMobile()
-
   // State management
-  const [checks, setChecks] = useState<Check[]>([])
   const [expeditors, setExpeditors] = useState<Expeditor[]>([])
-  const [projects, setProjects] = useState<Project[]>([])
-  const [sklads, setSklads] = useState<Sklad[]>([])
-  const [cities, setCities] = useState<City[]>([])
+  const [filteredExpeditors, setFilteredExpeditors] = useState<Expeditor[]>([])
+  const [checks, setChecks] = useState<Check[]>([])
   const [filials, setFilials] = useState<Filial[]>([])
-  const [statistics, setStatistics] = useState<Statistics | null>(null)
-  const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
-  const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
-  const [isCheckModalOpen, setIsCheckModalOpen] = useState(false)
-  const [focusLocation, setFocusLocation] = useState<{ lat: number; lng: number } | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [expeditorSearchQuery, setExpeditorSearchQuery] = useState("")
-  const [checkSearchQuery, setCheckSearchQuery] = useState("")
-
-  const [filters, setFilters] = useState<FilterState>({
-    dateRange: {
-      from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
-      to: new Date(),
-    },
-    project: "",
-    sklad: "",
-    city: "",
-    filial: "",
-    expeditor: "",
-    status: "",
-    paymentMethod: "",
-    searchQuery: "",
+  const [statistics, setStatistics] = useState<Statistics>({
+    total_checks: 0,
+    total_amount: 0,
+    status_distribution: [],
+    city_distribution: [],
+    project_distribution: [],
   })
+
+  // Filter states
+  const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedFilial, setSelectedFilial] = useState<string>("all") // Updated default value to 'all'
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  })
+
+  // UI states
+  const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingChecks, setIsLoadingChecks] = useState(false)
+  const isMobile = useIsMobile()
 
   // Load initial data
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       setIsLoading(true)
       try {
-        const [expeditorsData, projectsData, skladsData, citiesData, filialsData] = await Promise.all([
-          api.getExpeditors(),
-          api.getProjects(),
-          api.getSklads(),
-          api.getCities(),
-          api.getFilials(),
-        ])
+        const [expeditorsData, filialsData] = await Promise.all([getExpeditors(), getFilials()])
 
-        setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
-        setProjects(Array.isArray(projectsData) ? projectsData : [])
-        setSklads(Array.isArray(skladsData) ? skladsData : [])
-        setCities(Array.isArray(citiesData) ? citiesData : [])
-        setFilials(Array.isArray(filialsData) ? filialsData : [])
-
-        // Select first expeditor by default
-        if (Array.isArray(expeditorsData) && expeditorsData.length > 0) {
-          setSelectedExpeditor(expeditorsData[0])
-        }
+        setExpeditors(expeditorsData)
+        setFilials(filialsData)
       } catch (error) {
-        console.error("Error loading data:", error)
-        setExpeditors([])
-        setProjects([])
-        setSklads([])
-        setCities([])
-        setFilials([])
+        console.error("Error loading initial data:", error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadData()
+    loadInitialData()
   }, [])
 
-  // Load checks and statistics when expeditor or filters change
+  // Filter expeditors based on search and filial
+  useEffect(() => {
+    let filtered = expeditors
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (expeditor) =>
+          expeditor.name.toLowerCase().includes(searchTerm.toLowerCase()) || expeditor.phone.includes(searchTerm),
+      )
+    }
+
+    // Filter by filial
+    if (selectedFilial !== "all") {
+      filtered = filtered.filter((expeditor) => expeditor.filial?.toString() === selectedFilial)
+    }
+
+    setFilteredExpeditors(filtered)
+  }, [expeditors, searchTerm, selectedFilial])
+
+  // Load checks and statistics when filters change
   useEffect(() => {
     const loadChecksAndStats = async () => {
-      if (!selectedExpeditor) return
+      if (!selectedExpeditor) {
+        setChecks([])
+        setStatistics({
+          total_checks: 0,
+          total_amount: 0,
+          status_distribution: [],
+          city_distribution: [],
+          project_distribution: [],
+        })
+        return
+      }
 
-      setIsLoading(true)
+      setIsLoadingChecks(true)
       try {
-        // Prepare filters for backend
-        const backendFilters = {
+        const filters: FilterParams = {
           expeditor_id: selectedExpeditor.id,
-          dateRange: filters.dateRange,
-          project: filters.project,
-          sklad: filters.sklad,
-          city: filters.city,
-          status: filters.status,
-          search: checkSearchQuery,
         }
 
-        const [checksData, statisticsData] = await Promise.all([
-          api.getChecks(backendFilters),
-          api.getStatistics(backendFilters),
-        ])
+        // Add date range filters
+        if (dateRange.from) {
+          filters.date_from = dateRange.from.toISOString().split("T")[0]
+        }
+        if (dateRange.to) {
+          filters.date_to = dateRange.to.toISOString().split("T")[0]
+        }
 
-        setChecks(Array.isArray(checksData) ? checksData : [])
-        setStatistics(statisticsData)
+        const [checksData, statsData] = await Promise.all([getChecks(filters), getStatistics(filters)])
+
+        setChecks(checksData)
+        setStatistics(statsData)
       } catch (error) {
         console.error("Error loading checks and statistics:", error)
         setChecks([])
+        setStatistics({
+          total_checks: 0,
+          total_amount: 0,
+          status_distribution: [],
+          city_distribution: [],
+          project_distribution: [],
+        })
       } finally {
-        setIsLoading(false)
+        setIsLoadingChecks(false)
       }
     }
 
     loadChecksAndStats()
-  }, [selectedExpeditor, filters, checkSearchQuery])
+  }, [selectedExpeditor, dateRange])
 
-  // Filter expeditors based on search and filial (frontend filtering for expeditors only)
-  const filteredExpeditors = Array.isArray(expeditors)
-    ? expeditors.filter((expeditor) => {
-        // Filial filter
-        if (filters.filial) {
-          const selectedFilial = filials.find((f) => String(f.id) === filters.filial)
-          if (selectedFilial && expeditor.filial !== selectedFilial.filial_name) {
-            return false
-          }
-        }
-
-        // Search query filter
-        if (expeditorSearchQuery) {
-          const searchLower = expeditorSearchQuery.toLowerCase()
-          return (
-            expeditor.name?.toLowerCase().includes(searchLower) ||
-            expeditor.phone_number?.includes(searchLower) ||
-            expeditor.transport_number?.toLowerCase().includes(searchLower) ||
-            expeditor.filial?.toLowerCase().includes(searchLower)
-          )
-        }
-
-        return true
-      })
-    : []
-
-  // Count active filters
-  const activeFiltersCount = Object.values(filters).filter((value) => {
-    if (typeof value === "string") return value !== ""
-    if (typeof value === "object" && value !== null) {
-      return value.from !== undefined || value.to !== undefined
-    }
-    return false
-  }).length
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    setFilters({
-      dateRange: { from: undefined, to: undefined },
-      project: "",
-      sklad: "",
-      city: "",
-      filial: "",
-      expeditor: "",
-      status: "",
-      paymentMethod: "",
-      searchQuery: "",
-    })
-    setCheckSearchQuery("")
+  const handleExpeditorSelect = (expeditor: Expeditor) => {
+    setSelectedExpeditor(expeditor)
   }
 
-  // Handle check click
   const handleCheckClick = (check: Check) => {
     setSelectedCheck(check)
-    setIsCheckModalOpen(true)
   }
 
-  // Handle show location
-  const handleShowLocation = (check: Check) => {
-    if (check.check_lat && check.check_lon) {
-      setFocusLocation({ lat: check.check_lat, lng: check.check_lon })
-    }
+  const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
+    setDateRange(range || { from: undefined, to: undefined })
   }
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return (
-      new Intl.NumberFormat("uz-UZ", {
-        style: "decimal",
-        minimumFractionDigits: 0,
-      }).format(amount) + " UZS"
-    )
+  const clearFilters = () => {
+    setSearchTerm("")
+    setSelectedFilial("all") // Updated default value to 'all'
+    setDateRange({ from: undefined, to: undefined })
+    setSelectedExpeditor(null)
   }
-
-  // Sidebar content component
-  const SidebarContent = () => (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b border-gray-200">
-        <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Expeditor Tracker
-        </h1>
-
-        {/* Date Range Filter - Always Visible */}
-        <div className="mb-4">
-          <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
-          <DatePickerWithRange
-            dateRange={filters.dateRange}
-            onDateRangeChange={(range) =>
-              setFilters((prev) => ({ ...prev, dateRange: range || { from: undefined, to: undefined } }))
-            }
-          />
-        </div>
-
-        {/* Advanced Filters Toggle */}
-        <div className="mb-4">
-          <Button variant="outline" onClick={() => setIsFiltersOpen(!isFiltersOpen)} className="w-full justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Advanced Filters
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {activeFiltersCount}
-                </Badge>
-              )}
-            </div>
-            {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </Button>
-
-          {/* Collapsible Filters */}
-          {isFiltersOpen && (
-            <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
-              {/* Project Filter */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
-                <Select
-                  value={filters.project}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, project: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="All Projects" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Projects</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.project_name}>
-                        {project.project_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sklad Filter */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
-                <Select
-                  value={filters.sklad}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, sklad: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="All Warehouses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Warehouses</SelectItem>
-                    {sklads.map((sklad) => (
-                      <SelectItem key={sklad.id} value={sklad.sklad_name}>
-                        {sklad.sklad_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* City Filter */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
-                <Select
-                  value={filters.city}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, city: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="All Cities" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Cities</SelectItem>
-                    {cities.map((city) => (
-                      <SelectItem key={city.id} value={city.city_name}>
-                        {city.city_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Filial Filter */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
-                <Select
-                  value={filters.filial}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, filial: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="All Filials" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Filials</SelectItem>
-                    {filials.map((filial) => (
-                      <SelectItem key={filial.id} value={String(filial.id)}>
-                        {filial.filial_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value) => setFilters((prev) => ({ ...prev, status: value === "all" ? "" : value }))}
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="All Statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Clear Filters Button */}
-              {activeFiltersCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearAllFilters}
-                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <X className="h-3 w-3 mr-1" />
-                  Clear All Filters
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        <Separator className="my-4" />
-
-        {/* Expeditor Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-          <Input
-            placeholder="Search expeditors..."
-            value={expeditorSearchQuery}
-            onChange={(e) => setExpeditorSearchQuery(e.target.value)}
-            className="pl-10"
-            autoFocus
-          />
-        </div>
-      </div>
-
-      {/* Expeditors List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {filteredExpeditors.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
-            <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-            <p>No expeditors found</p>
-          </div>
-        ) : (
-          filteredExpeditors.map((expeditor) => (
-            <Card
-              key={expeditor.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
-              }`}
-              onClick={() => {
-                setSelectedExpeditor(expeditor)
-                if (isMobile) {
-                  setIsSidebarOpen(false)
-                }
-              }}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <Avatar>
-                    <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
-                    <AvatarFallback>
-                      {expeditor.name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("") || "EX"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
-                    <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
-                    <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
-                    {expeditor.filial && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        <strong>Filial:</strong> {expeditor.filial}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-    </div>
-  )
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Header */}
-      {isMobile && (
-        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Expeditor Tracker
-          </h1>
-          <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Menu className="h-4 w-4" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
-              <SidebarContent />
-            </SheetContent>
-          </Sheet>
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">Expeditor Tracker</h1>
+          <p className="text-gray-600">Track delivery couriers and their visited locations</p>
         </div>
-      )}
 
-      <div className={`flex ${isMobile ? "flex-col" : "h-screen"}`}>
-        {/* Desktop Sidebar */}
-        {!isMobile && (
-          <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-            <SidebarContent />
-          </div>
-        )}
-
-        {/* Main Content */}
-        <div className={`flex-1 ${isMobile ? "flex flex-col" : "flex"}`}>
-          {/* Map */}
-          <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
-            <MapComponent
-              checks={checks}
-              selectedExpeditor={selectedExpeditor}
-              loading={isLoading}
-              onCheckClick={handleCheckClick}
-              focusLocation={focusLocation}
-            />
-          </div>
-
-          {/* Right Panel - Statistics and Checks */}
-          <div className={`${isMobile ? "flex-1" : "w-96"} bg-white border-l border-gray-200 flex flex-col`}>
-            {/* Statistics Panel */}
-            <div className={`${isMobile ? "border-b" : "h-1/2 border-b"} border-gray-200`}>
-              <StatisticsPanel statistics={statistics} />
-            </div>
-
-            {/* Checks List */}
-            <div className={`${isMobile ? "flex-1" : "h-1/2"} flex flex-col`}>
-              <div className="p-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Checks
-                  {selectedExpeditor && <Badge variant="outline">{checks.length}</Badge>}
-                </h2>
-
-                {selectedExpeditor && (
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Search checks..."
-                      value={checkSearchQuery}
-                      onChange={(e) => setCheckSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                )}
+        {/* Filters */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Search Expeditors</label>
+                <Input
+                  placeholder="Search by name or phone..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4">
-                {!selectedExpeditor ? (
-                  <div className="text-center text-gray-500 mt-8">
-                    <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>Select an expeditor to view checks</p>
-                  </div>
-                ) : checks.length === 0 ? (
-                  <div className="text-center text-gray-500 mt-8">
-                    <p>No checks found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {checks.map((check) => (
-                      <Card key={check.id} className="hover:shadow-sm transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <Button
-                                variant="link"
-                                className="h-auto p-0 text-sm font-medium text-blue-600"
-                                onClick={() => handleCheckClick(check)}
-                              >
-                                {check.check_id}
-                              </Button>
-                              <Badge variant="outline" className="text-xs">
-                                {new Date(check.check_date).toLocaleDateString()}
-                              </Badge>
-                            </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Filial</label>
+                <Select value={selectedFilial} onValueChange={setSelectedFilial}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select filial" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Filials</SelectItem>
+                    {filials.map((filial) => (
+                      <SelectItem key={filial.id} value={filial.id.toString()}>
+                        {filial.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                            <div className="text-xs text-gray-600 space-y-1">
-                              <p>
-                                <strong>Project:</strong> {check.project}
-                              </p>
-                              <p>
-                                <strong>City:</strong> {check.city}
-                              </p>
-                              <p>
-                                <strong>KKM:</strong> {check.kkm_number}
-                              </p>
-                            </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Date Range</label>
+                <DatePickerWithRange dateRange={dateRange} onDateRangeChange={handleDateRangeChange} />
+              </div>
 
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-green-600">
-                                {formatCurrency(check.total_sum || 0)}
-                              </span>
-                              {check.check_lat && check.check_lon && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 text-xs bg-transparent"
-                                  onClick={() => handleShowLocation(check)}
-                                >
-                                  <MapPin className="h-3 w-3 mr-1" />
-                                  Show
-                                </Button>
-                              )}
-                            </div>
+              <div className="flex items-end">
+                <Button onClick={clearFilters} variant="outline" className="w-full bg-transparent">
+                  Clear Filters
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-                            {/* Payment Methods */}
-                            <div className="text-xs text-gray-500 space-y-1">
-                              {(check.nalichniy || 0) > 0 && (
-                                <div className="flex justify-between">
-                                  <span>Cash:</span>
-                                  <span>{formatCurrency(check.nalichniy || 0)}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Expeditors List */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Expeditors ({filteredExpeditors.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {filteredExpeditors.map((expeditor) => (
+                    <div
+                      key={expeditor.id}
+                      className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                        selectedExpeditor?.id === expeditor.id
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                      onClick={() => handleExpeditorSelect(expeditor)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={expeditor.photo || "/placeholder.svg"} alt={expeditor.name} />
+                          <AvatarFallback>
+                            {expeditor.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{expeditor.name}</p>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Phone className="h-3 w-3" />
+                            {expeditor.phone}
+                          </div>
+                          {expeditor.filial_name && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Building className="h-3 w-3" />
+                              {expeditor.filial_name}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {selectedExpeditor ? (
+              <>
+                {/* Statistics */}
+                <StatisticsPanel statistics={statistics} isLoading={isLoadingChecks} />
+
+                {/* Map */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5" />
+                      Locations Map
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64 md:h-80 lg:h-96">
+                      <MapComponent checks={checks} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Checks List */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      Recent Checks ({checks.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {isLoadingChecks ? (
+                      <div className="flex justify-center py-8">
+                        <LoadingSpinner />
+                      </div>
+                    ) : checks.length > 0 ? (
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {checks.map((check) => (
+                          <div
+                            key={check.id}
+                            className="p-4 border rounded-lg hover:border-gray-300 cursor-pointer transition-colors"
+                            onClick={() => handleCheckClick(check)}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">{check.holat}</Badge>
+                                  <span className="text-sm text-gray-500">
+                                    {check.sana} {check.vaqt}
+                                  </span>
                                 </div>
-                              )}
-                              {(check.uzcard || 0) > 0 && (
-                                <div className="flex justify-between">
-                                  <span>UzCard:</span>
-                                  <span>{formatCurrency(check.uzcard || 0)}</span>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Package className="h-4 w-4 text-gray-400" />
+                                    {check.loyiha}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <Building className="h-4 w-4 text-gray-400" />
+                                    {check.sklad}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm">
+                                    <MapPin className="h-4 w-4 text-gray-400" />
+                                    {check.shahar}
+                                  </div>
                                 </div>
-                              )}
-                              {(check.humo || 0) > 0 && (
-                                <div className="flex justify-between">
-                                  <span>Humo:</span>
-                                  <span>{formatCurrency(check.humo || 0)}</span>
+                              </div>
+                              <div className="text-right">
+                                <div className="flex items-center gap-1 text-lg font-semibold">
+                                  <DollarSign className="h-4 w-4" />
+                                  {check.summa.toLocaleString()}
                                 </div>
-                              )}
-                              {(check.click || 0) > 0 && (
-                                <div className="flex justify-between">
-                                  <span>Click:</span>
-                                  <span>{formatCurrency(check.click || 0)}</span>
-                                </div>
-                              )}
+                              </div>
                             </div>
                           </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        No checks found for the selected expeditor and date range.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select an Expeditor</h3>
+                  <p className="text-gray-500">Choose an expeditor from the list to view their checks and locations.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Check Modal */}
-      <CheckModal
-        check={selectedCheck}
-        isOpen={isCheckModalOpen}
-        onClose={() => {
-          setIsCheckModalOpen(false)
-          setSelectedCheck(null)
-        }}
-        onShowLocation={handleShowLocation}
-      />
+      {/* Check Details Modal */}
+      {selectedCheck && <CheckModal check={selectedCheck} onClose={() => setSelectedCheck(null)} />}
     </div>
   )
 }
