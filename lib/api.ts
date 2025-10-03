@@ -12,7 +12,7 @@ async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      cache: "no-store",
+      cache: "no-store", // Disable caching for real-time data
     })
 
     if (!res.ok) {
@@ -56,6 +56,8 @@ function transformCheck(item: any): Check {
     client_name: item.client_name || "",
     client_address: item.client_address || "",
     status: item.status || "",
+
+    // check_detail
     check_date: item.check_detail?.check_date || item.yetkazilgan_vaqti || "",
     check_lat: item.check_detail?.check_lat || item.check_lat || 0,
     check_lon: item.check_detail?.check_lon || item.check_lon || 0,
@@ -65,6 +67,7 @@ function transformCheck(item: any): Check {
     humo: item.check_detail?.humo || 0,
     click: item.check_detail?.click || 0,
     checkURL: item.check_detail?.checkURL || "",
+
     created_at: item.created_at || "",
     updated_at: item.updated_at || "",
   }
@@ -89,6 +92,7 @@ export async function getProjects(): Promise<Project[]> {
     }))
   }
 
+  // Return mock data if API fails or unexpected response
   return [
     {
       id: "1",
@@ -101,6 +105,13 @@ export async function getProjects(): Promise<Project[]> {
       id: "2",
       project_name: "Loyiha 2",
       project_description: "Ikkinchi loyiha",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      project_name: "Loyiha 3",
+      project_description: "Uchinchi loyiha",
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
@@ -136,6 +147,22 @@ export async function getSklads(): Promise<Sklad[]> {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
+    {
+      id: "2",
+      sklad_name: "Sklad 2",
+      sklad_code: "SKL002",
+      description: "Ikkinchi sklad",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      sklad_name: "Sklad 3",
+      sklad_code: "SKL003",
+      description: "Uchinchi sklad",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   ]
 }
 
@@ -168,6 +195,22 @@ export async function getCities(): Promise<City[]> {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
+    {
+      id: "2",
+      city_name: "Samarqand",
+      city_code: "SMQ",
+      description: "Tarixiy shahar",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: "3",
+      city_name: "Buxoro",
+      city_code: "BUX",
+      description: "Qadimiy shahar",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   ]
 }
 
@@ -188,6 +231,7 @@ export async function getFilials(): Promise<Filial[]> {
     }))
   }
 
+  // Mock data fallback
   return [
     {
       id: "1",
@@ -199,25 +243,22 @@ export async function getFilials(): Promise<Filial[]> {
       filial_name: "Filial 2",
       filial_code: "FIL002",
     },
+    {
+      id: "3",
+      filial_name: "Filial 3",
+      filial_code: "FIL003",
+    },
   ]
 }
 
 // Expeditors API
-export async function getExpeditors(filial?: string): Promise<Expeditor[]> {
-  let endpoint = "/ekispiditor/"
-
-  if (filial && filial !== "all") {
-    const queryParams = new URLSearchParams()
-    queryParams.append("filial", filial)
-    endpoint += `?${queryParams.toString()}`
-  }
-
+export async function getExpeditors(): Promise<Expeditor[]> {
   const data = await apiRequestSafe<{
     count: number
     next: string | null
     previous: string | null
     results: any[]
-  }>(endpoint)
+  }>("/ekispiditor/")
 
   if (data && Array.isArray(data.results)) {
     return data.results.map(transformExpeditor)
@@ -240,10 +281,26 @@ export async function getExpeditors(filial?: string): Promise<Expeditor[]> {
       photo: "/placeholder-user.jpg",
       filial: "Filial 2",
     },
+    {
+      id: "3",
+      name: "Sardor Rahimov",
+      phone_number: "+998909876543",
+      transport_number: "T003GHI",
+      photo: "/placeholder-user.jpg",
+      filial: "Filial 3",
+    },
+    {
+      id: "4",
+      name: "Jasur Abdullayev",
+      phone_number: "+998905432109",
+      transport_number: "T004JKL",
+      photo: "/placeholder-user.jpg",
+      filial: "Filial 1",
+    },
   ]
 }
 
-// Checks API
+// Checks API - Now properly handles backend filtering
 export async function getChecks(filters?: {
   expeditor_id?: string
   dateRange?: { from: Date | undefined; to: Date | undefined }
@@ -258,17 +315,20 @@ export async function getChecks(filters?: {
   if (filters) {
     const queryParams = new URLSearchParams()
 
+    // Expeditor ID filter
     if (filters.expeditor_id) {
-      queryParams.append("expeditor_id", filters.expeditor_id)
+      queryParams.append("ekispiditor_id", filters.expeditor_id)
     }
 
+    // Date range filters
     if (filters.dateRange?.from) {
-      queryParams.append("date_from", filters.dateRange.from.toISOString().split("T")[0])
+      queryParams.append("date_from", filters.dateRange.from.toISOString())
     }
     if (filters.dateRange?.to) {
-      queryParams.append("date_to", filters.dateRange.to.toISOString().split("T")[0])
+      queryParams.append("date_to", filters.dateRange.to.toISOString())
     }
 
+    // Other filters
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
@@ -280,7 +340,7 @@ export async function getChecks(filters?: {
     }
   }
 
-  console.log(`Fetching checks from: ${API_BASE_URL}${endpoint}`)
+  console.log(`Fetching checks from: ${endpoint}`)
 
   const data = await apiRequestSafe<{
     count: number
@@ -293,8 +353,9 @@ export async function getChecks(filters?: {
     return data.results.map(transformCheck)
   }
 
+  // Mock data fallback
   const now = new Date().toISOString()
-  return [
+  const mockChecks: Check[] = [
     {
       id: "1",
       check_id: "CHK001",
@@ -322,27 +383,59 @@ export async function getChecks(filters?: {
       updated_at: now,
       status: "delivered",
     },
+    {
+      id: "2",
+      check_id: "CHK002",
+      project: "Loyiha 2",
+      sklad: "Sklad 2",
+      city: "Samarqand",
+      sborshik: "Sborshik 2",
+      agent: "Agent 2",
+      ekispiditor: "Bobur Toshmatov",
+      yetkazilgan_vaqti: now,
+      transport_number: "T002XYZ",
+      kkm_number: "KKM002",
+      client_name: "Mijoz 2",
+      client_address: "Samarqand, Registon",
+      check_date: now,
+      check_lat: 39.627,
+      check_lon: 66.975,
+      total_sum: 200000,
+      nalichniy: 100000,
+      uzcard: 100000,
+      humo: 0,
+      click: 0,
+      checkURL: "https://soliq.uz/check/CHK002",
+      created_at: now,
+      updated_at: now,
+      status: "pending",
+    },
   ]
+
+  return mockChecks
 }
 
-// Statistics API
+// Statistics API - Updated to handle backend filtering
 export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
 
   if (filters) {
     const queryParams = new URLSearchParams()
 
+    // Expeditor ID filter
     if (filters.expeditor_id) {
-      queryParams.append("expeditor_id", filters.expeditor_id)
+      queryParams.append("ekispiditor_id", filters.expeditor_id)
     }
 
+    // Date range filters
     if (filters.dateRange?.from) {
-      queryParams.append("date_from", filters.dateRange.from.toISOString().split("T")[0])
+      queryParams.append("date_from", filters.dateRange.from.toISOString())
     }
     if (filters.dateRange?.to) {
-      queryParams.append("date_to", filters.dateRange.to.toISOString().split("T")[0])
+      queryParams.append("date_to", filters.dateRange.to.toISOString())
     }
 
+    // Other filters
     if (filters.project) queryParams.append("project", filters.project)
     if (filters.sklad) queryParams.append("sklad", filters.sklad)
     if (filters.city) queryParams.append("city", filters.city)
@@ -392,6 +485,7 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     }
   }
 
+  // Mock statistics fallback
   return {
     totalChecks: 4,
     deliveredChecks: 4,
@@ -409,6 +503,7 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     topExpeditors: [
       { name: "Alisher Karimov", checkCount: 1, totalSum: 150000 },
       { name: "Bobur Toshmatov", checkCount: 1, totalSum: 200000 },
+      { name: "Sardor Rahimov", checkCount: 1, totalSum: 300000 },
     ],
     topProjects: [
       { name: "Loyiha 1", checkCount: 2, totalSum: 450000 },
@@ -425,6 +520,7 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
   }
 }
 
+// Export all API functions
 export const api = {
   getProjects,
   getSklads,

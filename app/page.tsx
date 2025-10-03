@@ -34,6 +34,7 @@ interface FilterState {
 export default function ExpeditorTracker() {
   const isMobile = useIsMobile()
 
+  // State management
   const [checks, setChecks] = useState<Check[]>([])
   const [expeditors, setExpeditors] = useState<Expeditor[]>([])
   const [projects, setProjects] = useState<Project[]>([])
@@ -53,7 +54,7 @@ export default function ExpeditorTracker() {
 
   const [filters, setFilters] = useState<FilterState>({
     dateRange: {
-      from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
       to: new Date(),
     },
     project: "",
@@ -66,17 +67,17 @@ export default function ExpeditorTracker() {
     searchQuery: "",
   })
 
+  // Load initial data
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true)
       try {
-        const [expeditorsData, projectsData, skladsData, citiesData, filialsData, statisticsData] = await Promise.all([
+        const [expeditorsData, projectsData, skladsData, citiesData, filialsData] = await Promise.all([
           api.getExpeditors(),
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
           api.getFilials(),
-          api.getStatistics(),
         ])
 
         setExpeditors(Array.isArray(expeditorsData) ? expeditorsData : [])
@@ -84,8 +85,8 @@ export default function ExpeditorTracker() {
         setSklads(Array.isArray(skladsData) ? skladsData : [])
         setCities(Array.isArray(citiesData) ? citiesData : [])
         setFilials(Array.isArray(filialsData) ? filialsData : [])
-        setStatistics(statisticsData)
 
+        // Select first expeditor by default
         if (Array.isArray(expeditorsData) && expeditorsData.length > 0) {
           setSelectedExpeditor(expeditorsData[0])
         }
@@ -104,36 +105,54 @@ export default function ExpeditorTracker() {
     loadData()
   }, [])
 
+  // Load checks and statistics when expeditor or filters change
   useEffect(() => {
-    const loadData = async () => {
+    const loadChecksAndStats = async () => {
       if (!selectedExpeditor) return
 
       setIsLoading(true)
       try {
-        const [checksData] = await Promise.all([api.getChecks({ expeditor_id: selectedExpeditor.id, ...filters })])
+        // Prepare filters for backend
+        const backendFilters = {
+          expeditor_id: selectedExpeditor.id,
+          dateRange: filters.dateRange,
+          project: filters.project,
+          sklad: filters.sklad,
+          city: filters.city,
+          status: filters.status,
+          search: checkSearchQuery,
+        }
+
+        const [checksData, statisticsData] = await Promise.all([
+          api.getChecks(backendFilters),
+          api.getStatistics(backendFilters),
+        ])
+
         setChecks(Array.isArray(checksData) ? checksData : [])
+        setStatistics(statisticsData)
       } catch (error) {
-        console.error("Error loading data:", error)
+        console.error("Error loading checks and statistics:", error)
         setChecks([])
       } finally {
         setIsLoading(false)
       }
     }
-    loadData()
-  }, [selectedExpeditor, filters])
 
+    loadChecksAndStats()
+  }, [selectedExpeditor, filters, checkSearchQuery])
+
+  // Filter expeditors based on search and filial (frontend filtering for expeditors only)
   const filteredExpeditors = Array.isArray(expeditors)
     ? expeditors.filter((expeditor) => {
+        // Filial filter
         if (filters.filial) {
-          const selectedFilialName = filters.filial
-            ? filials.find((f) => String(f.id) === filters.filial)?.filial_name
-            : undefined
-
-          if (filters.filial && selectedFilialName && expeditor.filial !== selectedFilialName) {
+          const selectedFilial = filials.find((f) => String(f.id) === filters.filial)
+          if (selectedFilial && expeditor.filial !== selectedFilial.filial_name) {
             return false
           }
         }
 
+        // Search query filter
         if (expeditorSearchQuery) {
           const searchLower = expeditorSearchQuery.toLowerCase()
           return (
@@ -148,6 +167,7 @@ export default function ExpeditorTracker() {
       })
     : []
 
+  // Count active filters
   const activeFiltersCount = Object.values(filters).filter((value) => {
     if (typeof value === "string") return value !== ""
     if (typeof value === "object" && value !== null) {
@@ -156,6 +176,7 @@ export default function ExpeditorTracker() {
     return false
   }).length
 
+  // Clear all filters
   const clearAllFilters = () => {
     setFilters({
       dateRange: { from: undefined, to: undefined },
@@ -171,17 +192,20 @@ export default function ExpeditorTracker() {
     setCheckSearchQuery("")
   }
 
+  // Handle check click
   const handleCheckClick = (check: Check) => {
     setSelectedCheck(check)
     setIsCheckModalOpen(true)
   }
 
+  // Handle show location
   const handleShowLocation = (check: Check) => {
     if (check.check_lat && check.check_lon) {
       setFocusLocation({ lat: check.check_lat, lng: check.check_lon })
     }
   }
 
+  // Format currency
   const formatCurrency = (amount: number) => {
     return (
       new Intl.NumberFormat("uz-UZ", {
@@ -191,6 +215,7 @@ export default function ExpeditorTracker() {
     )
   }
 
+  // Sidebar content component
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b border-gray-200">
@@ -199,6 +224,7 @@ export default function ExpeditorTracker() {
           Expeditor Tracker
         </h1>
 
+        {/* Date Range Filter - Always Visible */}
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
           <DatePickerWithRange
@@ -209,6 +235,7 @@ export default function ExpeditorTracker() {
           />
         </div>
 
+        {/* Advanced Filters Toggle */}
         <div className="mb-4">
           <Button variant="outline" onClick={() => setIsFiltersOpen(!isFiltersOpen)} className="w-full justify-between">
             <div className="flex items-center gap-2">
@@ -223,8 +250,10 @@ export default function ExpeditorTracker() {
             {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
 
+          {/* Collapsible Filters */}
           {isFiltersOpen && (
             <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
+              {/* Project Filter */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
                 <Select
@@ -245,6 +274,7 @@ export default function ExpeditorTracker() {
                 </Select>
               </div>
 
+              {/* Sklad Filter */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
                 <Select
@@ -265,6 +295,7 @@ export default function ExpeditorTracker() {
                 </Select>
               </div>
 
+              {/* City Filter */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
                 <Select
@@ -285,6 +316,7 @@ export default function ExpeditorTracker() {
                 </Select>
               </div>
 
+              {/* Filial Filter */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
                 <Select
@@ -305,6 +337,7 @@ export default function ExpeditorTracker() {
                 </Select>
               </div>
 
+              {/* Status Filter */}
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
                 <Select
@@ -323,6 +356,7 @@ export default function ExpeditorTracker() {
                 </Select>
               </div>
 
+              {/* Clear Filters Button */}
               {activeFiltersCount > 0 && (
                 <Button
                   variant="ghost"
@@ -340,6 +374,7 @@ export default function ExpeditorTracker() {
 
         <Separator className="my-4" />
 
+        {/* Expeditor Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
           <Input
@@ -352,6 +387,7 @@ export default function ExpeditorTracker() {
         </div>
       </div>
 
+      {/* Expeditors List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {filteredExpeditors.length === 0 ? (
           <div className="text-center text-gray-500 mt-8">
@@ -412,6 +448,7 @@ export default function ExpeditorTracker() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header */}
       {isMobile && (
         <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <h1 className="text-lg font-semibold flex items-center gap-2">
@@ -432,28 +469,34 @@ export default function ExpeditorTracker() {
       )}
 
       <div className={`flex ${isMobile ? "flex-col" : "h-screen"}`}>
+        {/* Desktop Sidebar */}
         {!isMobile && (
           <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
             <SidebarContent />
           </div>
         )}
 
+        {/* Main Content */}
         <div className={`flex-1 ${isMobile ? "flex flex-col" : "flex"}`}>
+          {/* Map */}
           <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
             <MapComponent
               checks={checks}
               selectedExpeditor={selectedExpeditor}
-              loading={false}
+              loading={isLoading}
               onCheckClick={handleCheckClick}
               focusLocation={focusLocation}
             />
           </div>
 
+          {/* Right Panel - Statistics and Checks */}
           <div className={`${isMobile ? "flex-1" : "w-96"} bg-white border-l border-gray-200 flex flex-col`}>
+            {/* Statistics Panel */}
             <div className={`${isMobile ? "border-b" : "h-1/2 border-b"} border-gray-200`}>
               <StatisticsPanel statistics={statistics} />
             </div>
 
+            {/* Checks List */}
             <div className={`${isMobile ? "flex-1" : "h-1/2"} flex flex-col`}>
               <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -533,6 +576,7 @@ export default function ExpeditorTracker() {
                               )}
                             </div>
 
+                            {/* Payment Methods */}
                             <div className="text-xs text-gray-500 space-y-1">
                               {(check.nalichniy || 0) > 0 && (
                                 <div className="flex justify-between">
@@ -571,6 +615,7 @@ export default function ExpeditorTracker() {
         </div>
       </div>
 
+      {/* Check Modal */}
       <CheckModal
         check={selectedCheck}
         isOpen={isCheckModalOpen}
