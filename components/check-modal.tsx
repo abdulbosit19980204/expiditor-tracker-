@@ -37,10 +37,10 @@ export function CheckModal({ check, isOpen, onClose, onShowLocation }: CheckModa
   }
 
   const paymentMethods = [
-    { key: "nalichniy", label: "Cash", amount: check.nalichniy || 0, icon: "💵" },
-    { key: "uzcard", label: "UzCard", amount: check.uzcard || 0, icon: "💳" },
-    { key: "humo", label: "Humo", amount: check.humo || 0, icon: "💳" },
-    { key: "click", label: "Click", amount: check.click || 0, icon: "📱" },
+    { key: "nalichniy", label: t("cash"), amount: check.nalichniy || 0, icon: "💵" },
+    { key: "uzcard", label: t("uzcard"), amount: check.uzcard || 0, icon: "💳" },
+    { key: "humo", label: t("humo"), amount: check.humo || 0, icon: "💳" },
+    { key: "click", label: t("click"), amount: check.click || 0, icon: "📱" },
   ].filter((method) => method.amount > 0)
 
   return (
@@ -60,24 +60,24 @@ export function CheckModal({ check, isOpen, onClose, onShowLocation }: CheckModa
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium">Expeditor</p>
-                  <p className="text-sm text-gray-600">{check.ekispiditor || "Unknown"}</p>
+                  <p className="text-sm font-medium">{t("expeditor")}</p>
+                  <p className="text-sm text-gray-600">{check.ekispiditor || t("unknown")}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium">Project</p>
-                  <p className="text-sm text-gray-600">{check.project || "Unknown"}</p>
+                  <p className="text-sm font-medium">{t("project")}</p>
+                  <p className="text-sm text-gray-600">{check.project || t("unknown")}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium">City</p>
-                  <p className="text-sm text-gray-600">{check.city || "Unknown"}</p>
+                  <p className="text-sm font-medium">{t("city")}</p>
+                  <p className="text-sm text-gray-600">{check.city || t("unknown")}</p>
                 </div>
               </div>
             </div>
@@ -94,16 +94,16 @@ export function CheckModal({ check, isOpen, onClose, onShowLocation }: CheckModa
               <div className="flex items-center gap-2">
                 <Truck className="h-4 w-4 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium">Transport</p>
-                  <p className="text-sm text-gray-600">{check.transport_number || "Unknown"}</p>
+                  <p className="text-sm font-medium">{t("transport")}</p>
+                  <p className="text-sm text-gray-600">{check.transport_number || t("unknown")}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
                 <Receipt className="h-4 w-4 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium">KKM Number</p>
-                  <p className="text-sm text-gray-600">{check.kkm_number || "Unknown"}</p>
+                  <p className="text-sm font-medium">{t("kkmNumber")}</p>
+                  <p className="text-sm text-gray-600">{check.kkm_number || t("unknown")}</p>
                 </div>
               </div>
             </div>
@@ -114,21 +114,21 @@ export function CheckModal({ check, isOpen, onClose, onShowLocation }: CheckModa
           {/* Additional Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium mb-1">Warehouse</p>
-              <p className="text-sm text-gray-600">{check.sklad || "Unknown"}</p>
+              <p className="text-sm font-medium mb-1">{t("warehouse")}</p>
+              <p className="text-sm text-gray-600">{check.sklad || t("unknown")}</p>
             </div>
             <div>
-              <p className="text-sm font-medium mb-1">Agent</p>
-              <p className="text-sm text-gray-600">{check.agent || "Unknown"}</p>
+              <p className="text-sm font-medium mb-1">{t("agent")}</p>
+              <p className="text-sm text-gray-600">{check.agent || t("unknown")}</p>
             </div>
             <div>
-              <p className="text-sm font-medium mb-1">Collector</p>
-              <p className="text-sm text-gray-600">{check.sborshik || "Unknown"}</p>
+              <p className="text-sm font-medium mb-1">{t("collector")}</p>
+              <p className="text-sm text-gray-600">{check.sborshik || t("unknown")}</p>
             </div>
             <div>
-              <p className="text-sm font-medium mb-1">Delivery Time</p>
+              <p className="text-sm font-medium mb-1">{t("deliveryTime")}</p>
               <p className="text-sm text-gray-600">
-                {check.yetkazilgan_vaqti ? formatDate(check.yetkazilgan_vaqti) : "Unknown"}
+                {check.yetkazilgan_vaqti ? formatDate(check.yetkazilgan_vaqti) : t("unknown")}
               </p>
             </div>
           </div>

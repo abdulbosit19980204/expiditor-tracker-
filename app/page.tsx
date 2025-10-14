@@ -288,7 +288,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                       href="/stats"
                       className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
                     >
-                      <BarChart3 className="h-4 w-4" /> Open Stats
+                      <BarChart3 className="h-4 w-4" /> {t("openStats")}
                     </Link>
                   </div>
 
@@ -493,7 +493,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                               <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
                               {expeditor.filial && (
                                 <p className="text-xs text-gray-500 mt-1">
-                                  <strong>Filial:</strong> {expeditor.filial}
+                                  <strong>{t("filial")}:</strong> {expeditor.filial}
                                 </p>
                               )}
                             </div>
@@ -695,13 +695,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               {isLoadingExpeditors ? (
                 <div className="text-center py-8">
                   <LoadingSpinner size="sm" />
-                  <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
+                  <p className="text-sm text-gray-500 mt-2">{t("loadingExpeditors")}</p>
                 </div>
               ) : filteredExpeditors.length === 0 ? (
                 <div className="text-center text-gray-500 mt-8">
                   <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>No expeditors with checks found</p>
-                  {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
+                  <p>{t("noExpeditorsFound")}</p>
+                  {filters.filial && <p className="text-xs mt-2">{t("tryChangingFilial")}</p>}
                 </div>
               ) : (
                 filteredExpeditors.map((expeditor) => (
@@ -729,7 +729,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                           <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
                           {expeditor.filial && (
                             <p className="text-xs text-gray-500 mt-1">
-                              <strong>Filial:</strong> {expeditor.filial}
+                              <strong>{t("filial")}:</strong> {expeditor.filial}
                             </p>
                           )}
                         </div>

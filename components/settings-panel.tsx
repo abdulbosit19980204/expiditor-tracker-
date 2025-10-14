@@ -461,29 +461,29 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Download className="h-5 w-5" />
-                  Import & Export
+                  {t("importAndExport")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Export Settings</Label>
+                    <Label>{t("exportSettings")}</Label>
                     <p className="text-sm text-gray-500">
-                      Download your current settings as a JSON file
+                      {t("downloadCurrentSettings")}
                     </p>
                   </div>
                   <Button variant="outline" onClick={handleExportSettings}>
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {t("export")}
                   </Button>
                 </div>
 
                 <Separator />
 
                 <div className="space-y-2">
-                  <Label>Import Settings</Label>
+                  <Label>{t("importSettings")}</Label>
                   <p className="text-sm text-gray-500 mb-2">
-                    Upload a previously exported settings file
+                    {t("uploadExportedSettings")}
                   </p>
                   <Input
                     type="file"
@@ -496,14 +496,14 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Reset to Defaults</Label>
+                    <Label>{t("resetToDefaults")}</Label>
                     <p className="text-sm text-gray-500">
-                      Clear all custom settings and restore defaults
+                      {t("clearAllCustomSettings")}
                     </p>
                   </div>
                   <Button variant="destructive" onClick={handleResetSettings}>
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Reset
+                    {t("reset")}
                   </Button>
                 </div>
               </CardContent>
@@ -513,19 +513,19 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <RefreshCw className="h-5 w-5" />
-                  Data Management
+                  {t("dataManagement")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-sm text-gray-600">
-                  <p className="mb-2">Your settings are stored locally in your browser and include:</p>
+                  <p className="mb-2">{t("settingsStoredLocally")}</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Language preferences</li>
-                    <li>UI layout and panel states</li>
-                    <li>Default filters and date ranges</li>
-                    <li>Saved filter presets</li>
-                    <li>Column visibility settings</li>
-                    <li>Theme preferences</li>
+                    <li>{t("languagePreferences")}</li>
+                    <li>{t("uiLayoutAndPanelStates")}</li>
+                    <li>{t("defaultFiltersAndDateRanges")}</li>
+                    <li>{t("savedFilterPresets2")}</li>
+                    <li>{t("columnVisibilitySettings")}</li>
+                    <li>{t("themePreferences")}</li>
                   </ul>
                 </div>
               </CardContent>
@@ -535,7 +535,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setIsOpen(false)}>
-            Close
+            {t("close")}
           </Button>
         </DialogFooter>
       </DialogContent>
