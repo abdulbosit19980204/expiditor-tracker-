@@ -7,8 +7,10 @@ from django.db.models import (
     Sum, Count, Avg, Q, F, Value, 
     Case, When, DecimalField, FloatField
 )
-from django.db.models.functions import TruncDay, TruncMonth, TruncHour, TruncDate
-from django.db.models.functions import Coalesce, Cast
+from django.db.models.functions import (
+    TruncDate, TruncMonth, TruncHour, 
+    Coalesce, Cast
+)
 from django.utils import timezone
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
