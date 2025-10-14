@@ -337,65 +337,96 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-        # Get top expeditors with counts only (sums calculated separately due to relationship)
-        top_expeditors = list(
-            checks_qs.values('ekispiditor')
-            .annotate(
-                check_count=Count('id'),
-                success_count=Count('id', filter=Q(status='delivered'))
-            )
-            .order_by('-check_count')[:5]
-        )
+        # Get top expeditors with counts and sums - optimized approach
+        # Since Check and CheckDetail are linked by check_id (not FK), we need to join manually
+        expeditor_stats = {}
+        for check in checks_qs:
+            expeditor = check.ekispiditor
+            if not expeditor:
+                continue
+                
+            if expeditor not in expeditor_stats:
+                expeditor_stats[expeditor] = {
+                    'name': expeditor,
+                    'check_count': 0,
+                    'success_count': 0,
+                    'total_sum': 0
+                }
+            
+            expeditor_stats[expeditor]['check_count'] += 1
+            if check.status == 'delivered':
+                expeditor_stats[expeditor]['success_count'] += 1
         
-        # Calculate sums separately for expeditors
-        for exp_stat in top_expeditors:
-            expeditor_checks = checks_qs.filter(ekispiditor=exp_stat['ekispiditor'])
+        # Get sums from CheckDetail for each expeditor
+        for expeditor in expeditor_stats:
+            expeditor_checks = checks_qs.filter(ekispiditor=expeditor)
             expeditor_check_ids = list(expeditor_checks.values_list('check_id', flat=True))
             if expeditor_check_ids:
                 expeditor_sum = CheckDetail.objects.filter(check_id__in=expeditor_check_ids).aggregate(
                     total=Sum('total_sum')
                 )['total'] or 0
-            else:
-                expeditor_sum = 0
-            exp_stat['total_sum'] = expeditor_sum
+                expeditor_stats[expeditor]['total_sum'] = expeditor_sum
         
-        # Get top projects with counts only
-        top_projects = list(
-            checks_qs.values('project')
-            .annotate(check_count=Count('id'))
-            .order_by('-check_count')[:5]
-        )
+        # Sort and limit top expeditors
+        top_expeditors = sorted(expeditor_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
         
-        # Calculate sums separately for projects
-        for proj_stat in top_projects:
-            project_checks = checks_qs.filter(project=proj_stat['project'])
+        # Get top projects with counts and sums - optimized approach
+        project_stats = {}
+        for check in checks_qs:
+            project = check.project
+            if not project:
+                continue
+                
+            if project not in project_stats:
+                project_stats[project] = {
+                    'name': project,
+                    'check_count': 0,
+                    'total_sum': 0
+                }
+            
+            project_stats[project]['check_count'] += 1
+        
+        # Get sums from CheckDetail for each project
+        for project in project_stats:
+            project_checks = checks_qs.filter(project=project)
             project_check_ids = list(project_checks.values_list('check_id', flat=True))
             if project_check_ids:
                 project_sum = CheckDetail.objects.filter(check_id__in=project_check_ids).aggregate(
                     total=Sum('total_sum')
                 )['total'] or 0
-            else:
-                project_sum = 0
-            proj_stat['total_sum'] = project_sum
+                project_stats[project]['total_sum'] = project_sum
         
-        # Get top cities with counts only
-        top_cities = list(
-            checks_qs.values('city')
-            .annotate(check_count=Count('id'))
-            .order_by('-check_count')[:5]
-        )
+        # Sort and limit top projects
+        top_projects = sorted(project_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
         
-        # Calculate sums separately for cities
-        for city_stat in top_cities:
-            city_checks = checks_qs.filter(city=city_stat['city'])
+        # Get top cities with counts and sums - optimized approach
+        city_stats = {}
+        for check in checks_qs:
+            city = check.city
+            if not city:
+                continue
+                
+            if city not in city_stats:
+                city_stats[city] = {
+                    'name': city,
+                    'check_count': 0,
+                    'total_sum': 0
+                }
+            
+            city_stats[city]['check_count'] += 1
+        
+        # Get sums from CheckDetail for each city
+        for city in city_stats:
+            city_checks = checks_qs.filter(city=city)
             city_check_ids = list(city_checks.values_list('check_id', flat=True))
             if city_check_ids:
                 city_sum = CheckDetail.objects.filter(check_id__in=city_check_ids).aggregate(
                     total=Sum('total_sum')
                 )['total'] or 0
-            else:
-                city_sum = 0
-            city_stat['total_sum'] = city_sum
+                city_stats[city]['total_sum'] = city_sum
+        
+        # Sort and limit top cities
+        top_cities = sorted(city_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
         
         # Daily statistics - optimized for date range
         if date_from and date_to:
@@ -409,12 +440,34 @@ class StatisticsView(APIView):
             start_date = today.replace(day=1)
             end_date = today
         
-        # Top warehouses (sklads)
-        top_sklads = list(
-            checks_qs.values('sklad')
-            .annotate(check_count=Count('id'))
-            .order_by('-check_count')[:5]
-        )
+        # Top warehouses (sklads) - optimized approach
+        sklad_stats = {}
+        for check in checks_qs:
+            sklad = check.sklad
+            if not sklad:
+                continue
+                
+            if sklad not in sklad_stats:
+                sklad_stats[sklad] = {
+                    'name': sklad,
+                    'check_count': 0,
+                    'total_sum': 0
+                }
+            
+            sklad_stats[sklad]['check_count'] += 1
+        
+        # Get sums from CheckDetail for each sklad
+        for sklad in sklad_stats:
+            sklad_checks = checks_qs.filter(sklad=sklad)
+            sklad_check_ids = list(sklad_checks.values_list('check_id', flat=True))
+            if sklad_check_ids:
+                sklad_sum = CheckDetail.objects.filter(check_id__in=sklad_check_ids).aggregate(
+                    total=Sum('total_sum')
+                )['total'] or 0
+                sklad_stats[sklad]['total_sum'] = sklad_sum
+        
+        # Sort and limit top sklads
+        top_sklads = sorted(sklad_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
 
         # Hourly distribution
         hourly_data = (
