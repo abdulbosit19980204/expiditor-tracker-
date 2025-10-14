@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
@@ -37,7 +37,7 @@ function getCurrentMonthRange() {
   return { from: firstDay, to: lastDay }
 }
 
-export default function ExpeditorTracker() {
+const ExpeditorTracker = memo(function ExpeditorTracker() {
   const isMobile = useIsMobile()
 
   // State management
@@ -165,11 +165,11 @@ export default function ExpeditorTracker() {
     loadChecksAndStats()
   }, [selectedExpeditor, filters, checkSearchQuery])
 
-  // Filter expeditors by search query (client-side only for search)
+  // Optimized filter expeditors by search query with better memoization
   const filteredExpeditors = useMemo(() => {
-    if (!expeditorSearchQuery) return expeditors
+    if (!expeditorSearchQuery.trim()) return expeditors
 
-    const searchLower = expeditorSearchQuery.toLowerCase()
+    const searchLower = expeditorSearchQuery.toLowerCase().trim()
     return expeditors.filter(
       (expeditor) =>
         expeditor.name?.toLowerCase().includes(searchLower) ||
@@ -873,4 +873,6 @@ export default function ExpeditorTracker() {
       />
     </div>
   )
-}
+})
+
+export default ExpeditorTracker

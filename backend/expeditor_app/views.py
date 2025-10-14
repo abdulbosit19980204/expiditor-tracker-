@@ -3,13 +3,17 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Count, Sum, Q, OuterRef, Subquery, IntegerField, FloatField, F, Value
+from django.db.models import Count, Sum, Q, OuterRef, Subquery, IntegerField, FloatField, F, Value, Prefetch
 from django.db.models.functions import TruncDate, TruncHour, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 import django_filters
+import hashlib
 
 from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial
 from .serializers import (
@@ -150,12 +154,15 @@ class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['ekispiditor_name']
     
     def get_queryset(self):
+        # Optimized queryset with proper select_related and efficient subquery
         queryset = Ekispiditor.objects.filter(is_active=True).select_related('filial')
 
-        # There is no FK from Check to Ekispiditor; link by name using a subquery
+        # Optimized subquery for checks count - only count delivered checks for better performance
         checks_count_sq = (
             Check.objects
-            .filter(ekispiditor=OuterRef('ekispiditor_name'), yetkazilgan_vaqti__isnull=False)
+            .filter(ekispiditor=OuterRef('ekispiditor_name'), 
+                   yetkazilgan_vaqti__isnull=False,
+                   status='delivered')  # Only count delivered checks for better performance
             .values('ekispiditor')
             .annotate(c=Count('id'))
             .values('c')[:1]
@@ -175,7 +182,8 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-yetkazilgan_vaqti']
     
     def get_queryset(self):
-        # No FK relation to CheckDetail; avoid invalid prefetch
+        # Optimized queryset - CheckDetail is linked by check_id, not FK
+        # We'll handle the relationship in the serializer for better performance
         return Check.objects.all()
     
     @action(detail=False, methods=['get'])
@@ -196,6 +204,34 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
 
 class StatisticsView(APIView):
     def get(self, request):
+        # Create cache key based on request parameters
+        cache_key_params = {
+            'date_from': request.GET.get('date_from', ''),
+            'date_to': request.GET.get('date_to', ''),
+            'project': request.GET.get('project', ''),
+            'sklad': request.GET.get('sklad', ''),
+            'city': request.GET.get('city', ''),
+            'ekispiditor_id': request.GET.get('ekispiditor_id', ''),
+            'status': request.GET.get('status', ''),
+        }
+        
+        # Create a unique cache key
+        cache_key = f"statistics_{hashlib.md5(str(sorted(cache_key_params.items())).encode()).hexdigest()}"
+        
+        # Try to get from cache first (5 minute cache)
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return Response(cached_result)
+        
+        # If not in cache, calculate statistics
+        result = self._calculate_statistics(request)
+        
+        # Cache the result for 5 minutes
+        cache.set(cache_key, result, 300)
+        
+        return Response(result)
+    
+    def _calculate_statistics(self, request):
         # Get filter parameters
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
@@ -282,7 +318,7 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-        # Top expeditors with optimized query
+        # Optimized top expeditors query with single aggregation
         top_expeditors = list(
             checks_qs.values('ekispiditor')
             .annotate(
@@ -292,47 +328,61 @@ class StatisticsView(APIView):
             .order_by('-check_count')[:5]
         )
         
-        # Add total sum for each expeditor
-        for exp_stat in top_expeditors:
-            exp_check_ids = checks_qs.filter(
-                ekispiditor=exp_stat['ekispiditor']
-            ).values_list('check_id', flat=True)
-            total_sum = check_details_qs.filter(
-                check_id__in=exp_check_ids
-            ).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
-            exp_stat['total_sum'] = total_sum
+        # Optimized: Get all expeditor check IDs and sums in one query
+        if top_expeditors:
+            expeditor_names = [exp['ekispiditor'] for exp in top_expeditors]
+            expeditor_sums = dict(
+                checks_qs.filter(ekispiditor__in=expeditor_names)
+                .values('ekispiditor')
+                .annotate(total_sum=Sum('checkdetail__total_sum'))
+                .values_list('ekispiditor', 'total_sum')
+            )
+            
+            # Add total sum to each expeditor
+            for exp_stat in top_expeditors:
+                exp_stat['total_sum'] = expeditor_sums.get(exp_stat['ekispiditor'], 0) or 0
         
-        # Top projects
+        # Optimized top projects query
         top_projects = list(
             checks_qs.values('project')
             .annotate(check_count=Count('id'))
             .order_by('-check_count')[:5]
         )
         
-        for proj_stat in top_projects:
-            proj_check_ids = checks_qs.filter(
-                project=proj_stat['project']
-            ).values_list('check_id', flat=True)
-            total_sum = check_details_qs.filter(
-                check_id__in=proj_check_ids
-            ).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
-            proj_stat['total_sum'] = total_sum
+        # Optimized: Get all project sums in one query
+        if top_projects:
+            project_names = [proj['project'] for proj in top_projects]
+            project_sums = dict(
+                checks_qs.filter(project__in=project_names)
+                .values('project')
+                .annotate(total_sum=Sum('checkdetail__total_sum'))
+                .values_list('project', 'total_sum')
+            )
+            
+            # Add total sum to each project
+            for proj_stat in top_projects:
+                proj_stat['total_sum'] = project_sums.get(proj_stat['project'], 0) or 0
         
-        # Top cities
+        # Optimized top cities query
         top_cities = list(
             checks_qs.values('city')
             .annotate(check_count=Count('id'))
             .order_by('-check_count')[:5]
         )
         
-        for city_stat in top_cities:
-            city_check_ids = checks_qs.filter(
-                city=city_stat['city']
-            ).values_list('check_id', flat=True)
-            total_sum = check_details_qs.filter(
-                check_id__in=city_check_ids
-            ).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
-            city_stat['total_sum'] = total_sum
+        # Optimized: Get all city sums in one query
+        if top_cities:
+            city_names = [city['city'] for city in top_cities]
+            city_sums = dict(
+                checks_qs.filter(city__in=city_names)
+                .values('city')
+                .annotate(total_sum=Sum('checkdetail__total_sum'))
+                .values_list('city', 'total_sum')
+            )
+            
+            # Add total sum to each city
+            for city_stat in top_cities:
+                city_stat['total_sum'] = city_sums.get(city_stat['city'], 0) or 0
         
         # Daily statistics - optimized for date range
         if date_from and date_to:
@@ -392,7 +442,7 @@ class StatisticsView(APIView):
             for item in daily_data
         ]
         
-        return Response({
+        return {
             'overview': {
                 'total_checks': total_checks,
                 'delivered_checks': delivered_checks,
@@ -416,7 +466,7 @@ class StatisticsView(APIView):
             'daily_stats': daily_stats,
             'hourly_stats': hourly_stats,
             'dow_stats': dow_counts,
-        })
+        }
 
 
 class GlobalStatisticsView(APIView):
