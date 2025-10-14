@@ -7,6 +7,7 @@ import { Navigation, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/loading-spinner";
+import { useTranslation } from "react-i18next";
 import type { Check, Expeditor } from "@/lib/types";
 
 interface MapComponentProps {
@@ -43,6 +44,7 @@ export function MapComponent({
   onCheckClick,
   focusLocation,
 }: MapComponentProps) {
+  const { t } = useTranslation();
   const hasChecks = Array.isArray(checks) && checks.length > 0;
 
   return (

@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { useTranslation } from "react-i18next"
 import type { Check, Expeditor } from "@/lib/types"
 
 interface MapComponentProps {
@@ -65,6 +66,7 @@ export const MapComponent = memo(function MapComponent({
   onCheckClick,
   focusLocation,
 }: MapComponentProps) {
+  const { t } = useTranslation()
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
 
