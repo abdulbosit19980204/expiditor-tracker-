@@ -330,10 +330,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder="All Filials" />
+                              <SelectValue placeholder={t("allFilials")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All Filials</SelectItem>
+                              <SelectItem value="all">{t("allFilials")}</SelectItem>
                               {filials.map((filial) => (
                                 <SelectItem key={filial.id} value={String(filial.id)}>
                                   {filial.filial_name}
@@ -351,10 +351,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder="All Projects" />
+                              <SelectValue placeholder={t("allProjects")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All Projects</SelectItem>
+                              <SelectItem value="all">{t("allProjects")}</SelectItem>
                               {projects.map((project) => (
                                 <SelectItem key={project.id} value={project.project_name}>
                                   {project.project_name}
@@ -372,10 +372,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder="All Warehouses" />
+                              <SelectValue placeholder={t("allWarehouses")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All Warehouses</SelectItem>
+                              <SelectItem value="all">{t("allWarehouses")}</SelectItem>
                               {sklads.map((sklad) => (
                                 <SelectItem key={sklad.id} value={sklad.sklad_name}>
                                   {sklad.sklad_name}
@@ -393,10 +393,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder="All Cities" />
+                              <SelectValue placeholder={t("allCities")} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All Cities</SelectItem>
+                              <SelectItem value="all">{t("allCities")}</SelectItem>
                               {cities.map((city) => (
                                 <SelectItem key={city.id} value={city.city_name}>
                                   {city.city_name}
@@ -566,10 +566,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                         onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder="All Filials" />
+                            <SelectValue placeholder={t("allFilials")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Filials</SelectItem>
+                          <SelectItem value="all">{t("allFilials")}</SelectItem>
                           {filials.map((filial) => (
                             <SelectItem key={filial.id} value={String(filial.id)}>
                               {filial.filial_name}
@@ -587,10 +587,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                         onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder="All Projects" />
+                            <SelectValue placeholder={t("allProjects")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Projects</SelectItem>
+                          <SelectItem value="all">{t("allProjects")}</SelectItem>
                           {projects.map((project) => (
                             <SelectItem key={project.id} value={project.project_name}>
                               {project.project_name}
