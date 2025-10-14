@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
+import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -253,6 +254,11 @@ export default function ExpeditorTracker() {
             <Users className="h-5 w-5" />
             Expeditor Tracker
           </h1>
+          <div className="flex items-center gap-2">
+            <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+              <BarChart3 className="h-4 w-4" /> Stats
+            </Link>
+          </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm">
@@ -266,6 +272,11 @@ export default function ExpeditorTracker() {
                     <Users className="h-5 w-5" />
                     Expeditor Tracker
                   </h1>
+                  <div className="mb-3">
+                    <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+                      <BarChart3 className="h-4 w-4" /> Open Stats
+                    </Link>
+                  </div>
 
                   {/* Date Range Filter */}
                   <div className="mb-4">
@@ -492,6 +503,11 @@ export default function ExpeditorTracker() {
                 <Users className="h-5 w-5" />
                 Expeditor Tracker
               </h1>
+              <div className="mb-4">
+                <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+                  <BarChart3 className="h-4 w-4" /> Open Stats
+                </Link>
+              </div>
 
               {/* Date Range Filter */}
               <div className="mb-4">
