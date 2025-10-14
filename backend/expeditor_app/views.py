@@ -3,7 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Count, Sum, Q, Prefetch
+from django.db.models import Count, Sum, Q, OuterRef, Subquery, IntegerField
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
@@ -72,7 +73,9 @@ class CheckFilter(django_filters.FilterSet):
     
     class Meta:
         model = Check
-        fields = ['date_from', 'date_to', 'project', 'sklad', 'city', 'ekispiditor', 'ekispiditor_id', 'status']
+        # Exclude 'ekispiditor_id' from auto-generated filters to avoid
+        # unsupported lookup on CharField; we provide a custom method filter above.
+        fields = ['date_from', 'date_to', 'project', 'sklad', 'city', 'ekispiditor', 'status']
 
 
 class EkispiditorFilter(django_filters.FilterSet):
@@ -148,12 +151,18 @@ class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         queryset = Ekispiditor.objects.filter(is_active=True).select_related('filial')
-        
-        # Optimize by prefetching related checks count
-        queryset = queryset.annotate(
-            checks_count=Count('check', filter=Q(check__yetkazilgan_vaqti__isnull=False))
+
+        # There is no FK from Check to Ekispiditor; link by name using a subquery
+        checks_count_sq = (
+            Check.objects
+            .filter(ekispiditor=OuterRef('ekispiditor_name'), yetkazilgan_vaqti__isnull=False)
+            .values('ekispiditor')
+            .annotate(c=Count('id'))
+            .values('c')[:1]
         )
-        
+
+        queryset = queryset.annotate(checks_count=Subquery(checks_count_sq, output_field=IntegerField()))
+
         return queryset
 
 class CheckViewSet(viewsets.ReadOnlyModelViewSet):
@@ -166,10 +175,8 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-yetkazilgan_vaqti']
     
     def get_queryset(self):
-        # Use select_related to reduce database queries
-        return Check.objects.all().prefetch_related(
-            Prefetch('check_detail', queryset=CheckDetail.objects.all())
-        )
+        # No FK relation to CheckDetail; avoid invalid prefetch
+        return Check.objects.all()
     
     @action(detail=False, methods=['get'])
     def today_checks(self, request):
@@ -335,20 +342,20 @@ class StatisticsView(APIView):
             start_date = today.replace(day=1)
             end_date = today
         
-        # Get daily stats for the range
+        # Get daily stats using TruncDate for portability
         daily_data = (
             checks_qs.filter(
                 yetkazilgan_vaqti__date__gte=start_date,
                 yetkazilgan_vaqti__date__lte=end_date
             )
-            .extra({'date': "DATE(yetkazilgan_vaqti)"})
-            .values('date')
+            .annotate(day=TruncDate('yetkazilgan_vaqti'))
+            .values('day')
             .annotate(checks=Count('id'))
-            .order_by('date')
+            .order_by('day')
         )
-        
+
         daily_stats = [
-            {'date': item['date'].isoformat(), 'checks': item['checks']}
+            {'date': (item['day'].isoformat() if hasattr(item['day'], 'isoformat') else str(item['day'])), 'checks': item['checks']}
             for item in daily_data
         ]
         

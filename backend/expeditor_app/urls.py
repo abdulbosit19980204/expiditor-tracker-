@@ -13,8 +13,8 @@ router.register(r'check-details', CheckDetailViewSet)
 router.register(r'sklad', SkladViewSet)
 router.register(r'city', CityViewSet)
 router.register(r'filial', FilialViewSet)  # Registering FilialViewSet
-router.register(r'ekispiditor', EkispiditorViewSet)
-router.register(r'check', CheckViewSet)
+router.register(r'ekispiditor', EkispiditorViewSet, basename='ekispiditor')
+router.register(r'check', CheckViewSet, basename='check')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
