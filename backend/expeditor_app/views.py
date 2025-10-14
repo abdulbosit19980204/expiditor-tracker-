@@ -391,6 +391,7 @@ class StatisticsView(APIView):
     Provides comprehensive analytics and performance metrics for individual expeditors.
     Includes filtering capabilities and caching for optimal performance.
     """
+    serializer_class = None  # No serializer needed for this view
     
     @method_decorator(cache_page(300))  # Cache for 5 minutes
     def get(self, request):
@@ -845,6 +846,7 @@ class GlobalStatisticsView(APIView):
     Provides comprehensive analytics and performance metrics across all expeditors
     and the entire delivery system. Useful for management insights and system monitoring.
     """
+    serializer_class = None  # No serializer needed for this view
     
     @method_decorator(cache_page(300))  # Cache for 5 minutes
     def get(self, request):

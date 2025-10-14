@@ -1,0 +1,1910 @@
+openapi: 3.0.3
+info:
+  title: Expeditor Tracker API
+  version: 1.0.0
+  description: "\n    # Expeditor Tracker API Documentation\n    \n    This API provides\
+    \ comprehensive functionality for managing expeditors, checks, and delivery tracking.\n\
+    \    \n    ## Key Features\n    - **Expeditor Management**: Track expeditor information\
+    \ and performance\n    - **Check Processing**: Manage delivery checks and payment\
+    \ details\n    - **Statistics & Analytics**: Get detailed statistics and reports\n\
+    \    - **Real-time Updates**: Live data synchronization\n    \n    ## Authentication\n\
+    \    Currently, this API operates without authentication for development purposes.\n\
+    \    \n    ## Rate Limiting\n    No rate limiting is currently implemented.\n\
+    \    \n    ## Support\n    For technical support, contact the development team.\n\
+    \    "
+paths:
+  /api/projects/:
+    get:
+      operationId: projects_list
+      description: "\n        Retrieve a list of all projects in the system.\n   \
+        \     \n        This endpoint returns all available projects that can be used\
+        \ for filtering checks and statistics.\n        The response is not paginated\
+        \ since it's typically used for dropdown selections.\n        \n        **Use\
+        \ Cases:**\n        - Populate project filter dropdowns\n        - Display\
+        \ project selection in forms\n        - Get all available project options\n\
+        \        "
+      summary: List all projects
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - Projects
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Projects'
+              examples:
+                ExampleResponse:
+                  value:
+                  - results:
+                    - id: 1
+                      project_name: Express Delivery
+                      project_description: Fast delivery service
+                      created_at: '2024-01-15T10:30:00Z'
+                      updated_at: '2024-01-15T10:30:00Z'
+                  summary: Sample project list
+          description: ''
+  /api/projects/{id}/:
+    get:
+      operationId: projects_retrieve
+      description: |-
+        ViewSet for managing projects.
+
+        Provides read-only access to project data. Projects are used to categorize
+        and filter delivery checks and expeditor activities.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this projects.
+        required: true
+      tags:
+      - projects
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Projects'
+          description: ''
+  /api/check-details/:
+    get:
+      operationId: check_details_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - check-details
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCheckDetailList'
+          description: ''
+  /api/check-details/{id}/:
+    get:
+      operationId: check_details_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this check detail.
+        required: true
+      tags:
+      - check-details
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckDetail'
+          description: ''
+  /api/sklad/:
+    get:
+      operationId: sklad_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - sklad
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sklad'
+          description: ''
+  /api/sklad/{id}/:
+    get:
+      operationId: sklad_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this sklad.
+        required: true
+      tags:
+      - sklad
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sklad'
+          description: ''
+  /api/city/:
+    get:
+      operationId: city_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - city
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/City'
+          description: ''
+  /api/city/{id}/:
+    get:
+      operationId: city_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this city.
+        required: true
+      tags:
+      - city
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/City'
+          description: ''
+  /api/filial/:
+    get:
+      operationId: filial_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - filial
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Filial'
+          description: ''
+  /api/filial/{id}/:
+    get:
+      operationId: filial_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this filial.
+        required: true
+      tags:
+      - filial
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Filial'
+          description: ''
+  /api/ekispiditor/:
+    get:
+      operationId: ekispiditor_list
+      parameters:
+      - in: query
+        name: filial
+        schema:
+          type: integer
+      - in: query
+        name: filial_name
+        schema:
+          type: string
+      - in: query
+        name: has_checks
+        schema:
+          type: boolean
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - ekispiditor
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ekispiditor'
+          description: ''
+  /api/ekispiditor/{id}/:
+    get:
+      operationId: ekispiditor_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ekispiditor.
+        required: true
+      tags:
+      - ekispiditor
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ekispiditor'
+          description: ''
+  /api/check/:
+    get:
+      operationId: check_list
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+      - in: query
+        name: ekispiditor_id
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: project
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: sklad
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - check
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Check'
+          description: ''
+  /api/check/today_checks/:
+    get:
+      operationId: check_today_checks_retrieve
+      tags:
+      - check
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Check'
+          description: ''
+  /api/check/with_locations/:
+    get:
+      operationId: check_with_locations_retrieve
+      tags:
+      - check
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Check'
+          description: ''
+  /api/check/{id}/:
+    get:
+      operationId: check_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this check.
+        required: true
+      tags:
+      - check
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Check'
+          description: ''
+  /api/statistics/:
+    get:
+      operationId: statistics_retrieve
+      description: "\n    Retrieve comprehensive statistics for a specific expeditor.\n\
+        \    \n    This endpoint provides detailed statistics including:\n    - Total\
+        \ checks, delivered, failed, and pending counts\n    - Payment method breakdown\
+        \ (cash, cards, etc.)\n    - Top projects, cities, and warehouses\n    - Daily\
+        \ and hourly distribution patterns\n    - Success rates and performance metrics\n\
+        \    \n    **Filtering Options:**\n    - Date range filtering for specific\
+        \ time periods\n    - Project, warehouse, city, and status filtering\n   \
+        \ - Expeditor-specific filtering\n    \n    **Caching:** Results are cached\
+        \ for 5 minutes to improve performance.\n    "
+      summary: Get expeditor statistics
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor_id
+        schema:
+          type: string
+        description: ID of the expeditor to get statistics for
+        required: true
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Statistics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/statistics/global/:
+    get:
+      operationId: statistics_global_retrieve
+      description: "\n    Retrieve comprehensive global statistics across all expeditors.\n\
+        \    \n    This endpoint provides system-wide statistics including:\n    -\
+        \ Overall delivery performance metrics\n    - Payment method distribution\
+        \ across all checks\n    - Top performing expeditors, projects, cities, and\
+        \ warehouses\n    - System-wide trends and patterns\n    - Daily and hourly\
+        \ activity distribution\n    \n    **Key Differences from Expeditor Statistics:**\n\
+        \    - Aggregates data across ALL expeditors\n    - Provides system-wide performance\
+        \ insights\n    - Shows overall delivery trends and patterns\n    - Useful\
+        \ for management and system monitoring\n    \n    **Filtering Options:**\n\
+        \    - Date range filtering for specific time periods\n    - Project, warehouse,\
+        \ city, and status filtering\n    - No expeditor-specific filtering (global\
+        \ view)\n    \n    **Caching:** Results are cached for 5 minutes to improve\
+        \ performance.\n    "
+      summary: Get global statistics
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Statistics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/update-checks/:
+    get:
+      operationId: update_checks_retrieve
+      tags:
+      - update-checks
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/statistics/daily-sales/:
+    get:
+      operationId: statistics_daily_sales_retrieve
+      description: "\n        Retrieve daily sales summary with total revenue and\
+        \ check counts.\n        \n        This endpoint provides:\n        - Daily\
+        \ aggregated data with check counts and revenue\n        - Summary statistics\
+        \ including total checks and average daily revenue\n        - Support for\
+        \ date range filtering\n        \n        **Performance:** Results are cached\
+        \ for 15 minutes.\n        "
+      summary: Get daily sales summary
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySalesSummary'
+              examples:
+                ExampleResponse:
+                  value:
+                    daily_data:
+                    - date: '2024-01-15'
+                      total_checks: 45
+                      total_revenue: 1250000.0
+                      delivered_checks: 40
+                      failed_checks: 3
+                      pending_checks: 2
+                    summary:
+                      total_checks: 450
+                      total_revenue: 12500000.0
+                      avg_daily_revenue: 416666.67
+                  summary: Daily sales summary
+          description: ''
+  /api/statistics/expeditor-performance/:
+    get:
+      operationId: statistics_expeditor_performance_retrieve
+      description: "\n        Retrieve expeditor performance statistics with success\
+        \ rates and revenue.\n        \n        This endpoint provides:\n        -\
+        \ Top performing expeditors by check count\n        - Success rates and delivery\
+        \ statistics\n        - Revenue data per expeditor\n        - Configurable\
+        \ limit for results\n        \n        **Performance:** Results are cached\
+        \ for 15 minutes.\n        "
+      summary: Get expeditor performance statistics
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: 'Maximum number of expeditors to return (default: 10)'
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExpeditorPerformanceSummary'
+              examples:
+                ExampleResponse:
+                  value:
+                    expeditor_performance:
+                    - ekispiditor: John Doe
+                      total_checks: 150
+                      delivered_checks: 135
+                      failed_checks: 10
+                      pending_checks: 5
+                      success_rate: 90.0
+                      total_revenue: 3750000.0
+                    summary:
+                      total_expeditors: 10
+                      avg_success_rate: 85.5
+                  summary: Expeditor performance
+          description: ''
+  /api/statistics/payment-distribution/:
+    get:
+      operationId: statistics_payment_distribution_retrieve
+      description: "\n        Retrieve payment method distribution statistics.\n \
+        \       \n        This endpoint provides:\n        - Breakdown by payment\
+        \ methods (Cash, UzCard, Humo, Click)\n        - Amount and percentage for\
+        \ each method\n        - Total revenue summary\n        \n        **Performance:**\
+        \ Results are cached for 15 minutes.\n        "
+      summary: Get payment method distribution
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentDistributionSummary'
+              examples:
+                ExampleResponse:
+                  value:
+                    payment_distribution:
+                    - method: Cash
+                      amount: 5000000.0
+                      percentage: 45.5
+                    - method: UzCard
+                      amount: 3000000.0
+                      percentage: 27.3
+                    - method: Humo
+                      amount: 2500000.0
+                      percentage: 22.7
+                    - method: Click
+                      amount: 500000.0
+                      percentage: 4.5
+                    summary:
+                      total_revenue: 11000000.0
+                      payment_methods_count: 4
+                  summary: Payment distribution
+          description: ''
+  /api/statistics/project-statistics/:
+    get:
+      operationId: statistics_project_statistics_retrieve
+      description: "\n        Retrieve project-based statistics.\n        \n     \
+        \   This endpoint provides:\n        - Statistics by project with check counts\
+        \ and revenue\n        - Delivery success rates per project\n        - Number\
+        \ of unique expeditors per project\n        \n        **Performance:** Results\
+        \ are cached for 15 minutes.\n        "
+      summary: Get project statistics
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: 'Maximum number of projects to return (default: 10)'
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectStatisticsSummary'
+          description: ''
+  /api/statistics/status-distribution/:
+    get:
+      operationId: statistics_status_distribution_retrieve
+      description: "\n        Retrieve status distribution statistics.\n        \n\
+        \        This endpoint provides:\n        - Distribution of checks by status\
+        \ (delivered, failed, pending)\n        - Counts and percentages for each\
+        \ status\n        - Overall delivery success rate\n        \n        **Performance:**\
+        \ Results are cached for 15 minutes.\n        "
+      summary: Get status distribution
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusDistributionSummary'
+          description: ''
+  /api/statistics/location-statistics/:
+    get:
+      operationId: statistics_location_statistics_retrieve
+      description: "\n        Retrieve statistics by filial, city, and sklad.\n  \
+        \      \n        This endpoint provides:\n        - Statistics by city with\
+        \ check counts and revenue\n        - Statistics by warehouse (sklad) with\
+        \ performance metrics\n        - Statistics by filial with delivery data\n\
+        \        \n        **Performance:** Results are cached for 15 minutes.\n \
+        \       "
+      summary: Get location-based statistics
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LocationStatisticsSummary'
+          description: ''
+  /api/statistics/revenue-summary/:
+    get:
+      operationId: statistics_revenue_summary_retrieve
+      description: "\n        Retrieve comprehensive revenue summary with KPIs.\n\
+        \        \n        This endpoint provides:\n        - Total revenue and check\
+        \ statistics\n        - Performance metrics including success rates\n    \
+        \    - Revenue per expeditor calculations\n        - Basic statistics for\
+        \ all entities\n        \n        **Performance:** Results are cached for\
+        \ 15 minutes.\n        "
+      summary: Get comprehensive revenue summary
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueSummary'
+          description: ''
+  /api/statistics/hourly-distribution/:
+    get:
+      operationId: statistics_hourly_distribution_retrieve
+      description: "\n        Retrieve hourly distribution of deliveries.\n      \
+        \  \n        This endpoint provides:\n        - Hourly breakdown of check\
+        \ counts\n        - Peak delivery hours identification\n        - Delivery\
+        \ success rates by hour\n        \n        **Performance:** Results are cached\
+        \ for 15 minutes.\n        "
+      summary: Get hourly distribution
+      parameters:
+      - in: query
+        name: city
+        schema:
+          type: string
+        description: Filter by city name
+      - in: query
+        name: date_from
+        schema:
+          type: string
+          format: date-time
+        description: 'Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: date_to
+        schema:
+          type: string
+          format: date-time
+        description: 'End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)'
+      - in: query
+        name: ekispiditor
+        schema:
+          type: string
+        description: Filter by expeditor name
+      - in: query
+        name: filial
+        schema:
+          type: string
+        description: Filter by filial name
+      - in: query
+        name: project
+        schema:
+          type: string
+        description: Filter by project name
+      - in: query
+        name: sklad
+        schema:
+          type: string
+        description: Filter by warehouse name
+      - in: query
+        name: status
+        schema:
+          type: string
+        description: Filter by check status
+      tags:
+      - Analytics
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HourlyDistributionSummary'
+          description: ''
+components:
+  schemas:
+    BasicStatistics:
+      type: object
+      properties:
+        total_checks:
+          type: integer
+        delivered_checks:
+          type: integer
+        failed_checks:
+          type: integer
+        pending_checks:
+          type: integer
+        unique_expeditors:
+          type: integer
+        unique_cities:
+          type: integer
+        unique_projects:
+          type: integer
+      required:
+      - delivered_checks
+      - failed_checks
+      - pending_checks
+      - total_checks
+      - unique_cities
+      - unique_expeditors
+      - unique_projects
+    Check:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        check_id:
+          type: string
+          maxLength: 100
+        project:
+          type: string
+          nullable: true
+          maxLength: 100
+        sklad:
+          type: string
+          nullable: true
+          maxLength: 100
+        city:
+          type: string
+          nullable: true
+          maxLength: 100
+        sborshik:
+          type: string
+          nullable: true
+          maxLength: 100
+        agent:
+          type: string
+          nullable: true
+          maxLength: 100
+        ekispiditor:
+          type: string
+          nullable: true
+          maxLength: 100
+        yetkazilgan_vaqti:
+          type: string
+          format: date-time
+          nullable: true
+        receiptIdDate:
+          type: string
+          format: date-time
+          nullable: true
+        transport_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        kkm_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        client_name:
+          type: string
+          nullable: true
+          maxLength: 200
+        client_address:
+          type: string
+          nullable: true
+        check_lat:
+          type: number
+          format: double
+          nullable: true
+        check_lon:
+          type: number
+          format: double
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        check_detail:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - check_detail
+      - check_id
+      - created_at
+      - id
+      - updated_at
+    CheckDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        check_id:
+          type: string
+          maxLength: 100
+        checkURL:
+          type: string
+          format: uri
+          maxLength: 200
+        check_date:
+          type: string
+          format: date-time
+          nullable: true
+        receiptIdDate:
+          type: string
+          format: date-time
+          nullable: true
+        check_lat:
+          type: number
+          format: double
+          nullable: true
+        check_lon:
+          type: number
+          format: double
+          nullable: true
+        total_sum:
+          type: number
+          format: double
+          nullable: true
+        nalichniy:
+          type: number
+          format: double
+          nullable: true
+        uzcard:
+          type: number
+          format: double
+          nullable: true
+        humo:
+          type: number
+          format: double
+          nullable: true
+        click:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - checkURL
+      - check_id
+      - created_at
+      - id
+      - updated_at
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        city_name:
+          type: string
+          maxLength: 100
+        city_code:
+          type: string
+          nullable: true
+          maxLength: 50
+        description:
+          type: string
+          nullable: true
+        filial_name:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - city_name
+      - created_at
+      - filial_name
+      - id
+      - updated_at
+    CityStatistics:
+      type: object
+      properties:
+        city:
+          type: string
+        total_checks:
+          type: integer
+        total_revenue:
+          type: number
+          format: double
+        unique_expeditors:
+          type: integer
+      required:
+      - city
+      - total_checks
+      - total_revenue
+      - unique_expeditors
+    DailySalesData:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        total_checks:
+          type: integer
+        total_revenue:
+          type: number
+          format: double
+        delivered_checks:
+          type: integer
+        failed_checks:
+          type: integer
+        pending_checks:
+          type: integer
+      required:
+      - date
+      - delivered_checks
+      - failed_checks
+      - pending_checks
+      - total_checks
+      - total_revenue
+    DailySalesSummary:
+      type: object
+      properties:
+        daily_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailySalesData'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - daily_data
+      - summary
+    Ekispiditor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        ekispiditor_name:
+          type: string
+          maxLength: 100
+        filial:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        transport_number:
+          type: string
+          maxLength: 50
+        phone_number:
+          type: string
+          nullable: true
+          maxLength: 15
+        photo:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        is_active:
+          type: boolean
+        today_checks_count:
+          type: string
+          readOnly: true
+        checks_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - checks_count
+      - created_at
+      - ekispiditor_name
+      - filial
+      - id
+      - name
+      - today_checks_count
+      - transport_number
+      - updated_at
+    ExpeditorPerformance:
+      type: object
+      properties:
+        ekispiditor:
+          type: string
+        total_checks:
+          type: integer
+        delivered_checks:
+          type: integer
+        failed_checks:
+          type: integer
+        pending_checks:
+          type: integer
+        success_rate:
+          type: number
+          format: double
+        total_revenue:
+          type: number
+          format: double
+      required:
+      - delivered_checks
+      - ekispiditor
+      - failed_checks
+      - pending_checks
+      - success_rate
+      - total_checks
+      - total_revenue
+    ExpeditorPerformanceSummary:
+      type: object
+      properties:
+        expeditor_performance:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExpeditorPerformance'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - expeditor_performance
+      - summary
+    Filial:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        filial_name:
+          type: string
+          maxLength: 100
+        filial_code:
+          type: string
+          nullable: true
+          maxLength: 50
+      required:
+      - filial_name
+      - id
+    FilialStatistics:
+      type: object
+      properties:
+        ekispiditor__filial__filial_name:
+          type: string
+        total_checks:
+          type: integer
+        total_revenue:
+          type: number
+          format: double
+        unique_expeditors:
+          type: integer
+      required:
+      - ekispiditor__filial__filial_name
+      - total_checks
+      - total_revenue
+      - unique_expeditors
+    HourlyDistribution:
+      type: object
+      properties:
+        hour:
+          type: string
+          format: date-time
+        checks_count:
+          type: integer
+        delivered_count:
+          type: integer
+      required:
+      - checks_count
+      - delivered_count
+      - hour
+    HourlyDistributionSummary:
+      type: object
+      properties:
+        hourly_distribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/HourlyDistribution'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - hourly_distribution
+      - summary
+    LocationStatisticsSummary:
+      type: object
+      properties:
+        city_statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/CityStatistics'
+        sklad_statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkladStatistics'
+        filial_statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilialStatistics'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - city_statistics
+      - filial_statistics
+      - sklad_statistics
+      - summary
+    PaginatedCheckDetailList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckDetail'
+    PaymentDistribution:
+      type: object
+      properties:
+        method:
+          type: string
+        amount:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+      required:
+      - amount
+      - method
+      - percentage
+    PaymentDistributionSummary:
+      type: object
+      properties:
+        payment_distribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentDistribution'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - payment_distribution
+      - summary
+    PerformanceMetrics:
+      type: object
+      properties:
+        success_rate:
+          type: number
+          format: double
+        avg_revenue_per_check:
+          type: number
+          format: double
+        revenue_per_expeditor:
+          type: number
+          format: double
+      required:
+      - avg_revenue_per_check
+      - revenue_per_expeditor
+      - success_rate
+    ProjectStatistics:
+      type: object
+      properties:
+        project:
+          type: string
+        total_checks:
+          type: integer
+        delivered_checks:
+          type: integer
+        failed_checks:
+          type: integer
+        pending_checks:
+          type: integer
+        unique_expeditors:
+          type: integer
+        total_revenue:
+          type: number
+          format: double
+      required:
+      - delivered_checks
+      - failed_checks
+      - pending_checks
+      - project
+      - total_checks
+      - total_revenue
+      - unique_expeditors
+    ProjectStatisticsSummary:
+      type: object
+      properties:
+        project_statistics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectStatistics'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - project_statistics
+      - summary
+    Projects:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project_name:
+          type: string
+          maxLength: 100
+        project_description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - project_name
+      - updated_at
+    RevenueStatistics:
+      type: object
+      properties:
+        total_revenue:
+          type: number
+          format: double
+        avg_check_value:
+          type: number
+          format: double
+        total_cash:
+          type: number
+          format: double
+        total_cards:
+          type: number
+          format: double
+        total_click:
+          type: number
+          format: double
+      required:
+      - avg_check_value
+      - total_cards
+      - total_cash
+      - total_click
+      - total_revenue
+    RevenueSummary:
+      type: object
+      properties:
+        basic_statistics:
+          $ref: '#/components/schemas/BasicStatistics'
+        revenue_statistics:
+          $ref: '#/components/schemas/RevenueStatistics'
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+      required:
+      - basic_statistics
+      - performance_metrics
+      - revenue_statistics
+    Sklad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sklad_name:
+          type: string
+          maxLength: 100
+        sklad_code:
+          type: string
+          nullable: true
+          maxLength: 50
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - sklad_name
+      - updated_at
+    SkladStatistics:
+      type: object
+      properties:
+        sklad:
+          type: string
+        total_checks:
+          type: integer
+        total_revenue:
+          type: number
+          format: double
+        unique_expeditors:
+          type: integer
+      required:
+      - sklad
+      - total_checks
+      - total_revenue
+      - unique_expeditors
+    StatusDistribution:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: double
+      required:
+      - count
+      - percentage
+      - status
+    StatusDistributionSummary:
+      type: object
+      properties:
+        status_distribution:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusDistribution'
+        summary:
+          type: object
+          additionalProperties: {}
+      required:
+      - status_distribution
+      - summary
+    StatusEnum:
+      enum:
+      - delivered
+      - failed
+      - pending
+      type: string
+      description: |-
+        * `delivered` - Yetkazilgan
+        * `failed` - Muvaffaqiyatsiz
+        * `pending` - Kutilmoqda
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid

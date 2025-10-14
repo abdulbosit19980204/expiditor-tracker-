@@ -180,9 +180,7 @@ SPECTACULAR_SETTINGS = {
     'SCHEMA_PATH_PREFIX': '/api/',
     'COMPONENT_SPLIT_REQUEST': True,
     'SORT_OPERATIONS': False,
-    'ENUM_NAME_OVERRIDES': {
-        'StatusEnum': 'expeditor_app.models.Check.Status',
-    },
+    'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
     # 'POSTPROCESSING_HOOKS': [
     #     'drf_spectacular.contrib.djangorestframework_camel_case.camelize_serializer_fields'
     # ],

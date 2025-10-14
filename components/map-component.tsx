@@ -98,6 +98,13 @@ export const MapComponent = memo(function MapComponent({
         // Use our API route instead of direct Yandex API to avoid conflicts
         await loadScript("/api/yandex-maps?v=2.1&lang=en_US")
 
+        // Check if ymaps is available
+        if (!window.ymaps) {
+          console.warn("[Map] Yandex Maps not loaded")
+          setStatus("fallback")
+          return
+        }
+
         const wasmOk = await canUseWasm()
         if (!wasmOk) {
           console.warn("[Map] WebAssembly not available")
@@ -105,7 +112,11 @@ export const MapComponent = memo(function MapComponent({
           return
         }
 
-        await new Promise((r) => window.ymaps.ready(r))
+        // Wait for ymaps to be ready with timeout
+        await Promise.race([
+          new Promise((r) => window.ymaps.ready(r)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Yandex Maps timeout")), 10000))
+        ])
 
         if (mapContainerRef.current) {
           mapRef.current = new window.ymaps.Map(mapContainerRef.current, {
@@ -135,77 +146,99 @@ export const MapComponent = memo(function MapComponent({
   }, [])
 
   useEffect(() => {
-    if (status !== "ready" || !mapRef.current) return
+    if (status !== "ready" || !mapRef.current || !window.ymaps) return
 
-    const map = mapRef.current
-    map.geoObjects.removeAll()
+    try {
+      const map = mapRef.current
+      map.geoObjects.removeAll()
 
-    checks.forEach((c) => {
-      if (!c.check_lat || !c.check_lon) return
+      // Ensure checks is an array
+      if (Array.isArray(checks)) {
+        checks.forEach((c) => {
+          if (!c.check_lat || !c.check_lon) return
 
-      const placemark = new window.ymaps.Placemark(
-        [c.check_lat, c.check_lon],
-        {
-          balloonContentHeader: `Check ${c.check_id}`,
-          balloonContentBody: `
-            <div style="font-family:sans-serif">
-              <p><strong>Expeditor:</strong> ${c.ekispiditor ?? "-"}</p>
-              <p><strong>Sum:</strong> ${(c.total_sum ?? 0).toLocaleString()} UZS</p>
-              <p><strong>Date:</strong> ${new Date(c.check_date).toLocaleDateString()}</p>
-              <button
-                onclick="window.selectCheck('${c.check_id}')"
-                style="margin-top:8px;padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer"
-              >Details</button>
-            </div>
-          `,
-          balloonContentFooter: `KKM ${c.kkm_number ?? "-"}`,
-        },
-        {
-          preset: c.total_sum ? "islands#greenDotIcon" : "islands#redDotIcon",
-        },
-      )
+          try {
+            const placemark = new window.ymaps.Placemark(
+              [c.check_lat, c.check_lon],
+              {
+                balloonContentHeader: `Check ${c.check_id}`,
+                balloonContentBody: `
+                  <div style="font-family:sans-serif">
+                    <p><strong>Expeditor:</strong> ${c.ekispiditor ?? "-"}</p>
+                    <p><strong>Sum:</strong> ${(c.total_sum ?? 0).toLocaleString()} UZS</p>
+                    <p><strong>Date:</strong> ${new Date(c.check_date).toLocaleDateString()}</p>
+                    <button
+                      onclick="window.selectCheck('${c.check_id}')"
+                      style="margin-top:8px;padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer"
+                    >Details</button>
+                  </div>
+                `,
+                balloonContentFooter: `KKM ${c.kkm_number ?? "-"}`,
+              },
+              {
+                preset: c.total_sum ? "islands#greenDotIcon" : "islands#redDotIcon",
+              },
+            )
 
-      placemark.events.add("click", () => onCheckClick?.(c))
-      map.geoObjects.add(placemark)
-    })
+            placemark.events.add("click", () => onCheckClick?.(c))
+            map.geoObjects.add(placemark)
+          } catch (placemarkError) {
+            console.warn("[Map] Error creating placemark:", placemarkError)
+          }
+        })
+      }
 
-    if (selectedExpeditor) {
-      const expChecks = checks.filter((c) => c.ekispiditor === selectedExpeditor.name && c.check_lat && c.check_lon)
-      const grouped = groupChecksByDay(expChecks)
-      const days = Object.keys(grouped).sort()
-      days.forEach((day, idx) => {
-        const coords = grouped[day].map((c) => [c.check_lat, c.check_lon])
-        if (coords.length > 1) {
-          const polyline = new window.ymaps.Polyline(
-            coords,
-            {},
-            {
-              strokeColor: getPathColor(idx),
-              strokeWidth: 4,
-              strokeOpacity: 0.8,
-            },
-          )
-          map.geoObjects.add(polyline)
+      if (selectedExpeditor && Array.isArray(checks)) {
+        const expChecks = checks.filter((c) => c.ekispiditor === selectedExpeditor.name && c.check_lat && c.check_lon)
+        const grouped = groupChecksByDay(expChecks)
+        const days = Object.keys(grouped).sort()
+        days.forEach((day, idx) => {
+          const coords = grouped[day].map((c) => [c.check_lat, c.check_lon])
+          if (coords.length > 1) {
+            try {
+              const polyline = new window.ymaps.Polyline(
+                coords,
+                {},
+                {
+                  strokeColor: getPathColor(idx),
+                  strokeWidth: 4,
+                  strokeOpacity: 0.8,
+                },
+              )
+              map.geoObjects.add(polyline)
+            } catch (polylineError) {
+              console.warn("[Map] Error creating polyline:", polylineError)
+            }
+          }
+        })
+      }
+
+      if (checks.length && Array.isArray(checks)) {
+        try {
+          const b = map.geoObjects.getBounds()
+          if (b) map.setBounds(b, { checkZoomRange: true, zoomMargin: 40 })
+        } catch (boundsError) {
+          console.warn("[Map] Error setting bounds:", boundsError)
         }
-      })
-    }
+      }
 
-    if (checks.length) {
-      try {
-        const b = map.geoObjects.getBounds()
-        if (b) map.setBounds(b, { checkZoomRange: true, zoomMargin: 40 })
-      } catch {}
-    }
-
-    window.selectCheck = (id: string) => {
-      const found = checks.find((c) => c.check_id === id)
-      found && onCheckClick?.(found)
+      window.selectCheck = (id: string) => {
+        const found = checks.find((c) => c.check_id === id)
+        found && onCheckClick?.(found)
+      }
+    } catch (error) {
+      console.error("[Map] Error in map update:", error)
     }
   }, [status, checks, onCheckClick, selectedExpeditor])
 
   useEffect(() => {
     if (status !== "ready" || !focusLocation || !mapRef.current) return
-    mapRef.current.setCenter([focusLocation.lat, focusLocation.lng], 15)
+    
+    try {
+      mapRef.current.setCenter([focusLocation.lat, focusLocation.lng], 15)
+    } catch (error) {
+      console.warn("[Map] Error setting focus location:", error)
+    }
   }, [status, focusLocation])
 
   if (status === "error") {
