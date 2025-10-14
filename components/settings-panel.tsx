@@ -90,20 +90,20 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className={className}>
-          <Settings className="h-4 w-4 mr-2" />
-          Settings
-        </Button>
-      </DialogTrigger>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className={className}>
+            <Settings className="h-4 w-4 mr-2" />
+            {t("settings")}
+          </Button>
+        </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Settings & Preferences
+            {t("settingsAndPreferences")}
           </DialogTitle>
           <DialogDescription>
-            Customize your experience with the Expeditor Tracker application.
+            {t("customizeExperience")}
           </DialogDescription>
         </DialogHeader>
 
@@ -111,19 +111,19 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              General
+              {t("general")}
             </TabsTrigger>
             <TabsTrigger value="appearance" className="flex items-center gap-2">
               <Palette className="h-4 w-4" />
-              Appearance
+              {t("appearance")}
             </TabsTrigger>
             <TabsTrigger value="filters" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              Filters
+              {t("filters")}
             </TabsTrigger>
             <TabsTrigger value="data" className="flex items-center gap-2">
               <Download className="h-4 w-4" />
-              Data
+              {t("data")}
             </TabsTrigger>
           </TabsList>
 
@@ -132,17 +132,17 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Globe className="h-5 w-5" />
-                  Language & Localization
+                  {t("languageAndLocalization")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Interface Language</Label>
+                  <Label>{t("interfaceLanguage")}</Label>
                   <LanguageSwitcher />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Default Date Range</Label>
+                  <Label>{t("defaultDateRange")}</Label>
                   <Select
                     value={preferences.defaultDateRange.type}
                     onValueChange={(value) => updateNestedPreference("defaultDateRange", { type: value as any })}
@@ -151,10 +151,10 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="current_month">Current Month</SelectItem>
-                      <SelectItem value="last_week">Last Week</SelectItem>
-                      <SelectItem value="last_month">Last Month</SelectItem>
-                      <SelectItem value="custom">Custom Range</SelectItem>
+                      <SelectItem value="current_month">{t("currentMonth")}</SelectItem>
+                      <SelectItem value="last_week">{t("lastWeek")}</SelectItem>
+                      <SelectItem value="last_month">{t("lastMonth")}</SelectItem>
+                      <SelectItem value="custom">{t("customRange")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -165,15 +165,15 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5" />
-                  User Interface
+                  {t("userInterface")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Collapse Sidebar by Default</Label>
+                    <Label>{t("collapseSidebarByDefault")}</Label>
                     <p className="text-sm text-gray-500">
-                      Start with the sidebar collapsed on page load
+                      {t("startWithSidebarCollapsed")}
                     </p>
                   </div>
                   <Switch
@@ -185,10 +185,10 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                 <Separator />
 
                 <div className="space-y-3">
-                  <Label>Default Panel States</Label>
+                  <Label>{t("defaultPanelStates")}</Label>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Statistics Panel</Label>
+                      <Label className="text-sm">{t("statisticsPanel")}</Label>
                       <Switch
                         checked={preferences.ui.panelsExpanded.statistics}
                         onCheckedChange={(checked) => updateNestedPreference("ui", {
@@ -197,7 +197,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Expeditors Panel</Label>
+                      <Label className="text-sm">{t("expeditorsPanel")}</Label>
                       <Switch
                         checked={preferences.ui.panelsExpanded.expeditors}
                         onCheckedChange={(checked) => updateNestedPreference("ui", {
@@ -206,7 +206,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Checks Panel</Label>
+                      <Label className="text-sm">{t("checksPanel")}</Label>
                       <Switch
                         checked={preferences.ui.panelsExpanded.checks}
                         onCheckedChange={(checked) => updateNestedPreference("ui", {
@@ -215,7 +215,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                       />
                     </div>
                     <div className="flex items-center justify-between">
-                      <Label className="text-sm">Map Panel</Label>
+                      <Label className="text-sm">{t("mapPanel")}</Label>
                       <Switch
                         checked={preferences.ui.panelsExpanded.map}
                         onCheckedChange={(checked) => updateNestedPreference("ui", {
@@ -234,12 +234,12 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Palette className="h-5 w-5" />
-                  Theme & Display
+                  {t("themeAndDisplay")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Theme Preference</Label>
+                  <Label>{t("themePreference")}</Label>
                   <Select
                     value={preferences.ui.theme}
                     onValueChange={(value) => updateNestedPreference("ui", { theme: value as any })}
@@ -251,19 +251,19 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                       <SelectItem value="light">
                         <div className="flex items-center gap-2">
                           <Sun className="h-4 w-4" />
-                          Light
+                          {t("light")}
                         </div>
                       </SelectItem>
                       <SelectItem value="dark">
                         <div className="flex items-center gap-2">
                           <Moon className="h-4 w-4" />
-                          Dark
+                          {t("dark")}
                         </div>
                       </SelectItem>
                       <SelectItem value="system">
                         <div className="flex items-center gap-2">
                           <Monitor className="h-4 w-4" />
-                          System
+                          {t("system")}
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -273,10 +273,10 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                 <Separator />
 
                 <div className="space-y-3">
-                  <Label>Column Visibility</Label>
+                  <Label>{t("columnVisibility")}</Label>
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-sm font-medium">Expeditors Table</Label>
+                      <Label className="text-sm font-medium">{t("expeditorsTable")}</Label>
                       <div className="mt-2 space-y-2">
                         {["name", "phone_number", "transport_number", "filial", "checks_count"].map((column) => (
                           <div key={column} className="flex items-center justify-between">
@@ -299,7 +299,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium">Checks Table</Label>
+                      <Label className="text-sm font-medium">{t("checksTable")}</Label>
                       <div className="mt-2 space-y-2">
                         {["check_id", "project", "city", "total_sum", "status", "check_date"].map((column) => (
                           <div key={column} className="flex items-center justify-between">
@@ -322,7 +322,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium">Statistics Panel</Label>
+                      <Label className="text-sm font-medium">{t("statisticsPanel2")}</Label>
                       <div className="mt-2 space-y-2">
                         {["totalChecks", "deliveredChecks", "successRate", "totalSum", "avgCheckSum"].map((column) => (
                           <div key={column} className="flex items-center justify-between">
@@ -354,39 +354,39 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
-                  Default Filters
+                  {t("defaultFilters")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Default Project Filter</Label>
+                    <Label>{t("defaultProjectFilter")}</Label>
                     <Input
-                      placeholder="All projects"
+                      placeholder={t("allProjects")}
                       value={preferences.defaultFilters.project}
                       onChange={(e) => updateNestedPreference("defaultFilters", { project: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Default Warehouse Filter</Label>
+                    <Label>{t("defaultWarehouseFilter")}</Label>
                     <Input
-                      placeholder="All warehouses"
+                      placeholder={t("allWarehouses")}
                       value={preferences.defaultFilters.sklad}
                       onChange={(e) => updateNestedPreference("defaultFilters", { sklad: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Default City Filter</Label>
+                    <Label>{t("defaultCityFilter")}</Label>
                     <Input
-                      placeholder="All cities"
+                      placeholder={t("allCities")}
                       value={preferences.defaultFilters.city}
                       onChange={(e) => updateNestedPreference("defaultFilters", { city: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Default Filial Filter</Label>
+                    <Label>{t("defaultFilialFilter")}</Label>
                     <Input
-                      placeholder="All filials"
+                      placeholder={t("allFilials")}
                       value={preferences.defaultFilters.filial}
                       onChange={(e) => updateNestedPreference("defaultFilters", { filial: e.target.value })}
                     />
