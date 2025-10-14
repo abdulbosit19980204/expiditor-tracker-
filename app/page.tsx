@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,6 +17,7 @@ import { MapComponent } from "@/components/map-component"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
@@ -38,6 +40,7 @@ function getCurrentMonthRange() {
 }
 
 const ExpeditorTracker = memo(function ExpeditorTracker() {
+  const { t } = useTranslation()
   const isMobile = useIsMobile()
 
   // State management
@@ -252,11 +255,12 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <h1 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Expeditor Tracker
+            {t('expeditorTracker')}
           </h1>
           <div className="flex items-center gap-2">
+            <LanguageSwitcher variant="button" className="hidden sm:flex" />
             <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-              <BarChart3 className="h-4 w-4" /> Stats
+              <BarChart3 className="h-4 w-4" /> {t('statistics')}
             </Link>
           </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -432,7 +436,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                     <Input
-                      placeholder="Search expeditors..."
+                      placeholder={t('searchExpeditors')}
                       value={expeditorSearchQuery}
                       onChange={(e) => setExpeditorSearchQuery(e.target.value)}
                       className="pl-10"
@@ -445,13 +449,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   {isLoadingExpeditors ? (
                     <div className="text-center py-8">
                       <LoadingSpinner size="sm" />
-                      <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
+                      <p className="text-sm text-gray-500 mt-2">{t('loadingExpeditors')}</p>
                     </div>
                   ) : filteredExpeditors.length === 0 ? (
                     <div className="text-center text-gray-500 mt-8">
                       <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p>No expeditors with checks found</p>
-                      {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
+                      <p>{t('noExpeditorsFound')}</p>
+                      {filters.filial && <p className="text-xs mt-2">{t('tryChangingFilial')}</p>}
                     </div>
                   ) : (
                     filteredExpeditors.map((expeditor) => (
@@ -501,17 +505,18 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             <div className="p-4 border-b border-gray-200">
               <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Expeditor Tracker
+                {t('expeditorTracker')}
               </h1>
-              <div className="mb-4">
+              <div className="mb-4 space-y-3">
+                <LanguageSwitcher variant="select" />
                 <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-                  <BarChart3 className="h-4 w-4" /> Open Stats
+                  <BarChart3 className="h-4 w-4" /> {t('statistics')}
                 </Link>
               </div>
 
               {/* Date Range Filter */}
               <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">{t('dateRange')}</label>
                 <DatePickerWithRange
                   dateRange={filters.dateRange}
                   onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
@@ -527,7 +532,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 >
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    Advanced Filters
+                    {t('advancedFilters')}
                     {activeFiltersCount > 0 && (
                       <Badge variant="secondary" className="ml-2">
                         {activeFiltersCount}
@@ -743,7 +748,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Checks
+                  {t('checks')}
                   {selectedExpeditor && <Badge variant="outline">{checks.length}</Badge>}
                 </h2>
 
@@ -751,7 +756,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                      placeholder="Search checks..."
+                      placeholder={t('searchChecks')}
                       value={checkSearchQuery}
                       onChange={(e) => setCheckSearchQuery(e.target.value)}
                       className="pl-10"
@@ -764,17 +769,17 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 {!selectedExpeditor ? (
                   <div className="text-center text-gray-500 mt-8">
                     <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>Select an expeditor to view checks</p>
+                    <p>{t('selectExpeditor')}</p>
                   </div>
                 ) : isLoadingChecks ? (
                   <div className="text-center py-8">
                     <LoadingSpinner size="sm" />
-                    <p className="text-sm text-gray-500 mt-2">Loading checks...</p>
+                    <p className="text-sm text-gray-500 mt-2">{t('loadingChecks')}</p>
                   </div>
                 ) : checks.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
-                    <p>No checks found</p>
-                    <p className="text-xs mt-2">Try adjusting the date range or filters</p>
+                    <p>{t('noChecksFound')}</p>
+                    <p className="text-xs mt-2">{t('tryAdjustingFilters')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -797,13 +802,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                             <div className="text-xs text-gray-600 space-y-1">
                               <p>
-                                <strong>Project:</strong> {check.project}
+                                <strong>{t('project')}:</strong> {check.project}
                               </p>
                               <p>
-                                <strong>City:</strong> {check.city}
+                                <strong>{t('city')}:</strong> {check.city}
                               </p>
                               <p>
-                                <strong>KKM:</strong> {check.kkm_number}
+                                <strong>{t('kkm')}:</strong> {check.kkm_number}
                               </p>
                             </div>
 
@@ -819,7 +824,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                                   onClick={() => handleShowLocation(check)}
                                 >
                                   <MapPin className="h-3 w-3 mr-1" />
-                                  Show
+                                  {t('show')}
                                 </Button>
                               )}
                             </div>
@@ -827,25 +832,25 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             <div className="text-xs text-gray-500 space-y-1">
                               {(check.nalichniy || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>Cash:</span>
+                                  <span>{t('cash')}:</span>
                                   <span>{formatCurrency(check.nalichniy || 0)}</span>
                                 </div>
                               )}
                               {(check.uzcard || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>UzCard:</span>
+                                  <span>{t('uzcard')}:</span>
                                   <span>{formatCurrency(check.uzcard || 0)}</span>
                                 </div>
                               )}
                               {(check.humo || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>Humo:</span>
+                                  <span>{t('humo')}:</span>
                                   <span>{formatCurrency(check.humo || 0)}</span>
                                 </div>
                               )}
                               {(check.click || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>Click:</span>
+                                  <span>{t('click')}:</span>
                                   <span>{formatCurrency(check.click || 0)}</span>
                                 </div>
                               )}

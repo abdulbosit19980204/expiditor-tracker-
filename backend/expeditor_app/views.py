@@ -182,8 +182,9 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-yetkazilgan_vaqti']
     
     def get_queryset(self):
-        # Optimized queryset - CheckDetail is linked by check_id, not FK
-        # We'll handle the relationship in the serializer for better performance
+        # Optimized queryset - since CheckDetail is linked by check_id (not FK),
+        # we'll handle the relationship in the serializer for better performance
+        # The serializer will use a more efficient approach
         return Check.objects.all()
     
     @action(detail=False, methods=['get'])
@@ -318,71 +319,48 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-        # Optimized top expeditors query with single aggregation
+        # Optimized top expeditors query with single aggregation including sums
         top_expeditors = list(
             checks_qs.values('ekispiditor')
             .annotate(
                 check_count=Count('id'),
-                success_count=Count('id', filter=Q(status='delivered'))
+                success_count=Count('id', filter=Q(status='delivered')),
+                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
             )
             .order_by('-check_count')[:5]
         )
         
-        # Optimized: Get all expeditor check IDs and sums in one query
-        if top_expeditors:
-            expeditor_names = [exp['ekispiditor'] for exp in top_expeditors]
-            expeditor_sums = dict(
-                checks_qs.filter(ekispiditor__in=expeditor_names)
-                .values('ekispiditor')
-                .annotate(total_sum=Sum('checkdetail__total_sum'))
-                .values_list('ekispiditor', 'total_sum')
-            )
-            
-            # Add total sum to each expeditor
-            for exp_stat in top_expeditors:
-                exp_stat['total_sum'] = expeditor_sums.get(exp_stat['ekispiditor'], 0) or 0
+        # Clean up None values
+        for exp_stat in top_expeditors:
+            exp_stat['total_sum'] = exp_stat['total_sum'] or 0
         
-        # Optimized top projects query
+        # Optimized top projects query with sums in single query
         top_projects = list(
             checks_qs.values('project')
-            .annotate(check_count=Count('id'))
+            .annotate(
+                check_count=Count('id'),
+                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
+            )
             .order_by('-check_count')[:5]
         )
         
-        # Optimized: Get all project sums in one query
-        if top_projects:
-            project_names = [proj['project'] for proj in top_projects]
-            project_sums = dict(
-                checks_qs.filter(project__in=project_names)
-                .values('project')
-                .annotate(total_sum=Sum('checkdetail__total_sum'))
-                .values_list('project', 'total_sum')
-            )
-            
-            # Add total sum to each project
-            for proj_stat in top_projects:
-                proj_stat['total_sum'] = project_sums.get(proj_stat['project'], 0) or 0
+        # Clean up None values
+        for proj_stat in top_projects:
+            proj_stat['total_sum'] = proj_stat['total_sum'] or 0
         
-        # Optimized top cities query
+        # Optimized top cities query with sums in single query
         top_cities = list(
             checks_qs.values('city')
-            .annotate(check_count=Count('id'))
+            .annotate(
+                check_count=Count('id'),
+                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
+            )
             .order_by('-check_count')[:5]
         )
         
-        # Optimized: Get all city sums in one query
-        if top_cities:
-            city_names = [city['city'] for city in top_cities]
-            city_sums = dict(
-                checks_qs.filter(city__in=city_names)
-                .values('city')
-                .annotate(total_sum=Sum('checkdetail__total_sum'))
-                .values_list('city', 'total_sum')
-            )
-            
-            # Add total sum to each city
-            for city_stat in top_cities:
-                city_stat['total_sum'] = city_sums.get(city_stat['city'], 0) or 0
+        # Clean up None values
+        for city_stat in top_cities:
+            city_stat['total_sum'] = city_stat['total_sum'] or 0
         
         # Daily statistics - optimized for date range
         if date_from and date_to:
