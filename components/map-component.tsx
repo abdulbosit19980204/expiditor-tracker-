@@ -95,7 +95,8 @@ export const MapComponent = memo(function MapComponent({
 
     const init = async () => {
       try {
-        await loadScript("https://api-maps.yandex.ru/2.1/?apikey=60bf1ed7-7273-4bf6-af8a-bb77a1f0c129&lang=en_US")
+        // Use our API route instead of direct Yandex API to avoid conflicts
+        await loadScript("/api/yandex-maps?v=2.1&lang=en_US")
 
         const wasmOk = await canUseWasm()
         if (!wasmOk) {

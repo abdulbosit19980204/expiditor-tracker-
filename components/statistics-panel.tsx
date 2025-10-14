@@ -7,12 +7,14 @@ import { TrendingUp, Users, MapPin, CreditCard, Calendar, DollarSign } from "luc
 import type { Statistics } from "@/lib/types"
 import { useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useTranslation } from "react-i18next"
 
 interface StatisticsPanelProps {
   statistics: Statistics | null
 }
 
 export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
+  const { t } = useTranslation()
   const [selectedMonth, setSelectedMonth] = useState("6") // July (0-based)
 
   if (!statistics) {
