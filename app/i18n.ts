@@ -460,6 +460,12 @@ const resources = {
   // Error Messages
   errorImportingSettings: "Error importing settings. Please check the file format.",
   confirmResetSettings: "Are you sure you want to reset all settings to defaults? This action cannot be undone.",
+  
+  // Statistics Page
+  statusDistribution: "Status Distribution",
+  filialPerformance: "Filial Performance",
+  checks: "checks",
+  expeditors: "expeditors",
     },
   },
   uz: {
@@ -919,6 +925,12 @@ const resources = {
       // Error Messages
       errorImportingSettings: "Sozlamalarni import qilishda xatolik. Fayl formatini tekshiring.",
       confirmResetSettings: "Barcha sozlamalarni standartga qaytarishni xohlaysizmi? Bu amalni bekor qilib bo'lmaydi.",
+      
+      // Statistics Page
+      statusDistribution: "Holat Taqsimoti",
+      filialPerformance: "Filial Ishlashi",
+      checks: "cheklar",
+      expeditors: "ekspeditorlar",
     },
   },
   ru: {
@@ -1378,6 +1390,12 @@ const resources = {
       // Error Messages
       errorImportingSettings: "Ошибка импорта настроек. Проверьте формат файла.",
       confirmResetSettings: "Вы уверены, что хотите сбросить все настройки к значениям по умолчанию? Это действие нельзя отменить.",
+      
+      // Statistics Page
+      statusDistribution: "Распределение Статусов",
+      filialPerformance: "Производительность Филиалов",
+      checks: "чеки",
+      expeditors: "экспедиторы",
     },
   },
 }

@@ -291,7 +291,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             <SettingsPanel className="hidden sm:flex" />
             <HelpModal className="hidden sm:flex" />
             <Link
-              href="/analytics"
+              href="/statistics"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
             >
               <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
@@ -549,7 +549,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 <SettingsPanel />
                 <HelpModal />
                 <Link
-                  href="/analytics"
+                  href="/statistics"
                   className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
                 >
                   <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
