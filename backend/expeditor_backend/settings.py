@@ -183,8 +183,8 @@ SPECTACULAR_SETTINGS = {
     'ENUM_NAME_OVERRIDES': {
         'StatusEnum': 'expeditor_app.models.Check.Status',
     },
-    'POSTPROCESSING_HOOKS': [
-        'drf_spectacular.contrib.djangorestframework_camel_case.camelize_serializer_fields'
-    ],
-    'CAMELIZE_NAMES': True,
+    # 'POSTPROCESSING_HOOKS': [
+    #     'drf_spectacular.contrib.djangorestframework_camel_case.camelize_serializer_fields'
+    # ],
+    # 'CAMELIZE_NAMES': True,
 }

@@ -13,6 +13,16 @@ from drf_spectacular.types import OpenApiTypes
 from typing import Dict, Any
 
 from .analytics_service import AnalyticsService
+from .analytics_serializers import (
+    DailySalesSummarySerializer,
+    ExpeditorPerformanceSummarySerializer,
+    PaymentDistributionSummarySerializer,
+    ProjectStatisticsSummarySerializer,
+    StatusDistributionSummarySerializer,
+    LocationStatisticsSummarySerializer,
+    RevenueSummarySerializer,
+    HourlyDistributionSummarySerializer
+)
 
 
 @extend_schema_view(
@@ -118,6 +128,7 @@ class DailySalesSummaryView(APIView):
     
     Provides daily aggregated data with check counts and revenue statistics.
     """
+    serializer_class = DailySalesSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -249,6 +260,7 @@ class ExpeditorPerformanceView(APIView):
     
     Provides performance metrics for expeditors including success rates and revenue.
     """
+    serializer_class = ExpeditorPerformanceSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -392,6 +404,7 @@ class PaymentDistributionView(APIView):
     
     Provides breakdown of revenue by payment methods.
     """
+    serializer_class = PaymentDistributionSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -506,6 +519,7 @@ class ProjectStatisticsView(APIView):
     
     Provides comprehensive statistics organized by project.
     """
+    serializer_class = ProjectStatisticsSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -615,6 +629,7 @@ class StatusDistributionView(APIView):
     
     Provides breakdown of checks by delivery status.
     """
+    serializer_class = StatusDistributionSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -722,6 +737,7 @@ class LocationStatisticsView(APIView):
     
     Provides statistics organized by filial, city, and warehouse.
     """
+    serializer_class = LocationStatisticsSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -830,6 +846,7 @@ class RevenueSummaryView(APIView):
     
     Provides KPI metrics and comprehensive revenue statistics.
     """
+    serializer_class = RevenueSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
@@ -937,6 +954,7 @@ class HourlyDistributionView(APIView):
     
     Provides hourly breakdown of delivery statistics.
     """
+    serializer_class = HourlyDistributionSummarySerializer
     
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request):
