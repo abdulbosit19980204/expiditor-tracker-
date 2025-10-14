@@ -17,6 +17,7 @@ import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useLocationDetection } from "@/hooks/use-location"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 

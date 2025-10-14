@@ -82,6 +82,9 @@ class EkispiditorFilter(django_filters.FilterSet):
     filial = django_filters.NumberFilter(field_name='filial__id')
     filial_name = django_filters.CharFilter(field_name='filial__filial_name', lookup_expr='icontains')
     has_checks = django_filters.BooleanFilter(method='filter_has_checks')
+    city = django_filters.CharFilter(method='filter_by_city')
+    sklad = django_filters.CharFilter(method='filter_by_sklad')
+    location_based = django_filters.BooleanFilter(method='filter_location_based')
     
     def filter_has_checks(self, queryset, name, value):
         if value:
@@ -90,9 +93,37 @@ class EkispiditorFilter(django_filters.FilterSet):
             return queryset.filter(ekispiditor_name__in=ekispiditor_names)
         return queryset
     
+    def filter_by_city(self, queryset, name, value):
+        if value:
+            # Get expeditors who have delivered checks in this city
+            city_expeditors = Check.objects.filter(
+                city__icontains=value,
+                status='delivered'
+            ).values_list('ekispiditor', flat=True).distinct()
+            return queryset.filter(ekispiditor_name__in=city_expeditors)
+        return queryset
+    
+    def filter_by_sklad(self, queryset, name, value):
+        if value:
+            # Get expeditors who have delivered checks from this sklad
+            sklad_expeditors = Check.objects.filter(
+                sklad__icontains=value,
+                status='delivered'
+            ).values_list('ekispiditor', flat=True).distinct()
+            return queryset.filter(ekispiditor_name__in=sklad_expeditors)
+        return queryset
+    
+    def filter_location_based(self, queryset, name, value):
+        if value:
+            # This will be handled in the view to detect user location
+            # For now, return all expeditors with checks
+            ekispiditor_names = Check.objects.values_list('ekispiditor', flat=True).distinct()
+            return queryset.filter(ekispiditor_name__in=ekispiditor_names)
+        return queryset
+    
     class Meta:
         model = Ekispiditor
-        fields = ['filial', 'filial_name', 'is_active', 'has_checks']
+        fields = ['filial', 'filial_name', 'is_active', 'has_checks', 'city', 'sklad', 'location_based']
 
 
 class ProjectsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -162,6 +193,44 @@ class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
         queryset = queryset.annotate(checks_count=Subquery(checks_count_sq, output_field=IntegerField()))
+
+        # Location-based filtering
+        user_location = self.request.GET.get('user_location')
+        if user_location:
+            # Map major cities to prioritize local expeditors
+            city_mapping = {
+                'tashkent': ['toshkent', 'tashkent', 'ташкент'],
+                'fergana': ['fargona', 'fergana', 'фергана', 'farg\'ona'],
+                'samarkand': ['samarkand', 'samarqand', 'самарканд'],
+                'bukhara': ['bukhara', 'buxoro', 'бухара'],
+                'namangan': ['namangan', 'наманган'],
+                'andijan': ['andijan', 'andijon', 'андижан'],
+            }
+            
+            user_city_lower = user_location.lower()
+            prioritized_cities = []
+            
+            for key, cities in city_mapping.items():
+                if any(city in user_city_lower for city in cities):
+                    prioritized_cities.extend(cities)
+                    break
+            
+            if prioritized_cities:
+                # Get expeditors who work in the user's city
+                city_expeditors = Check.objects.filter(
+                    city__iregex=r'(' + '|'.join(prioritized_cities) + ')',
+                    status='delivered'
+                ).values_list('ekispiditor', flat=True).distinct()
+                
+                # Order by local expeditors first
+                from django.db.models import Case, When, IntegerField
+                queryset = queryset.annotate(
+                    is_local=Case(
+                        When(ekispiditor_name__in=city_expeditors, then=1),
+                        default=0,
+                        output_field=IntegerField()
+                    )
+                ).order_by('-is_local', 'ekispiditor_name')
 
         return queryset
 
