@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -26,7 +25,6 @@ import { fetchGlobalStatistics, fetchProjects, fetchSklads, fetchCities } from "
 import type { GlobalStatistics } from "@/lib/types"
 
 function StatsContentInner() {
-  const searchParams = useSearchParams()
   const [stats, setStats] = useState<GlobalStatistics | null>(null)
   const [loading, setLoading] = useState(true)
 
