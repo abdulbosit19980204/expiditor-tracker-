@@ -319,48 +319,65 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-        # Optimized top expeditors query with single aggregation including sums
+        # Get top expeditors with counts only (sums calculated separately due to relationship)
         top_expeditors = list(
             checks_qs.values('ekispiditor')
             .annotate(
                 check_count=Count('id'),
-                success_count=Count('id', filter=Q(status='delivered')),
-                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
+                success_count=Count('id', filter=Q(status='delivered'))
             )
             .order_by('-check_count')[:5]
         )
         
-        # Clean up None values
+        # Calculate sums separately for expeditors
         for exp_stat in top_expeditors:
-            exp_stat['total_sum'] = exp_stat['total_sum'] or 0
+            expeditor_checks = checks_qs.filter(ekispiditor=exp_stat['ekispiditor'])
+            expeditor_check_ids = list(expeditor_checks.values_list('check_id', flat=True))
+            if expeditor_check_ids:
+                expeditor_sum = CheckDetail.objects.filter(check_id__in=expeditor_check_ids).aggregate(
+                    total=Sum('total_sum')
+                )['total'] or 0
+            else:
+                expeditor_sum = 0
+            exp_stat['total_sum'] = expeditor_sum
         
-        # Optimized top projects query with sums in single query
+        # Get top projects with counts only
         top_projects = list(
             checks_qs.values('project')
-            .annotate(
-                check_count=Count('id'),
-                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
-            )
+            .annotate(check_count=Count('id'))
             .order_by('-check_count')[:5]
         )
         
-        # Clean up None values
+        # Calculate sums separately for projects
         for proj_stat in top_projects:
-            proj_stat['total_sum'] = proj_stat['total_sum'] or 0
+            project_checks = checks_qs.filter(project=proj_stat['project'])
+            project_check_ids = list(project_checks.values_list('check_id', flat=True))
+            if project_check_ids:
+                project_sum = CheckDetail.objects.filter(check_id__in=project_check_ids).aggregate(
+                    total=Sum('total_sum')
+                )['total'] or 0
+            else:
+                project_sum = 0
+            proj_stat['total_sum'] = project_sum
         
-        # Optimized top cities query with sums in single query
+        # Get top cities with counts only
         top_cities = list(
             checks_qs.values('city')
-            .annotate(
-                check_count=Count('id'),
-                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
-            )
+            .annotate(check_count=Count('id'))
             .order_by('-check_count')[:5]
         )
         
-        # Clean up None values
+        # Calculate sums separately for cities
         for city_stat in top_cities:
-            city_stat['total_sum'] = city_stat['total_sum'] or 0
+            city_checks = checks_qs.filter(city=city_stat['city'])
+            city_check_ids = list(city_checks.values_list('check_id', flat=True))
+            if city_check_ids:
+                city_sum = CheckDetail.objects.filter(check_id__in=city_check_ids).aggregate(
+                    total=Sum('total_sum')
+                )['total'] or 0
+            else:
+                city_sum = 0
+            city_stat['total_sum'] = city_sum
         
         # Daily statistics - optimized for date range
         if date_from and date_to:
