@@ -54,14 +54,7 @@ class EkispiditorSerializer(serializers.ModelSerializer):
 
 class CheckSerializer(serializers.ModelSerializer):
     check_detail = serializers.SerializerMethodField()
-    total_sum = serializers.SerializerMethodField()
-    nalichniy = serializers.SerializerMethodField()
-    uzcard = serializers.SerializerMethodField()
-    humo = serializers.SerializerMethodField()
-    click = serializers.SerializerMethodField()
-    checkURL = serializers.SerializerMethodField()
-    check_date = serializers.SerializerMethodField()
-
+    
     def get_check_detail(self, obj):
         # Optimized: Get check detail efficiently
         # This will be optimized further in the viewset using bulk operations
@@ -70,60 +63,10 @@ class CheckSerializer(serializers.ModelSerializer):
             return CheckDetailSerializer(check_detail).data
         except CheckDetail.DoesNotExist:
             return None
-
-    def get_total_sum(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.total_sum
-        except CheckDetail.DoesNotExist:
-            return None
-
-    def get_nalichniy(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.nalichniy
-        except CheckDetail.DoesNotExist:
-            return None
-
-    def get_uzcard(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.uzcard
-        except CheckDetail.DoesNotExist:
-            return None
-
-    def get_humo(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.humo
-        except CheckDetail.DoesNotExist:
-            return None
-
-    def get_click(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.click
-        except CheckDetail.DoesNotExist:
-            return None
-
-    def get_checkURL(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.checkURL
-        except CheckDetail.DoesNotExist:
-            return None
-
-    def get_check_date(self, obj):
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return check_detail.check_date
-        except CheckDetail.DoesNotExist:
-            return obj.yetkazilgan_vaqti
-
+    
     class Meta:
         model = Check
         fields = ['id', 'check_id', 'project', 'sklad', 'city', 'sborshik', 'agent',
                  'ekispiditor', 'yetkazilgan_vaqti', 'receiptIdDate', 'transport_number', 'kkm_number',
                  'client_name', 'client_address', 'check_lat', 'check_lon', 'status',
-                 'check_detail', 'total_sum', 'nalichniy', 'uzcard', 'humo', 'click', 
-                 'checkURL', 'check_date', 'created_at', 'updated_at']
+                 'check_detail', 'created_at', 'updated_at']

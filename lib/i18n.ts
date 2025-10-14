@@ -69,21 +69,6 @@ const resources = {
       failedToLoadMap: "Failed to load map",
       retry: "Retry",
 
-      // Enhanced Statistics
-      enhancedStatistics: "Enhanced Statistics",
-      comprehensiveAnalytics: "Comprehensive Analytics Dashboard",
-      performanceAnalysis: "Performance Analysis",
-      deliveryStatus: "Delivery Status",
-      avgCheckValue: "Average Check Value",
-      topPerformers: "Top Performers",
-      dailyTrends: "Daily Trends",
-      customizeView: "Customize View",
-      applyFilters: "Apply Filters",
-      loadingStatistics: "Loading statistics",
-      noStatisticsAvailable: "No statistics available",
-      warehouse: "Warehouse",
-      filial: "Filial",
-      
       // Common
       loading: "Loading...",
       refresh: "Refresh",
@@ -169,21 +154,6 @@ const resources = {
       failedToLoadMap: "Xaritani yuklashda xatolik",
       retry: "Qayta urinish",
 
-      // Enhanced Statistics
-      enhancedStatistics: "Kengaytirilgan Statistika",
-      comprehensiveAnalytics: "To'liq Analitik Panel",
-      performanceAnalysis: "Ishlash Tahlili",
-      deliveryStatus: "Yetkazib Berish Holati",
-      avgCheckValue: "O'rtacha Chek Qiymati",
-      topPerformers: "Eng Yaxshi Ishlovchilar",
-      dailyTrends: "Kunlik Tendentsiyalar",
-      customizeView: "Ko'rinishni Sozlash",
-      applyFilters: "Filtrlarni Qo'llash",
-      loadingStatistics: "Statistika yuklanmoqda",
-      noStatisticsAvailable: "Statistika mavjud emas",
-      warehouse: "Ombor",
-      filial: "Filial",
-      
       // Common
       loading: "Yuklanmoqda...",
       refresh: "Yangilash",
@@ -269,21 +239,6 @@ const resources = {
       failedToLoadMap: "Ошибка загрузки карты",
       retry: "Повторить",
 
-      // Enhanced Statistics
-      enhancedStatistics: "Расширенная Статистика",
-      comprehensiveAnalytics: "Комплексная Аналитическая Панель",
-      performanceAnalysis: "Анализ Производительности",
-      deliveryStatus: "Статус Доставки",
-      avgCheckValue: "Средняя Стоимость Чека",
-      topPerformers: "Топ Исполнители",
-      dailyTrends: "Ежедневные Тренды",
-      customizeView: "Настроить Вид",
-      applyFilters: "Применить Фильтры",
-      loadingStatistics: "Загрузка статистики",
-      noStatisticsAvailable: "Статистика недоступна",
-      warehouse: "Склад",
-      filial: "Филиал",
-      
       // Common
       loading: "Загрузка...",
       refresh: "Обновить",

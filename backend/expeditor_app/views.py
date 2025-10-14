@@ -187,24 +187,6 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
         # The serializer will use a more efficient approach
         return Check.objects.all()
     
-    def list(self, request, *args, **kwargs):
-        # Optimize by pre-fetching check details to avoid N+1 queries
-        queryset = self.filter_queryset(self.get_queryset())
-        
-        # Pre-fetch check details in bulk
-        check_ids = list(queryset.values_list('check_id', flat=True))
-        check_details_map = {}
-        if check_ids:
-            check_details = CheckDetail.objects.filter(check_id__in=check_ids)
-            check_details_map = {cd.check_id: cd for cd in check_details}
-        
-        # Add check details to serializer context
-        serializer = self.get_serializer(queryset, many=True, context={
-            'check_details_map': check_details_map
-        })
-        
-        return Response(serializer.data)
-    
     @action(detail=False, methods=['get'])
     def today_checks(self, request):
         today = timezone.now().date()
@@ -337,65 +319,48 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-        # Get top expeditors with counts only (sums calculated separately due to relationship)
+        # Optimized top expeditors query with single aggregation including sums
         top_expeditors = list(
             checks_qs.values('ekispiditor')
             .annotate(
                 check_count=Count('id'),
-                success_count=Count('id', filter=Q(status='delivered'))
+                success_count=Count('id', filter=Q(status='delivered')),
+                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
             )
             .order_by('-check_count')[:5]
         )
         
-        # Calculate sums separately for expeditors
+        # Clean up None values
         for exp_stat in top_expeditors:
-            expeditor_checks = checks_qs.filter(ekispiditor=exp_stat['ekispiditor'])
-            expeditor_check_ids = list(expeditor_checks.values_list('check_id', flat=True))
-            if expeditor_check_ids:
-                expeditor_sum = CheckDetail.objects.filter(check_id__in=expeditor_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-            else:
-                expeditor_sum = 0
-            exp_stat['total_sum'] = expeditor_sum
+            exp_stat['total_sum'] = exp_stat['total_sum'] or 0
         
-        # Get top projects with counts only
+        # Optimized top projects query with sums in single query
         top_projects = list(
             checks_qs.values('project')
-            .annotate(check_count=Count('id'))
+            .annotate(
+                check_count=Count('id'),
+                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
+            )
             .order_by('-check_count')[:5]
         )
         
-        # Calculate sums separately for projects
+        # Clean up None values
         for proj_stat in top_projects:
-            project_checks = checks_qs.filter(project=proj_stat['project'])
-            project_check_ids = list(project_checks.values_list('check_id', flat=True))
-            if project_check_ids:
-                project_sum = CheckDetail.objects.filter(check_id__in=project_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-            else:
-                project_sum = 0
-            proj_stat['total_sum'] = project_sum
+            proj_stat['total_sum'] = proj_stat['total_sum'] or 0
         
-        # Get top cities with counts only
+        # Optimized top cities query with sums in single query
         top_cities = list(
             checks_qs.values('city')
-            .annotate(check_count=Count('id'))
+            .annotate(
+                check_count=Count('id'),
+                total_sum=Sum('checkdetail__total_sum')  # Get sum in same query
+            )
             .order_by('-check_count')[:5]
         )
         
-        # Calculate sums separately for cities
+        # Clean up None values
         for city_stat in top_cities:
-            city_checks = checks_qs.filter(city=city_stat['city'])
-            city_check_ids = list(city_checks.values_list('check_id', flat=True))
-            if city_check_ids:
-                city_sum = CheckDetail.objects.filter(check_id__in=city_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-            else:
-                city_sum = 0
-            city_stat['total_sum'] = city_sum
+            city_stat['total_sum'] = city_stat['total_sum'] or 0
         
         # Daily statistics - optimized for date range
         if date_from and date_to:
