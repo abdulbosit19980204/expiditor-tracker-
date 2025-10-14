@@ -4,7 +4,6 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import "./i18n"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -18,7 +17,7 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Expeditor Tracker",
   },
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
