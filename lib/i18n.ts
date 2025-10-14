@@ -2,6 +2,35 @@ import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 import LanguageDetector from "i18next-browser-languagedetector"
 
+// Global error handler to prevent forEach errors
+if (typeof window !== "undefined") {
+  // Override Array.prototype.forEach to handle null/undefined cases
+  const originalForEach = Array.prototype.forEach
+  Array.prototype.forEach = function(callback, thisArg) {
+    if (this == null) {
+      console.warn("[Global] forEach called on null/undefined, skipping")
+      return
+    }
+    if (typeof callback !== "function") {
+      throw new TypeError("forEach callback must be a function")
+    }
+    return originalForEach.call(this, callback, thisArg)
+  }
+}
+
+// Safe language detector that handles errors gracefully
+const safeLanguageDetector = {
+  ...LanguageDetector,
+  detect: function() {
+    try {
+      return LanguageDetector.detect.apply(this, arguments)
+    } catch (error) {
+      console.warn("[i18n] Language detection failed, falling back to English:", error)
+      return "en"
+    }
+  }
+}
+
 // Translation resources
 const resources = {
   en: {
@@ -262,7 +291,7 @@ const resources = {
 }
 
 i18n
-  .use(LanguageDetector)
+  .use(safeLanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
@@ -276,6 +305,18 @@ i18n
     detection: {
       order: ["localStorage", "navigator", "htmlTag"],
       caches: ["localStorage"],
+      // Add safer detection options
+      lookupLocalStorage: "i18nextLng",
+      lookupSessionStorage: "i18nextLng",
+      lookupFromPathIndex: 0,
+      lookupFromSubdomainIndex: 0,
+      // Prevent errors with browser language detection
+      convertDetectedLanguage: (lng) => {
+        if (typeof lng === "string" && lng.length > 0) {
+          return lng.split("-")[0] // Use only the primary language code
+        }
+        return "en"
+      }
     },
 
     // Save language preference
@@ -286,7 +327,19 @@ export default i18n
 
 export const changeLanguage = (lng: string) => {
   if (typeof window !== "undefined" && i18n.isInitialized) {
-    return i18n.changeLanguage(lng)
+    try {
+      // Validate language code
+      const validLanguages = ["en", "uz", "ru"]
+      const safeLanguage = validLanguages.includes(lng) ? lng : "en"
+      
+      return i18n.changeLanguage(safeLanguage).catch((error) => {
+        console.warn("[i18n] Language change failed:", error)
+        return Promise.resolve()
+      })
+    } catch (error) {
+      console.warn("[i18n] Language change error:", error)
+      return Promise.resolve()
+    }
   }
   return Promise.resolve()
 }

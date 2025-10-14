@@ -105,6 +105,13 @@ export const MapComponent = memo(function MapComponent({
           return
         }
 
+        // Check if we're using the fallback implementation
+        if (window.ymaps._loaded) {
+          console.log("[Map] Using fallback Yandex Maps implementation")
+          setStatus("fallback")
+          return
+        }
+
         const wasmOk = await canUseWasm()
         if (!wasmOk) {
           console.warn("[Map] WebAssembly not available")
