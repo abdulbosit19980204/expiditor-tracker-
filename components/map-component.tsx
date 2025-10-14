@@ -104,7 +104,7 @@ export const MapComponent = memo(function MapComponent({
 
         await new Promise((r) => window.ymaps.ready(r))
 
-        if (mapContainerRef.current && !mapRef.current) {
+        if (mapContainerRef.current) {
           mapRef.current = new window.ymaps.Map(mapContainerRef.current, {
             center: [41.2995, 69.2401],
             zoom: 11,
