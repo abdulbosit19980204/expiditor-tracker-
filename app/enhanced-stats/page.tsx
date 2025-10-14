@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -65,14 +66,11 @@ const SimpleLineChart = ({ data, title }: { data: any[], title: string }) => (
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="h-64 flex items-end justify-between space-x-1">
+      <div className="space-y-2">
         {data.slice(0, 7).map((item, index) => (
-          <div key={index} className="flex flex-col items-center">
-            <div 
-              className="bg-blue-600 w-8 rounded-t"
-              style={{ height: `${Math.max(20, (item.value / Math.max(...data.map(d => d.value))) * 200)}px` }}
-            />
-            <span className="text-xs mt-2 text-gray-600">{item.label}</span>
+          <div key={index} className="flex items-center justify-between">
+            <span className="text-sm font-medium">{item.date || item.label}</span>
+            <Badge variant="outline">{item.value || item.checks}</Badge>
           </div>
         ))}
       </div>
@@ -80,55 +78,59 @@ const SimpleLineChart = ({ data, title }: { data: any[], title: string }) => (
   </Card>
 )
 
-function getCurrentMonthRange() {
-  const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return { from: firstDay, to: lastDay }
-}
+function EnhancedStatsContent() {
+  const { t } = useTranslation()
+  const [stats, setStats] = useState<Statistics | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
+    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    to: new Date()
+  })
 
-interface FilterState {
-  dateRange: { from: Date | undefined; to: Date | undefined }
-  project: string
-  sklad: string
-  city: string
-  filial: string
-  status: string
-}
+  // Filter states
+  const [selectedProject, setSelectedProject] = useState<string>("")
+  const [selectedSklad, setSelectedSklad] = useState<string>("")
+  const [selectedCity, setSelectedCity] = useState<string>("")
+  const [selectedFilial, setSelectedFilial] = useState<string>("")
 
-function EnhancedStatsPageContent() {
-  const [statistics, setStatistics] = useState<Statistics | null>(null)
+  // Filter options
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [filials, setFilials] = useState<Filial[]>([])
-  const [loading, setLoading] = useState(true)
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  
-  // Filter state
-  const [filters, setFilters] = useState<FilterState>(() => ({
-    dateRange: getCurrentMonthRange(),
-    project: "",
-    sklad: "",
-    city: "",
-    filial: "",
-    status: "",
-  }))
 
-  // View preferences
-  const [visibleCharts, setVisibleCharts] = useState({
-    dailyStats: true,
-    hourlyStats: true,
-    topExpeditors: true,
-    topProjects: true,
-    topCities: true,
-    paymentMethods: true,
-  })
+  // UI states
+  const [visiblePanels, setVisiblePanels] = useState<Set<string>>(new Set([
+    'overview', 'performance', 'payments', 'trends'
+  ]))
 
-  // Load initial data
+  const loadStats = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await api.getGlobalStatistics({
+        dateRange: {
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString()
+        },
+        project: selectedProject || undefined,
+        sklad: selectedSklad || undefined,
+        city: selectedCity || undefined,
+        filial: selectedFilial || undefined,
+      })
+      setStats(data)
+    } catch (error) {
+      console.error("Error loading statistics:", error)
+    } finally {
+      setLoading(false)
+    }
+  }, [dateRange, selectedProject, selectedSklad, selectedCity, selectedFilial])
+
   useEffect(() => {
-    const loadInitialData = async () => {
-      setLoading(true)
+    loadStats()
+  }, [loadStats])
+
+  useEffect(() => {
+    const loadFilterOptions = async () => {
       try {
         const [projectsData, skladsData, citiesData, filialsData] = await Promise.all([
           api.getProjects(),
@@ -136,111 +138,35 @@ function EnhancedStatsPageContent() {
           api.getCities(),
           api.getFilials(),
         ])
-
         setProjects(projectsData)
         setSklads(skladsData)
         setCities(citiesData)
         setFilials(filialsData)
       } catch (error) {
-        console.error("Error loading initial data:", error)
-      } finally {
-        setLoading(false)
+        console.error("Error loading filter options:", error)
       }
     }
-
-    loadInitialData()
+    loadFilterOptions()
   }, [])
 
-  // Load statistics when filters change
-  useEffect(() => {
-    const loadStatistics = async () => {
-      setIsRefreshing(true)
-      try {
-        const backendFilters = {
-          dateRange: filters.dateRange,
-          project: filters.project,
-          sklad: filters.sklad,
-          city: filters.city,
-          status: filters.status,
-        }
-
-        const statisticsData = await api.getGlobalStatistics(backendFilters)
-        setStatistics(statisticsData)
-      } catch (error) {
-        console.error("Error loading statistics:", error)
-        setStatistics(null)
-      } finally {
-        setIsRefreshing(false)
-      }
-    }
-
-    loadStatistics()
-  }, [filters])
-
-  // Count active filters
-  const activeFiltersCount = useMemo(() => {
-    let count = 0
-    if (filters.project) count++
-    if (filters.sklad) count++
-    if (filters.city) count++
-    if (filters.filial) count++
-    if (filters.status) count++
-    return count
-  }, [filters])
-
-  // Clear all filters
-  const clearAllFilters = useCallback(() => {
-    setFilters({
-      dateRange: getCurrentMonthRange(),
-      project: "",
-      sklad: "",
-      city: "",
-      filial: "",
-      status: "",
-    })
-  }, [])
-
-  // Handle filter changes
-  const handleFilterChange = useCallback((key: keyof FilterState, value: any) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-  }, [])
-
-  // Toggle chart visibility
-  const toggleChartVisibility = useCallback((chart: keyof typeof visibleCharts) => {
-    setVisibleCharts(prev => ({
-      ...prev,
-      [chart]: !prev[chart]
-    }))
-  }, [])
-
-  // Export all data
-  const handleExportAll = useCallback(() => {
-    if (!statistics) return
+  const handleExportCSV = () => {
+    if (!stats) return
 
     const csvData = [
       ['Metric', 'Value'],
-      ['Total Checks', statistics.totalChecks],
-      ['Delivered Checks', statistics.deliveredChecks],
-      ['Failed Checks', statistics.failedChecks],
-      ['Pending Checks', statistics.pendingChecks],
-      ['Total Sum (UZS)', statistics.totalSum],
-      ['Average Check Sum (UZS)', statistics.avgCheckSum || 0],
-      ['Success Rate (%)', statistics.successRate],
+      ['Total Checks', stats.totalChecks],
+      ['Delivered Checks', stats.deliveredChecks],
+      ['Failed Checks', stats.failedChecks],
+      ['Pending Checks', stats.pendingChecks],
+      ['Total Sum (UZS)', stats.totalSum],
+      ['Average Check Sum (UZS)', stats.avgCheckSum || 0],
+      ['Success Rate (%)', stats.successRate],
       ['', ''],
       ['Payment Methods', ''],
-      ['Cash', statistics.paymentMethods.nalichniy],
-      ['UzCard', statistics.paymentMethods.uzcard],
-      ['Humo', statistics.paymentMethods.humo],
-      ['Click', statistics.paymentMethods.click],
-      ['', ''],
-      ['Top Expeditors', ''],
-      ...statistics.topExpeditors.map(exp => [exp.name, exp.checkCount]),
-      ['', ''],
-      ['Top Projects', ''],
-      ...statistics.topProjects.map(proj => [proj.name, proj.checkCount]),
-      ['', ''],
-      ['Top Cities', ''],
-      ...statistics.topCities.map(city => [city.name, city.checkCount]),
+      ['Cash', stats.paymentMethods.nalichniy],
+      ['UzCard', stats.paymentMethods.uzcard],
+      ['Humo', stats.paymentMethods.humo],
+      ['Click', stats.paymentMethods.click],
     ]
 
     const csvContent = csvData.map(row => row.join(',')).join('\n')
@@ -248,20 +174,37 @@ function EnhancedStatsPageContent() {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `enhanced_statistics_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `statistics_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-  }, [statistics])
+  }
 
-  if (loading) {
+  const togglePanel = (panel: string) => {
+    const newVisible = new Set(visiblePanels)
+    if (newVisible.has(panel)) {
+      newVisible.delete(panel)
+    } else {
+      newVisible.add(panel)
+    }
+    setVisiblePanels(newVisible)
+  }
+
+  const resetFilters = () => {
+    setSelectedProject("")
+    setSelectedSklad("")
+    setSelectedCity("")
+    setSelectedFilial("")
+  }
+
+  if (loading && !stats) {
     return (
       <div className="min-h-screen bg-gray-50 p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           <div className="py-20 flex items-center justify-center">
             <LoadingSpinner size="lg" />
-            <span className="ml-2 text-gray-600">Loading enhanced statistics...</span>
+            <span className="ml-2 text-gray-600">{t('loading')}...</span>
           </div>
         </div>
       </div>
@@ -272,14 +215,14 @@ function EnhancedStatsPageContent() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-              <TrendingUp className="h-8 w-8" />
-              Enhanced Analytics Dashboard
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+              <TrendingUp className="h-8 w-8 text-blue-600" />
+              {t('enhancedStatistics')}
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Comprehensive statistics and insights for expeditor performance
+            <p className="text-muted-foreground mt-1">
+              {t('comprehensiveAnalytics')} - {t('dateRange')}: {dateRange.from.toLocaleDateString()} - {dateRange.to.toLocaleDateString()}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -287,58 +230,49 @@ function EnhancedStatsPageContent() {
               href="/"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
             >
-              <Home className="h-4 w-4" /> Home
+              <Home className="h-4 w-4" /> {t('home')}
             </Link>
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+            <Button variant="outline" onClick={loadStats} disabled={loading}>
+              <RefreshCw className="h-4 w-4 mr-1" />
+              {t('refresh')}
             </Button>
-            <Button variant="outline" onClick={handleExportAll} disabled={!statistics}>
-              <Download className="h-4 w-4 mr-1" /> Export All
+            <Button variant="outline" onClick={handleExportCSV} disabled={!stats}>
+              <Download className="h-4 w-4 mr-1" />
+              {t('exportCSV')}
             </Button>
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Advanced Filters */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Advanced Filters
-              {activeFiltersCount > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {activeFiltersCount} active
-                </Badge>
-              )}
+              {t('advancedFilters')}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-              {/* Date Range */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('dateRange')}</label>
                 <DatePickerWithRange
-                  dateRange={filters.dateRange}
-                  onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
+                  dateRange={dateRange}
+                  onDateRangeChange={(range) => {
+                    if (range?.from && range?.to) {
+                      setDateRange({ from: range.from, to: range.to })
+                    }
+                  }}
                 />
               </div>
-
-              {/* Project Filter */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Project</label>
-                <Select
-                  value={filters.project || "all"}
-                  onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
-                >
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('project')}</label>
+                <Select value={selectedProject} onValueChange={setSelectedProject}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All projects" />
+                    <SelectValue placeholder={t('allProjects')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All projects</SelectItem>
+                    <SelectItem value="">{t('allProjects')}</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.project_name}>
                         {project.project_name}
@@ -348,18 +282,14 @@ function EnhancedStatsPageContent() {
                 </Select>
               </div>
 
-              {/* Warehouse Filter */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Warehouse</label>
-                <Select
-                  value={filters.sklad || "all"}
-                  onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('warehouse')}</label>
+                <Select value={selectedSklad} onValueChange={setSelectedSklad}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All warehouses" />
+                    <SelectValue placeholder={t('allWarehouses')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All warehouses</SelectItem>
+                    <SelectItem value="">{t('allWarehouses')}</SelectItem>
                     {sklads.map((sklad) => (
                       <SelectItem key={sklad.id} value={sklad.sklad_name}>
                         {sklad.sklad_name}
@@ -369,18 +299,14 @@ function EnhancedStatsPageContent() {
                 </Select>
               </div>
 
-              {/* City Filter */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">City</label>
-                <Select
-                  value={filters.city || "all"}
-                  onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('city')}</label>
+                <Select value={selectedCity} onValueChange={setSelectedCity}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All cities" />
+                    <SelectValue placeholder={t('allCities')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All cities</SelectItem>
+                    <SelectItem value="">{t('allCities')}</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city.id} value={city.city_name}>
                         {city.city_name}
@@ -390,123 +316,108 @@ function EnhancedStatsPageContent() {
                 </Select>
               </div>
 
-              {/* Filial Filter */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Filial</label>
-                <Select
-                  value={filters.filial || "all"}
-                  onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
-                >
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('filial')}</label>
+                <Select value={selectedFilial} onValueChange={setSelectedFilial}>
                   <SelectTrigger>
-                    <SelectValue placeholder="All filials" />
+                    <SelectValue placeholder={t('allFilials')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All filials</SelectItem>
+                    <SelectItem value="">{t('allFilials')}</SelectItem>
                     {filials.map((filial) => (
-                      <SelectItem key={filial.id} value={String(filial.id)}>
+                      <SelectItem key={filial.id} value={filial.id}>
                         {filial.filial_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Status Filter */}
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
-                <Select
-                  value={filters.status || "all"}
-                  onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-
-            {activeFiltersCount > 0 && (
-              <div className="mt-4 flex justify-end">
-                <Button variant="outline" onClick={clearAllFilters}>
-                  Clear All Filters
-                </Button>
-              </div>
-            )}
+            
+            <div className="flex items-center gap-2">
+              <Button onClick={resetFilters} variant="outline" size="sm">
+                {t('clearAllFilters')}
+              </Button>
+              <Button onClick={loadStats} disabled={loading} size="sm">
+                <RefreshCw className="h-4 w-4 mr-1" />
+                {t('applyFilters')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Enhanced Statistics Panel */}
-        {statistics && (
-          <EnhancedStatisticsPanel statistics={statistics} isLoading={isRefreshing} />
-        )}
-
-        {/* Charts Grid */}
-        {statistics && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Daily Statistics */}
-            {visibleCharts.dailyStats && (
-              <SimpleLineChart 
-                data={statistics.dailyStats.map(d => ({ label: new Date(d.date).toLocaleDateString(), value: d.checks }))}
-                title="Daily Check Distribution"
-              />
-            )}
-
-            {/* Top Expeditors */}
-            {visibleCharts.topExpeditors && (
-              <SimpleBarChart 
-                data={statistics.topExpeditors.map(exp => ({ name: exp.name, value: exp.checkCount }))}
-                title="Top Expeditors by Check Count"
-              />
-            )}
-
-            {/* Top Projects */}
-            {visibleCharts.topProjects && (
-              <SimpleBarChart 
-                data={statistics.topProjects.map(proj => ({ name: proj.name, value: proj.checkCount }))}
-                title="Top Projects by Check Count"
-              />
-            )}
-
-            {/* Top Cities */}
-            {visibleCharts.topCities && (
-              <SimpleBarChart 
-                data={statistics.topCities.map(city => ({ name: city.name, value: city.checkCount }))}
-                title="Top Cities by Check Count"
-              />
-            )}
-          </div>
-        )}
-
-        {/* Chart Visibility Controls */}
+        {/* Panel Visibility Controls */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Chart Visibility Settings
+              {t('customizeView')}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {Object.entries(visibleCharts).map(([chart, isVisible]) => (
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'overview', label: t('overview') },
+                { key: 'performance', label: t('performanceAnalysis') },
+                { key: 'payments', label: t('paymentMethods') },
+                { key: 'trends', label: t('trends') },
+                { key: 'topPerformers', label: t('topPerformers') },
+              ].map((panel) => (
                 <Button
-                  key={chart}
-                  variant={isVisible ? "default" : "outline"}
-                  onClick={() => toggleChartVisibility(chart as keyof typeof visibleCharts)}
-                  className="justify-start"
+                  key={panel.key}
+                  variant={visiblePanels.has(panel.key) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => togglePanel(panel.key)}
+                  className="flex items-center gap-1"
                 >
-                  {isVisible ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-                  {chart.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  {visiblePanels.has(panel.key) ? (
+                    <Eye className="h-3 w-3" />
+                  ) : (
+                    <EyeOff className="h-3 w-3" />
+                  )}
+                  {panel.label}
                 </Button>
               ))}
             </div>
           </CardContent>
         </Card>
+
+        {/* Statistics Panels */}
+        {loading ? (
+          <div className="py-20 flex items-center justify-center">
+            <LoadingSpinner size="lg" />
+            <span className="ml-2 text-gray-600">{t('loadingStatistics')}...</span>
+          </div>
+        ) : !stats ? (
+          <div className="text-center text-gray-500 py-20">
+            {t('noStatisticsAvailable')}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Statistics Panel */}
+            <div className="lg:col-span-3">
+              <EnhancedStatisticsPanel statistics={stats} />
+            </div>
+
+            {/* Additional Charts - only show if panels are visible */}
+            {visiblePanels.has('trends') && (
+              <>
+                <SimpleLineChart 
+                  data={stats.dailyStats || []} 
+                  title={t('dailyTrends')} 
+                />
+                <SimpleBarChart 
+                  data={stats.topExpeditors?.map(exp => ({ name: exp.name, value: exp.checkCount })) || []} 
+                  title={t('topExpeditors')} 
+                />
+                <SimpleBarChart 
+                  data={stats.topCities?.map(city => ({ name: city.name, value: city.checkCount })) || []} 
+                  title={t('topCities')} 
+                />
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -519,12 +430,12 @@ export default function EnhancedStatsPage() {
         <div className="max-w-7xl mx-auto">
           <div className="py-20 flex items-center justify-center">
             <LoadingSpinner size="lg" />
-            <span className="ml-2 text-gray-600">Loading enhanced statistics page...</span>
+            <span className="ml-2 text-gray-600">Loading enhanced statistics...</span>
           </div>
         </div>
       </div>
     }>
-      <EnhancedStatsPageContent />
+      <EnhancedStatsContent />
     </Suspense>
   )
 }

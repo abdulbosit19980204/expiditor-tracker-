@@ -259,9 +259,14 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
           </h1>
           <div className="flex items-center gap-2">
             <LanguageSwitcher variant="button" className="hidden sm:flex" />
-            <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-              <BarChart3 className="h-4 w-4" /> {t('statistics')}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+                <BarChart3 className="h-4 w-4" /> {t('statistics')}
+              </Link>
+              <Link href="/enhanced-stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-600">
+                <TrendingUp className="h-4 w-4" /> {t('enhancedStatistics')}
+              </Link>
+            </div>
           </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger asChild>
@@ -509,9 +514,14 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               </h1>
               <div className="mb-4 space-y-3">
                 <LanguageSwitcher variant="select" />
-                <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-                  <BarChart3 className="h-4 w-4" /> {t('statistics')}
-                </Link>
+                <div className="space-y-2">
+                  <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+                    <BarChart3 className="h-4 w-4" /> {t('statistics')}
+                  </Link>
+                  <Link href="/enhanced-stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-600">
+                    <TrendingUp className="h-4 w-4" /> {t('enhancedStatistics')}
+                  </Link>
+                </div>
               </div>
 
               {/* Date Range Filter */}
