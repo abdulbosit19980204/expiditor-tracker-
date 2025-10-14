@@ -93,7 +93,7 @@ export const MapComponent = memo(function MapComponent({
 
     const init = async () => {
       try {
-        await loadScript("https://api-maps.yandex.ru/2.1/?apikey=5080fe14-e264-4e2a-9e31-164d4b96da6e&lang=en_US")
+        await loadScript("https://api-maps.yandex.ru/2.1/?apikey=60bf1ed7-7273-4bf6-af8a-bb77a1f0c129&lang=en_US")
 
         const wasmOk = await canUseWasm()
         if (!wasmOk) {
