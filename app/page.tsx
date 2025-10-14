@@ -653,10 +653,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                           <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="failed">Failed</SelectItem>
+                          <SelectItem value="all">{t("allStatuses")}</SelectItem>
+                          <SelectItem value="delivered">{t("delivered")}</SelectItem>
+                          <SelectItem value="pending">{t("pending")}</SelectItem>
+                          <SelectItem value="failed">{t("failed")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -669,7 +669,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                         className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-3 w-3 mr-1" />
-                        Clear All Filters
+{t("clearAllFilters")}
                       </Button>
                     )}
                   </div>
