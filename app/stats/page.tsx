@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { Home, TrendingUp } from "lucide-react"
+import { Home, TrendingUp, Download, Search } from "lucide-react"
 import type { Statistics, Project, Sklad, City } from "@/lib/types"
 import { api } from "@/lib/api"
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import Link from "next/link"
+import { Suspense } from "react"
 
 function getCurrentMonthRange() {
   const now = new Date()
@@ -18,7 +19,67 @@ function getCurrentMonthRange() {
   return { from: firstDay, to: lastDay }
 }
 
-const StatsPage = () => {
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
+// CSV Export function
+const exportToCSV = (stats: Statistics, filters: any) => {
+  const csvData = [
+    ['Metric', 'Value'],
+    ['Total Checks', stats.totalChecks],
+    ['Delivered Checks', stats.deliveredChecks],
+    ['Failed Checks', stats.failedChecks],
+    ['Pending Checks', stats.pendingChecks],
+    ['Total Sum (UZS)', stats.totalSum],
+    ['Average Check Sum (UZS)', stats.avgCheckSum || 0],
+    ['Success Rate (%)', stats.successRate],
+    ['', ''],
+    ['Payment Methods', ''],
+    ['Cash', stats.paymentMethods.nalichniy],
+    ['UzCard', stats.paymentMethods.uzcard],
+    ['Humo', stats.paymentMethods.humo],
+    ['Click', stats.paymentMethods.click],
+    ['', ''],
+    ['Top Expeditors', ''],
+    ...stats.topExpeditors.map(exp => [exp.name, exp.checkCount]),
+    ['', ''],
+    ['Top Projects', ''],
+    ...stats.topProjects.map(proj => [proj.name, proj.checkCount]),
+    ['', ''],
+    ['Top Cities', ''],
+    ...stats.topCities.map(city => [city.name, city.checkCount]),
+    ['', ''],
+    ['Top Warehouses', ''],
+    ...(stats.topSklads || []).map(sklad => [sklad.name, sklad.checkCount]),
+  ]
+
+  const csvContent = csvData.map(row => row.join(',')).join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `statistics_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+const StatsPageContent = () => {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>(getCurrentMonthRange())
   const [project, setProject] = useState("")
   const [sklad, setSklad] = useState("")
@@ -33,10 +94,15 @@ const StatsPage = () => {
   const [skladSearch, setSkladSearch] = useState("")
   const [citySearch, setCitySearch] = useState("")
 
+  // Debounced filters for better performance
+  const debouncedProject = useDebounce(project, 300)
+  const debouncedSklad = useDebounce(sklad, 300)
+  const debouncedCity = useDebounce(city, 300)
+
   const loadStats = useCallback(async () => {
     setLoading(true)
     try {
-      const filters = { dateRange, project, sklad, city, status }
+      const filters = { dateRange, project: debouncedProject, sklad: debouncedSklad, city: debouncedCity, status }
       const data = await api.getGlobalStatistics(filters)
       setStats(data)
     } catch (e) {
@@ -44,7 +110,7 @@ const StatsPage = () => {
     } finally {
       setLoading(false)
     }
-  }, [dateRange, project, sklad, city, status])
+  }, [dateRange, debouncedProject, debouncedSklad, debouncedCity, status])
 
   useEffect(() => {
     loadStats()
@@ -64,6 +130,28 @@ const StatsPage = () => {
 
   const formatNumber = (n: number) => new Intl.NumberFormat("uz-UZ").format(Math.round(n || 0))
 
+  // Filtered options for searchable selects
+  const filteredProjects = useMemo(() => {
+    if (!projSearch) return projects
+    return projects.filter(p => p.project_name.toLowerCase().includes(projSearch.toLowerCase()))
+  }, [projects, projSearch])
+
+  const filteredSklads = useMemo(() => {
+    if (!skladSearch) return sklads
+    return sklads.filter(s => s.sklad_name.toLowerCase().includes(skladSearch.toLowerCase()))
+  }, [sklads, skladSearch])
+
+  const filteredCities = useMemo(() => {
+    if (!citySearch) return cities
+    return cities.filter(c => c.city_name.toLowerCase().includes(citySearch.toLowerCase()))
+  }, [cities, citySearch])
+
+  const handleExport = () => {
+    if (stats) {
+      exportToCSV(stats, { dateRange, project, sklad, city, status })
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4">
@@ -78,8 +166,11 @@ const StatsPage = () => {
             >
               <Home className="h-4 w-4" /> Home
             </Link>
-            <Button variant="outline" onClick={loadStats}>
+            <Button variant="outline" onClick={loadStats} disabled={loading}>
               Refresh
+            </Button>
+            <Button variant="outline" onClick={handleExport} disabled={!stats}>
+              <Download className="h-4 w-4 mr-1" /> Export CSV
             </Button>
           </div>
         </div>
@@ -96,13 +187,14 @@ const StatsPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Project</label>
-                <Select>
+                <Select value={project} onValueChange={setProject}>
                   <SelectTrigger>
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
                   <SelectContent>
-                    {projects.map((p) => (
-                      <SelectItem key={p.project_id} value={p.project_name}>
+                    <SelectItem value="">All projects</SelectItem>
+                    {filteredProjects.map((p) => (
+                      <SelectItem key={p.id} value={p.project_name}>
                         {p.project_name}
                       </SelectItem>
                     ))}
@@ -111,13 +203,14 @@ const StatsPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Warehouse</label>
-                <Select>
+                <Select value={sklad} onValueChange={setSklad}>
                   <SelectTrigger>
                     <SelectValue placeholder="All warehouses" />
                   </SelectTrigger>
                   <SelectContent>
-                    {sklads.map((s) => (
-                      <SelectItem key={s.sklad_id} value={s.sklad_name}>
+                    <SelectItem value="">All warehouses</SelectItem>
+                    {filteredSklads.map((s) => (
+                      <SelectItem key={s.id} value={s.sklad_name}>
                         {s.sklad_name}
                       </SelectItem>
                     ))}
@@ -126,13 +219,14 @@ const StatsPage = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">City</label>
-                <Select>
+                <Select value={city} onValueChange={setCity}>
                   <SelectTrigger>
                     <SelectValue placeholder="All cities" />
                   </SelectTrigger>
                   <SelectContent>
-                    {cities.map((c) => (
-                      <SelectItem key={c.city_id} value={c.city_name}>
+                    <SelectItem value="">All cities</SelectItem>
+                    {filteredCities.map((c) => (
+                      <SelectItem key={c.id} value={c.city_name}>
                         {c.city_name}
                       </SelectItem>
                     ))}
@@ -342,4 +436,19 @@ function dowLabel(dow: number) {
   return map[dow] || String(dow)
 }
 
-export default StatsPage
+export default function StatsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="py-20 flex items-center justify-center">
+            <LoadingSpinner size="lg" />
+            <span className="ml-2 text-gray-600">Loading statistics page...</span>
+          </div>
+        </div>
+      </div>
+    }>
+      <StatsPageContent />
+    </Suspense>
+  )
+}

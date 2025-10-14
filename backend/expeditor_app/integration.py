@@ -16,14 +16,139 @@ logger = logging.getLogger(__name__)
 class UpdateChecksView(APIView):
     # Cache WSDL client to avoid reloading
     _client = None
+    _client_lock = None
 
     @classmethod
     def get_client(cls):
         if cls._client is None:
-            url = "http://192.168.1.241:5443/AVON_UT/AVON_UT.1cws?wsdl"
-            transport = Transport(cache=InMemoryCache())
-            cls._client = Client(wsdl=url, transport=transport)
+            import threading
+            if cls._client_lock is None:
+                cls._client_lock = threading.Lock()
+            
+            with cls._client_lock:
+                if cls._client is None:  # Double-check locking
+                    url = "http://192.168.1.241:5443/AVON_UT/AVON_UT.1cws?wsdl"
+                    # Use persistent cache and connection pooling
+                    transport = Transport(
+                        cache=InMemoryCache(),
+                        timeout=30,
+                        operation_timeout=60
+                    )
+                    cls._client = Client(wsdl=url, transport=transport)
         return cls._client
+
+    def _process_batch(self, batch, existing_check_ids, existing_projects, 
+                      existing_cities, existing_expeditors, existing_sklads):
+        """Process a batch of rows efficiently"""
+        checks_to_create = []
+        check_details_to_create = []
+        projects_to_create = []
+        cities_to_create = []
+        expeditors_to_create = []
+        sklads_to_create = []
+        
+        for row in batch:
+            try:
+                check_id = row.receiptID
+                
+                # Validate and process dates
+                delivery_date = row.deliveryDate if (hasattr(row, 'deliveryDate') and
+                                                    row.deliveryDate and
+                                                    row.deliveryDate.year > 1) else None
+                receipt_date = row.receiptIdDate if (hasattr(row, 'receiptIdDate') and
+                                                    row.receiptIdDate and
+                                                    row.receiptIdDate.year > 1) else None
+
+                # Prepare check data
+                check_data = {
+                    'check_id': check_id,
+                    'project': getattr(row, 'project', None),
+                    'sklad': getattr(row, 'warehouse', None),
+                    'city': getattr(row, 'city', None),
+                    'sborshik': getattr(row, 'OrderPicker', None),
+                    'agent': getattr(row, 'agent', None),
+                    'ekispiditor': getattr(row, 'curier', None),
+                    'yetkazilgan_vaqti': delivery_date if delivery_date else getattr(row, 'receiptIdDate', None),
+                    'receiptIdDate': receipt_date,
+                    'transport_number': getattr(row, 'auto', None),
+                    'kkm_number': getattr(row, 'kkm', None),
+                    'client_name': getattr(row, 'client', None),
+                    'client_address': None,
+                    'check_lat': float(row.latitude) if hasattr(row, 'latitude') and row.latitude else None,
+                    'check_lon': float(row.longitude) if hasattr(row, 'longitude') and row.longitude else None,
+                    'status': 'delivered',
+                    'updated_at': timezone.now()
+                }
+
+                # Collect bulk operations
+                if hasattr(row, 'project') and row.project and row.project not in existing_projects:
+                    projects_to_create.append(Projects(
+                        project_name=row.project,
+                        project_description=getattr(row, 'projectDescription', ''),
+                        updated_at=timezone.now()
+                    ))
+
+                if hasattr(row, 'city') and row.city and row.city not in existing_cities:
+                    cities_to_create.append(City(
+                        city_name=row.city,
+                        city_code=getattr(row, 'cityCode', ''),
+                        description=getattr(row, 'cityDescription', ''),
+                        updated_at=timezone.now()
+                    ))
+
+                if hasattr(row, 'curier') and row.curier and row.curier not in existing_expeditors:
+                    expeditors_to_create.append(Ekispiditor(
+                        ekispiditor_name=row.curier,
+                        transport_number=getattr(row, 'auto', ''),
+                        phone_number=getattr(row, 'phone', '+998999999999'),
+                        photo=getattr(row, 'photo', None),
+                        is_active=True,
+                        updated_at=timezone.now()
+                    ))
+
+                if hasattr(row, 'warehouse') and row.warehouse and row.warehouse not in existing_sklads:
+                    sklads_to_create.append(Sklad(
+                        sklad_name=row.warehouse,
+                        sklad_code=getattr(row, 'warehouseCode', ''),
+                        description=getattr(row, 'warehouseDescription', ''),
+                        updated_at=timezone.now()
+                    ))
+
+                # Use update_or_create for checks (more complex logic needed)
+                Check.objects.update_or_create(
+                    check_id=check_id,
+                    defaults={k: v for k, v in check_data.items() if k != 'check_id'}
+                )
+
+                CheckDetail.objects.update_or_create(
+                    check_id=check_id,
+                    defaults={
+                        'checkURL': getattr(row, 'receiptURL', ''),
+                        'check_date': receipt_date,
+                        'check_lat': float(row.latitude) if hasattr(row, 'latitude') and row.latitude else None,
+                        'check_lon': float(row.longitude) if hasattr(row, 'longitude') and row.longitude else None,
+                        'total_sum': float(row.totalSum) if hasattr(row, 'totalSum') and row.totalSum else None,
+                        'nalichniy': float(row.cash) if hasattr(row, 'cash') and row.cash else None,
+                        'uzcard': float(row.uzcard) if hasattr(row, 'uzcard') and row.uzcard else None,
+                        'humo': float(row.humo) if hasattr(row, 'humo') and row.humo else None,
+                        'click': 0,
+                        'updated_at': timezone.now()
+                    }
+                )
+
+            except Exception as inner_e:
+                logger.error(f"[ROW ERROR] Check ID: {getattr(row, 'receiptID', 'unknown')}, Error: {inner_e}")
+                continue
+
+        # Bulk create new records
+        if projects_to_create:
+            Projects.objects.bulk_create(projects_to_create, ignore_conflicts=True)
+        if cities_to_create:
+            City.objects.bulk_create(cities_to_create, ignore_conflicts=True)
+        if expeditors_to_create:
+            Ekispiditor.objects.bulk_create(expeditors_to_create, ignore_conflicts=True)
+        if sklads_to_create:
+            Sklad.objects.bulk_create(sklads_to_create, ignore_conflicts=True)
 
     def get(self, request):
         try:
@@ -39,115 +164,24 @@ class UpdateChecksView(APIView):
                 return Response({'detail': 'No data received'}, status=status.HTTP_204_NO_CONTENT)
 
             updated_count = 0
+            batch_size = 100  # Process in smaller batches for better memory management
+            rows = list(response.Rows)
+            
+            # Pre-fetch existing records to avoid individual queries
+            existing_check_ids = set(Check.objects.values_list('check_id', flat=True))
+            existing_projects = {p.project_name: p for p in Projects.objects.all()}
+            existing_cities = {c.city_name: c for c in City.objects.all()}
+            existing_expeditors = {e.ekispiditor_name: e for e in Ekispiditor.objects.all()}
+            existing_sklads = {s.sklad_name: s for s in Sklad.objects.all()}
 
             with transaction.atomic():  # Ensure data consistency
-                for row in response.Rows:
-                    try:
-                        check_id = row.receiptID
-
-                        # Validate and process dates
-                        delivery_date = row.deliveryDate if (hasattr(row, 'deliveryDate') and
-                                                            row.deliveryDate and
-                                                            row.deliveryDate.year > 1) else None
-                        receipt_date = row.receiptIdDate if (hasattr(row, 'receiptIdDate') and
-                                                            row.receiptIdDate and
-                                                            row.receiptIdDate.year > 1) else None
-
-                        # Prepare check data
-                        check_data = {
-                            'check_id': check_id,
-                            'project': getattr(row, 'project', None),
-                            'sklad': getattr(row, 'warehouse', None),
-                            'city': getattr(row, 'city', None),
-                            'sborshik': getattr(row, 'OrderPicker', None),
-                            'agent': getattr(row, 'agent', None),
-                            'ekispiditor': getattr(row, 'curier', None),
-                            # 'yetkazilgan_vaqti': delivery_date,
-                            'yetkazilgan_vaqti': delivery_date if delivery_date else getattr(row, 'receiptIdDate', None),
-                            'receiptIdDate': receipt_date,
-                            'transport_number': getattr(row, 'auto', None),
-                            'kkm_number': getattr(row, 'kkm', None),
-                            'client_name': getattr(row, 'client', None),
-                            'client_address': None,  # Not provided in response
-                            'check_lat': float(row.latitude) if hasattr(row, 'latitude') and row.latitude else None,
-                            'check_lon': float(row.longitude) if hasattr(row, 'longitude') and row.longitude else None,
-                            'status': 'delivered',  # Adjust based on additional logic if needed
-                            'updated_at': timezone.now()
-                        }
-
-                        # Update or create Projects
-                        if hasattr(row, 'project') and row.project:
-                            Projects.objects.update_or_create(
-                                project_name=row.project,
-                                defaults={
-                                    'project_description': getattr(row, 'projectDescription', ''),
-                                    'updated_at': timezone.now()
-                                }
-                            )
-
-                        # Update or create City
-                        if hasattr(row, 'city') and row.city:
-                            City.objects.update_or_create(
-                                city_name=row.city,
-                                defaults={
-                                    'city_code': getattr(row, 'cityCode', ''),
-                                    'description': getattr(row, 'cityDescription', ''),
-                                    'updated_at': timezone.now()
-                                }
-                            )
-
-                        # Update or create Ekispiditor
-                        if hasattr(row, 'curier') and row.curier:
-                            Ekispiditor.objects.update_or_create(
-                                ekispiditor_name=row.curier,
-                                defaults={
-                                    'transport_number': getattr(row, 'auto', ''),
-                                    'phone_number': getattr(row, 'phone', '+998999999999'),
-                                    'photo': getattr(row, 'photo', None),
-                                    'is_active': True,
-                                    'updated_at': timezone.now()
-                                }
-                            )
-
-                        # Update or create Sklad
-                        if hasattr(row, 'warehouse') and row.warehouse:
-                            Sklad.objects.update_or_create(
-                                sklad_name=row.warehouse,
-                                defaults={
-                                    'sklad_code': getattr(row, 'warehouseCode', ''),
-                                    'description': getattr(row, 'warehouseDescription', ''),
-                                    'updated_at': timezone.now()
-                                }
-                            )
-
-                        # Update or create Check
-                        Check.objects.update_or_create(
-                            check_id=check_id,
-                            defaults={k: v for k, v in check_data.items() if k != 'check_id'}
-                        )
-
-                        # Update or create CheckDetail
-                        CheckDetail.objects.update_or_create(
-                            check_id=check_id,
-                            defaults={
-                                'checkURL': getattr(row, 'receiptURL', ''),
-                                'check_date': receipt_date,
-                                'check_lat': float(row.latitude) if hasattr(row, 'latitude') and row.latitude else None,
-                                'check_lon': float(row.longitude) if hasattr(row, 'longitude') and row.longitude else None,
-                                'total_sum': float(row.totalSum) if hasattr(row, 'totalSum') and row.totalSum else None,
-                                'nalichniy': float(row.cash) if hasattr(row, 'cash') and row.cash else None,
-                                'uzcard': float(row.uzcard) if hasattr(row, 'uzcard') and row.uzcard else None,
-                                'humo': float(row.humo) if hasattr(row, 'humo') and row.humo else None,
-                                'click': 0,
-                                'updated_at': timezone.now()
-                            }
-                        )
-
-                        updated_count += 1
-
-                    except Exception as inner_e:
-                        logger.error(f"[ROW ERROR] Check ID: {check_id}, Error: {inner_e}")
-                        continue
+                for i in range(0, len(rows), batch_size):
+                    batch = rows[i:i + batch_size]
+                    self._process_batch(
+                        batch, existing_check_ids, existing_projects, 
+                        existing_cities, existing_expeditors, existing_sklads
+                    )
+                    updated_count += len(batch)
 
                 # Save the last update date
                 last_update_date = getattr(response, 'lastUpdateDateTime', None)

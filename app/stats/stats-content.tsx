@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -25,7 +25,7 @@ import {
 import { fetchGlobalStatistics, fetchProjects, fetchSklads, fetchCities } from "@/lib/api"
 import type { GlobalStatistics } from "@/lib/types"
 
-export default function StatsContent() {
+function StatsContentInner() {
   const searchParams = useSearchParams()
   const [stats, setStats] = useState<GlobalStatistics | null>(null)
   const [loading, setLoading] = useState(true)
@@ -385,5 +385,20 @@ export default function StatsContent() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function StatsContent() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading statistics...</p>
+        </div>
+      </div>
+    }>
+      <StatsContentInner />
+    </Suspense>
   )
 }
