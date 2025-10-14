@@ -187,12 +187,12 @@ const StatsPageContent = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Project</label>
-                <Select value={project} onValueChange={setProject}>
+                <Select value={project || "all"} onValueChange={(value) => setProject(value === "all" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All projects</SelectItem>
+                    <SelectItem value="all">All projects</SelectItem>
                     {filteredProjects.map((p) => (
                       <SelectItem key={p.id} value={p.project_name}>
                         {p.project_name}
@@ -203,12 +203,12 @@ const StatsPageContent = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Warehouse</label>
-                <Select value={sklad} onValueChange={setSklad}>
+                <Select value={sklad || "all"} onValueChange={(value) => setSklad(value === "all" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All warehouses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All warehouses</SelectItem>
+                    <SelectItem value="all">All warehouses</SelectItem>
                     {filteredSklads.map((s) => (
                       <SelectItem key={s.id} value={s.sklad_name}>
                         {s.sklad_name}
@@ -219,12 +219,12 @@ const StatsPageContent = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">City</label>
-                <Select value={city} onValueChange={setCity}>
+                <Select value={city || "all"} onValueChange={(value) => setCity(value === "all" ? "" : value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="All cities" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All cities</SelectItem>
+                    <SelectItem value="all">All cities</SelectItem>
                     {filteredCities.map((c) => (
                       <SelectItem key={c.id} value={c.city_name}>
                         {c.city_name}

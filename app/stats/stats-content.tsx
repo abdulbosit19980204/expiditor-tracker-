@@ -186,14 +186,14 @@ function StatsContentInner() {
             {/* Project Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Project</label>
-              <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <Select value={selectedProject || "all"} onValueChange={(value) => setSelectedProject(value === "all" ? "" : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All projects" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All projects</SelectItem>
                   {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
+                    <SelectItem key={project.id} value={project.id?.toString() || `project-${project.id}`}>
                       {project.name}
                     </SelectItem>
                   ))}
@@ -204,14 +204,14 @@ function StatsContentInner() {
             {/* Warehouse Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Warehouse</label>
-              <Select value={selectedSklad} onValueChange={setSelectedSklad}>
+              <Select value={selectedSklad || "all"} onValueChange={(value) => setSelectedSklad(value === "all" ? "" : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All warehouses" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All warehouses</SelectItem>
                   {sklads.map((sklad) => (
-                    <SelectItem key={sklad.id} value={sklad.id.toString()}>
+                    <SelectItem key={sklad.id} value={sklad.id?.toString() || `sklad-${sklad.id}`}>
                       {sklad.name}
                     </SelectItem>
                   ))}
@@ -222,14 +222,14 @@ function StatsContentInner() {
             {/* City Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">City</label>
-              <Select value={selectedCity} onValueChange={setSelectedCity}>
+              <Select value={selectedCity || "all"} onValueChange={(value) => setSelectedCity(value === "all" ? "" : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="All cities" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All cities</SelectItem>
                   {cities.map((city) => (
-                    <SelectItem key={city.id} value={city.id.toString()}>
+                    <SelectItem key={city.id} value={city.id?.toString() || `city-${city.id}`}>
                       {city.name}
                     </SelectItem>
                   ))}
