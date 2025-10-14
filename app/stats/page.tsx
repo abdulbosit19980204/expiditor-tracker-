@@ -1,13 +1,16 @@
 "use client"
 
 import { useEffect, useMemo, useState, useCallback } from "react"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import type { Statistics } from "@/lib/types"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
+import { Home, TrendingUp } from "lucide-react"
+import type { Statistics, Project, Sklad, City } from "@/lib/types"
 import { api } from "@/lib/api"
 
 function getCurrentMonthRange() {
@@ -25,6 +28,12 @@ export default function StatsPage() {
   const [status, setStatus] = useState("")
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<Statistics | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [sklads, setSklads] = useState<Sklad[]>([])
+  const [cities, setCities] = useState<City[]>([])
+  const [projSearch, setProjSearch] = useState("")
+  const [skladSearch, setSkladSearch] = useState("")
+  const [citySearch, setCitySearch] = useState("")
 
   const loadStats = useCallback(async () => {
     setLoading(true)
@@ -43,14 +52,31 @@ export default function StatsPage() {
     loadStats()
   }, [loadStats])
 
+  useEffect(() => {
+    const loadMeta = async () => {
+      try {
+        const [proj, skl, cts] = await Promise.all([api.getProjects(), api.getSklads(), api.getCities()])
+        setProjects(proj)
+        setSklads(skl)
+        setCities(cts)
+      } catch {}
+    }
+    loadMeta()
+  }, [])
+
   const formatNumber = (n: number) => new Intl.NumberFormat("uz-UZ").format(Math.round(n || 0))
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-semibold">Global Statistics</h1>
-          <Button variant="outline" onClick={loadStats}>Refresh</Button>
+          <h1 className="text-xl md:text-2xl font-semibold flex items-center gap-2"><TrendingUp className="h-5 w-5"/> Global Statistics</h1>
+          <div className="flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+              <Home className="h-4 w-4"/> Home
+            </Link>
+            <Button variant="outline" onClick={loadStats}>Refresh</Button>
+          </div>
         </div>
 
         <Card>
@@ -62,15 +88,30 @@ export default function StatsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Project</label>
-                <input className="w-full border rounded-md px-3 py-2" placeholder="All" value={project} onChange={(e) => setProject(e.target.value)} />
+                <SearchableSelect
+                  items={projects.map(p => p.project_name)}
+                  value={project}
+                  onChange={setProject}
+                  placeholder="All projects"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Warehouse</label>
-                <input className="w-full border rounded-md px-3 py-2" placeholder="All" value={sklad} onChange={(e) => setSklad(e.target.value)} />
+                <SearchableSelect
+                  items={sklads.map(s => s.sklad_name)}
+                  value={sklad}
+                  onChange={setSklad}
+                  placeholder="All warehouses"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">City</label>
-                <input className="w-full border rounded-md px-3 py-2" placeholder="All" value={city} onChange={(e) => setCity(e.target.value)} />
+                <SearchableSelect
+                  items={cities.map(c => c.city_name)}
+                  value={city}
+                  onChange={setCity}
+                  placeholder="All cities"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
@@ -147,33 +188,21 @@ export default function StatsPage() {
             <Card className="lg:col-span-3">
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Daily Checks</h3>
-                <div className="grid grid-cols-2 md:grid-cols-8 lg:grid-cols-12 gap-2">
-                  {(stats.dailyStats || []).map((d) => (
-                    <Bar key={d.date} label={new Date(d.date).toLocaleDateString()} value={d.checks} />
-                  ))}
-                </div>
+                <LineChart data={(stats.dailyStats || []).map(d => ({ x: new Date(d.date).getTime(), y: d.checks }))} height={140} />
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Hourly Distribution</h3>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                  {(stats.hourlyStats || []).map((h) => (
-                    <Bar key={h.hour} label={new Date(h.hour).getHours().toString()} value={h.checks} />
-                  ))}
-                </div>
+                <BarChart data={(stats.hourlyStats || []).map(h => ({ label: String(new Date(h.hour).getHours()), value: h.checks }))} height={140} />
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Weekday Distribution</h3>
-                <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
-                  {(stats.dowStats || []).map((d) => (
-                    <Bar key={d.dow} label={dowLabel(d.dow)} value={d.checks} />
-                  ))}
-                </div>
+                <BarChart data={(stats.dowStats || []).map(d => ({ label: dowLabel(d.dow), value: d.checks }))} height={140} />
               </CardContent>
             </Card>
           </div>
@@ -209,16 +238,49 @@ function List({ items, format }: { items: { label: string; value: number }[]; fo
   )
 }
 
-function Bar({ label, value }: { label: string; value: number }) {
-  const width = Math.min(100, Math.round((value || 0) * 5))
+function BarChart({ data, height = 120 }: { data: { label: string; value: number }[]; height?: number }) {
+  const max = Math.max(1, ...data.map(d => d.value || 0))
   return (
-    <div className="bg-white border rounded p-2">
-      <div className="text-xs text-gray-500 truncate mb-1">{label}</div>
-      <div className="h-2 bg-gray-100 rounded">
-        <div className="h-2 bg-blue-500 rounded" style={{ width: `${width}%` }} />
-      </div>
-      <div className="text-[10px] text-gray-500 mt-1">{value}</div>
-    </div>
+    <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} className="bg-white border rounded">
+      {data.map((d, i) => {
+        const bw = 100 / Math.max(1, data.length)
+        const x = i * bw + bw * 0.1
+        const h = (d.value / max) * (height - 30)
+        const y = height - 20 - h
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={bw * 0.8} height={h} fill="#2563eb" opacity={0.85} />
+            <text x={x + bw * 0.4} y={height - 8} fontSize="3" textAnchor="middle" fill="#6b7280">{d.label}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function LineChart({ data, height = 140 }: { data: { x: number; y: number }[]; height?: number }) {
+  if (!data.length) return <div className="text-sm text-gray-500">No data</div>
+  const xs = data.map(d => d.x)
+  const ys = data.map(d => d.y)
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = 0
+  const maxY = Math.max(1, ...ys)
+  const norm = (x: number, y: number) => ({
+    nx: ((x - minX) / Math.max(1, maxX - minX)) * 100,
+    ny: (1 - (y - minY) / Math.max(1, maxY - minY)) * (height - 30) + 10,
+  })
+  const points = data
+    .sort((a, b) => a.x - b.x)
+    .map(p => {
+      const { nx, ny } = norm(p.x, p.y)
+      return `${nx},${ny}`
+    })
+    .join(" ")
+  return (
+    <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} className="bg-white border rounded">
+      <polyline points={points} fill="none" stroke="#16a34a" strokeWidth={1.5} />
+    </svg>
   )
 }
 
