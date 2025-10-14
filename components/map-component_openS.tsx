@@ -94,7 +94,7 @@ export function MapComponent({
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
           <LoadingSpinner size="lg" />
           <span className="ml-2 text-gray-600">
-            {loading ? "Loading checks…" : "No data"}
+            {loading ? t("loadingChecksEllipsis") : t("noData")}
           </span>
         </div>
       )}

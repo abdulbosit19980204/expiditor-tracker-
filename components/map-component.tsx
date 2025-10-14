@@ -227,7 +227,7 @@ export const MapComponent = memo(function MapComponent({
       <div className="h-full flex items-center justify-center bg-gray-100 relative">
         <img
           src="/placeholder.svg?height=400&width=800"
-          alt="Map placeholder"
+          alt={t("mapPlaceholder")}
           className="object-cover w-full h-full opacity-60"
         />
         <div className="absolute inset-0 flex items-center justify-center">
