@@ -2,9 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.db.models import Count, Sum, Q, Avg
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count, Sum, Q, Prefetch
 from django.utils import timezone
-from django.utils.timezone import now
 from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -13,105 +13,175 @@ import django_filters
 from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial
 from .serializers import (
     ProjectsSerializer, CheckDetailSerializer, SkladSerializer, 
-    CitySerializer, EkispiditorSerializer, CheckSerializer,FilialSerializer
+    CitySerializer, EkispiditorSerializer, CheckSerializer, FilialSerializer
 )
 
 
+class CustomPagination(PageNumberPagination):
+    page_size = 100
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data,
+            'total_pages': self.page.paginator.num_pages,
+            'current_page': self.page.number,
+        })
+
 
 class CheckFilter(django_filters.FilterSet):
-    date_from = django_filters.DateTimeFilter(field_name='yetkazilgan_vaqti', lookup_expr='gte')
-    # date_to = django_filters.DateTimeFilter(field_name='yetkazilgan_vaqti', lookup_expr='lte')
+    date_from = django_filters.DateTimeFilter(
+        field_name='yetkazilgan_vaqti',
+        lookup_expr='gte',
+        method='filter_date_from_start_of_day'
+    )
     date_to = django_filters.DateTimeFilter(
-    field_name='yetkazilgan_vaqti',
-    lookup_expr='lte',
-    method='filter_date_to_end_of_day'
+        field_name='yetkazilgan_vaqti',
+        lookup_expr='lte',
+        method='filter_date_to_end_of_day'
     )
     project = django_filters.CharFilter(field_name='project', lookup_expr='icontains')
     sklad = django_filters.CharFilter(field_name='sklad', lookup_expr='icontains')
     city = django_filters.CharFilter(field_name='city', lookup_expr='icontains')
     ekispiditor = django_filters.CharFilter(field_name='ekispiditor', lookup_expr='icontains')
     status = django_filters.CharFilter(field_name='status')
-    ekispiditor_id = django_filters.CharFilter(field_name='ekispiditor__id', lookup_expr='exact')
+    ekispiditor_id = django_filters.NumberFilter(method='filter_by_ekispiditor_id')
+    
+    def filter_date_from_start_of_day(self, queryset, name, value):
+        if value:
+            start_of_day = value.replace(hour=0, minute=0, second=0, microsecond=0)
+            return queryset.filter(**{f"{name}__gte": start_of_day})
+        return queryset
     
     def filter_date_to_end_of_day(self, queryset, name, value):
         if value:
-            # Agar `date_to` berilgan bo‘lsa, unga 23:59:59 qo‘shamiz
-            end_of_day = value.replace(hour=23, minute=59, second=59)
-            print(f"Filtering {name} to end of day: {end_of_day}")
+            end_of_day = value.replace(hour=23, minute=59, second=59, microsecond=999999)
             return queryset.filter(**{f"{name}__lte": end_of_day})
         return queryset
+    
+    def filter_by_ekispiditor_id(self, queryset, name, value):
+        try:
+            ekispiditor = Ekispiditor.objects.get(id=value)
+            return queryset.filter(ekispiditor=ekispiditor.ekispiditor_name)
+        except Ekispiditor.DoesNotExist:
+            return queryset.none()
+    
     class Meta:
         model = Check
         fields = ['date_from', 'date_to', 'project', 'sklad', 'city', 'ekispiditor', 'ekispiditor_id', 'status']
 
-class ProjectsViewSet(viewsets.ModelViewSet):
+
+class EkispiditorFilter(django_filters.FilterSet):
+    filial = django_filters.NumberFilter(field_name='filial__id')
+    filial_name = django_filters.CharFilter(field_name='filial__filial_name', lookup_expr='icontains')
+    has_checks = django_filters.BooleanFilter(method='filter_has_checks')
+    
+    def filter_has_checks(self, queryset, name, value):
+        if value:
+            # Get expeditors that have checks
+            ekispiditor_names = Check.objects.values_list('ekispiditor', flat=True).distinct()
+            return queryset.filter(ekispiditor_name__in=ekispiditor_names)
+        return queryset
+    
+    class Meta:
+        model = Ekispiditor
+        fields = ['filial', 'filial_name', 'is_active', 'has_checks']
+
+
+class ProjectsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Projects.objects.all()
     serializer_class = ProjectsSerializer
+    pagination_class = None  # No pagination for dropdown data
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['project_name', 'project_description']
     ordering_fields = ['project_name', 'created_at']
     ordering = ['project_name']
 
-class CheckDetailViewSet(viewsets.ModelViewSet):
+class CheckDetailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CheckDetail.objects.all()
     serializer_class = CheckDetailSerializer
+    pagination_class = CustomPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['check_id']
     ordering_fields = ['check_date', 'total_sum']
     ordering = ['-check_date']
 
-class SkladViewSet(viewsets.ModelViewSet):
+class SkladViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Sklad.objects.all()
     serializer_class = SkladSerializer
+    pagination_class = None  # No pagination for dropdown data
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['sklad_name', 'sklad_code']
     ordering_fields = ['sklad_name', 'created_at']
     ordering = ['sklad_name']
 
-class CityViewSet(viewsets.ModelViewSet):
+class CityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
+    pagination_class = None  # No pagination for dropdown data
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['city_name', 'city_code']
     ordering_fields = ['city_name', 'created_at']
     ordering = ['city_name']
 
-class FilialViewSet(viewsets.ModelViewSet):
+class FilialViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Filial.objects.all()
     serializer_class = FilialSerializer
+    pagination_class = None  # No pagination for dropdown data
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ['filial_name', 'filial_code']
     ordering_fields = ['filial_name']
     ordering = ['filial_name']
 
-class EkispiditorViewSet(viewsets.ModelViewSet):
-    queryset = Ekispiditor.objects.filter(is_active=True)
+class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EkispiditorSerializer
+    pagination_class = None  # No pagination for dropdown data
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    search_fields = ['ekispiditor_name', 'transport_number', 'phone_number', 'filial']
+    filterset_class = EkispiditorFilter
+    search_fields = ['ekispiditor_name', 'transport_number', 'phone_number']
     ordering_fields = ['ekispiditor_name', 'created_at']
     ordering = ['ekispiditor_name']
+    
+    def get_queryset(self):
+        queryset = Ekispiditor.objects.filter(is_active=True).select_related('filial')
+        
+        # Optimize by prefetching related checks count
+        queryset = queryset.annotate(
+            checks_count=Count('check', filter=Q(check__yetkazilgan_vaqti__isnull=False))
+        )
+        
+        return queryset
 
-class CheckViewSet(viewsets.ModelViewSet):
-    queryset = Check.objects.all()
+class CheckViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CheckSerializer
+    pagination_class = None  # Return all checks for selected expeditor
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = CheckFilter
     search_fields = ['check_id', 'client_name', 'client_address', 'ekispiditor', 'project']
-    ordering_fields = ['yetkazilgan_vaqti', 'created_at', 'status','ekispiditor', 'project']
+    ordering_fields = ['yetkazilgan_vaqti', 'created_at', 'status', 'ekispiditor', 'project']
     ordering = ['-yetkazilgan_vaqti']
+    
+    def get_queryset(self):
+        # Use select_related to reduce database queries
+        return Check.objects.all().prefetch_related(
+            Prefetch('check_detail', queryset=CheckDetail.objects.all())
+        )
     
     @action(detail=False, methods=['get'])
     def today_checks(self, request):
         today = timezone.now().date()
-        checks = Check.objects.filter(yetkazilgan_vaqti__date=today)
+        checks = self.get_queryset().filter(yetkazilgan_vaqti__date=today)
         serializer = self.get_serializer(checks, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def with_locations(self, request):
-        checks = Check.objects.filter(
-            check_lat__isnull=False, 
+        checks = self.get_queryset().filter(
+            check_lat__isnull=False,
             check_lon__isnull=False
         )
         serializer = self.get_serializer(checks, many=True)
@@ -125,29 +195,36 @@ class StatisticsView(APIView):
         project = request.GET.get('project')
         sklad = request.GET.get('sklad')
         city = request.GET.get('city')
-        ekispiditor = request.GET.get('ekispiditor')
+        ekispiditor_id = request.GET.get('ekispiditor_id')
         status = request.GET.get('status')
         
-        # Base queryset
+        # Base queryset with optimization
         checks_qs = Check.objects.all()
         check_details_qs = CheckDetail.objects.all()
-        today = now().date()
-        today_checks_count = Check.objects.filter(
-            yetkazilgan_vaqti__date=today
-        ).count()
+        today = timezone.now().date()
+        
         # Apply filters
         if date_from:
             try:
                 date_from_parsed = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                date_from_parsed = date_from_parsed.replace(hour=0, minute=0, second=0, microsecond=0)
                 checks_qs = checks_qs.filter(yetkazilgan_vaqti__gte=date_from_parsed)
-            except:
+            except ValueError:
                 pass
                 
         if date_to:
             try:
                 date_to_parsed = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                date_to_parsed = date_to_parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
                 checks_qs = checks_qs.filter(yetkazilgan_vaqti__lte=date_to_parsed)
-            except:
+            except ValueError:
+                pass
+        
+        if ekispiditor_id:
+            try:
+                ekispiditor = Ekispiditor.objects.get(id=ekispiditor_id)
+                checks_qs = checks_qs.filter(ekispiditor=ekispiditor.ekispiditor_name)
+            except Ekispiditor.DoesNotExist:
                 pass
                 
         if project:
@@ -159,9 +236,6 @@ class StatisticsView(APIView):
         if city:
             checks_qs = checks_qs.filter(city__icontains=city)
             
-        if ekispiditor:
-            checks_qs = checks_qs.filter(ekispiditor__icontains=ekispiditor)
-            
         if status:
             checks_qs = checks_qs.filter(status=status)
         
@@ -169,27 +243,36 @@ class StatisticsView(APIView):
         check_ids = list(checks_qs.values_list('check_id', flat=True))
         if check_ids:
             check_details_qs = check_details_qs.filter(check_id__in=check_ids)
+        else:
+            check_details_qs = CheckDetail.objects.none()
         
-        # Calculate statistics
+        # Calculate statistics with single queries
         total_checks = checks_qs.count()
-        delivered_checks = checks_qs.filter(status='delivered').count()
-        failed_checks = checks_qs.filter(status='failed').count()
-        pending_checks = checks_qs.filter(status='pending').count()
+        status_counts = checks_qs.aggregate(
+            delivered=Count('id', filter=Q(status='delivered')),
+            failed=Count('id', filter=Q(status='failed')),
+            pending=Count('id', filter=Q(status='pending'))
+        )
+        
+        today_checks_count = checks_qs.filter(yetkazilgan_vaqti__date=today).count()
+        
+        delivered_checks = status_counts['delivered'] or 0
+        failed_checks = status_counts['failed'] or 0
+        pending_checks = status_counts['pending'] or 0
         
         success_rate = (delivered_checks / total_checks * 100) if total_checks > 0 else 0
         
         # Payment statistics
         payment_stats = check_details_qs.aggregate(
-            total_sum=Sum('total_sum') or 0,
-            total_nalichniy=Sum('nalichniy') or 0,
-            total_uzcard=Sum('uzcard') or 0,
-            total_humo=Sum('humo') or 0,
-            total_click=Sum('click') or 0,
+            total_sum=Sum('total_sum'),
+            total_nalichniy=Sum('nalichniy'),
+            total_uzcard=Sum('uzcard'),
+            total_humo=Sum('humo'),
+            total_click=Sum('click'),
         )
         
-        # Top expeditors with total sum calculation
-        top_expeditors = []
-        expeditor_stats = (
+        # Top expeditors with optimized query
+        top_expeditors = list(
             checks_qs.values('ekispiditor')
             .annotate(
                 check_count=Count('id'),
@@ -198,78 +281,77 @@ class StatisticsView(APIView):
             .order_by('-check_count')[:5]
         )
         
-        for exp_stat in expeditor_stats:
-            exp_check_ids = checks_qs.filter(ekispiditor=exp_stat['ekispiditor']).values_list('check_id', flat=True)
-            total_sum = check_details_qs.filter(check_id__in=exp_check_ids).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
-            
-            top_expeditors.append({
-                'ekispiditor': exp_stat['ekispiditor'],
-                'check_count': exp_stat['check_count'],
-                'success_count': exp_stat['success_count'],
-                'total_sum': total_sum
-            })
+        # Add total sum for each expeditor
+        for exp_stat in top_expeditors:
+            exp_check_ids = checks_qs.filter(
+                ekispiditor=exp_stat['ekispiditor']
+            ).values_list('check_id', flat=True)
+            total_sum = check_details_qs.filter(
+                check_id__in=exp_check_ids
+            ).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
+            exp_stat['total_sum'] = total_sum
         
-        # Top projects with total sum calculation
-        top_projects = []
-        project_stats = (
+        # Top projects
+        top_projects = list(
             checks_qs.values('project')
             .annotate(check_count=Count('id'))
             .order_by('-check_count')[:5]
         )
         
-        for proj_stat in project_stats:
-            proj_check_ids = checks_qs.filter(project=proj_stat['project']).values_list('check_id', flat=True)
-            total_sum = check_details_qs.filter(check_id__in=proj_check_ids).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
-            
-            top_projects.append({
-                'project': proj_stat['project'],
-                'check_count': proj_stat['check_count'],
-                'total_sum': total_sum
-            })
+        for proj_stat in top_projects:
+            proj_check_ids = checks_qs.filter(
+                project=proj_stat['project']
+            ).values_list('check_id', flat=True)
+            total_sum = check_details_qs.filter(
+                check_id__in=proj_check_ids
+            ).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
+            proj_stat['total_sum'] = total_sum
         
-        # Top cities with total sum calculation
-        top_cities = []
-        city_stats = (
+        # Top cities
+        top_cities = list(
             checks_qs.values('city')
             .annotate(check_count=Count('id'))
             .order_by('-check_count')[:5]
         )
         
-        for city_stat in city_stats:
-            city_check_ids = checks_qs.filter(city=city_stat['city']).values_list('check_id', flat=True)
-            total_sum = check_details_qs.filter(check_id__in=city_check_ids).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
-            
-            top_cities.append({
-                'city': city_stat['city'],
-                'check_count': city_stat['check_count'],
-                'total_sum': total_sum
-            })
+        for city_stat in top_cities:
+            city_check_ids = checks_qs.filter(
+                city=city_stat['city']
+            ).values_list('check_id', flat=True)
+            total_sum = check_details_qs.filter(
+                check_id__in=city_check_ids
+            ).aggregate(Sum('total_sum'))['total_sum__sum'] or 0
+            city_stat['total_sum'] = total_sum
         
-        # Daily statistics (last 7 days)
-        # today = timezone.now().date()
-        # daily_stats = []
-        # for i in range(50):
-        #     date = today - timedelta(days=i)
-        #     day_checks = checks_qs.filter(yetkazilgan_vaqti__date=date).count()
-        #     daily_stats.append({
-        #         'date': date.isoformat(),
-        #         'checks': day_checks
-        #     })
+        # Daily statistics - optimized for date range
+        if date_from and date_to:
+            try:
+                start_date = datetime.fromisoformat(date_from.replace('Z', '+00:00')).date()
+                end_date = datetime.fromisoformat(date_to.replace('Z', '+00:00')).date()
+            except ValueError:
+                start_date = today.replace(day=1)
+                end_date = today
+        else:
+            start_date = today.replace(day=1)
+            end_date = today
         
-        # daily_stats.reverse()
-        today = timezone.now().date()
-        year_start = today.replace(month=1, day=1)
-        days_count = (today - year_start).days + 1  # +1 for today
-
-        daily_stats = []
-        for i in range(days_count):
-            date = year_start + timedelta(days=i)
-            day_checks = checks_qs.filter(yetkazilgan_vaqti__date=date).count()
-            daily_stats.append({
-                'date': date.isoformat(),
-                'checks': day_checks
-            })
-            
+        # Get daily stats for the range
+        daily_data = (
+            checks_qs.filter(
+                yetkazilgan_vaqti__date__gte=start_date,
+                yetkazilgan_vaqti__date__lte=end_date
+            )
+            .extra({'date': "DATE(yetkazilgan_vaqti)"})
+            .values('date')
+            .annotate(checks=Count('id'))
+            .order_by('date')
+        )
+        
+        daily_stats = [
+            {'date': item['date'].isoformat(), 'checks': item['checks']}
+            for item in daily_data
+        ]
+        
         return Response({
             'overview': {
                 'total_checks': total_checks,
@@ -278,14 +360,13 @@ class StatisticsView(APIView):
                 'pending_checks': pending_checks,
                 'success_rate': round(success_rate, 2),
                 'today_checks_count': today_checks_count
-
             },
             'payment_stats': {
-                'total_sum': payment_stats['total_sum'],
-                'nalichniy': payment_stats['total_nalichniy'],
-                'uzcard': payment_stats['total_uzcard'],
-                'humo': payment_stats['total_humo'],
-                'click': payment_stats['total_click']
+                'total_sum': payment_stats['total_sum'] or 0,
+                'nalichniy': payment_stats['total_nalichniy'] or 0,
+                'uzcard': payment_stats['total_uzcard'] or 0,
+                'humo': payment_stats['total_humo'] or 0,
+                'click': payment_stats['total_click'] or 0
             },
             'top_expeditors': top_expeditors,
             'top_projects': top_projects,

@@ -100,10 +100,11 @@ export default function ExpeditorTracker() {
     const loadExpeditors = async () => {
       setIsLoadingExpeditors(true)
       try {
-        const expeditorsData = await api.getExpeditors(filters.filial)
+        // Only load expeditors with checks
+        const expeditorsData = await api.getExpeditors(filters.filial, true)
         setExpeditors(expeditorsData)
 
-        // Auto-select first expeditor if available
+        // Auto-select first expeditor if available and no current selection
         if (expeditorsData.length > 0 && !selectedExpeditor) {
           setSelectedExpeditor(expeditorsData[0])
         }
@@ -184,7 +185,7 @@ export default function ExpeditorTracker() {
     if (filters.city) count++
     if (filters.filial) count++
     if (filters.status) count++
-    if (filters.dateRange.from || filters.dateRange.to) count++
+    // Don't count date range as it's always set
     return count
   }, [filters])
 
@@ -231,248 +232,10 @@ export default function ExpeditorTracker() {
     [isMobile],
   )
 
-  // Sidebar content component (memoized to prevent re-renders)
-  const SidebarContent = useMemo(
-    () => (
-      <div className="h-full flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Expeditor Tracker
-          </h1>
-
-          {/* Date Range Filter */}
-          <div className="mb-4">
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
-            <DatePickerWithRange
-              dateRange={filters.dateRange}
-              onDateRangeChange={(range) =>
-                setFilters((prev) => ({ ...prev, dateRange: range || getCurrentMonthRange() }))
-              }
-            />
-          </div>
-
-          {/* Advanced Filters Toggle */}
-          <div className="mb-4">
-            <Button
-              variant="outline"
-              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-              className="w-full justify-between"
-            >
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Advanced Filters
-                {activeFiltersCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {activeFiltersCount}
-                  </Badge>
-                )}
-              </div>
-              {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-
-            {isFiltersOpen && (
-              <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
-                {/* Filial Filter */}
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
-                  <Select
-                    value={filters.filial}
-                    onValueChange={(value) => setFilters((prev) => ({ ...prev, filial: value === "all" ? "" : value }))}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="All Filials" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Filials</SelectItem>
-                      {filials.map((filial) => (
-                        <SelectItem key={filial.id} value={String(filial.id)}>
-                          {filial.filial_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Project Filter */}
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
-                  <Select
-                    value={filters.project}
-                    onValueChange={(value) =>
-                      setFilters((prev) => ({ ...prev, project: value === "all" ? "" : value }))
-                    }
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="All Projects" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Projects</SelectItem>
-                      {projects.map((project) => (
-                        <SelectItem key={project.id} value={project.project_name}>
-                          {project.project_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sklad Filter */}
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
-                  <Select
-                    value={filters.sklad}
-                    onValueChange={(value) => setFilters((prev) => ({ ...prev, sklad: value === "all" ? "" : value }))}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="All Warehouses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Warehouses</SelectItem>
-                      {sklads.map((sklad) => (
-                        <SelectItem key={sklad.id} value={sklad.sklad_name}>
-                          {sklad.sklad_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* City Filter */}
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
-                  <Select
-                    value={filters.city}
-                    onValueChange={(value) => setFilters((prev) => ({ ...prev, city: value === "all" ? "" : value }))}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="All Cities" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Cities</SelectItem>
-                      {cities.map((city) => (
-                        <SelectItem key={city.id} value={city.city_name}>
-                          {city.city_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Status Filter */}
-                <div>
-                  <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) => setFilters((prev) => ({ ...prev, status: value === "all" ? "" : value }))}
-                  >
-                    <SelectTrigger className="h-8">
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {activeFiltersCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearAllFilters}
-                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Clear All Filters
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
-
-          <Separator className="my-4" />
-
-          {/* Expeditor Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-            <Input
-              placeholder="Search expeditors..."
-              value={expeditorSearchQuery}
-              onChange={(e) => setExpeditorSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Expeditors List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {isLoadingExpeditors ? (
-            <div className="text-center py-8">
-              <LoadingSpinner size="sm" />
-              <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
-            </div>
-          ) : filteredExpeditors.length === 0 ? (
-            <div className="text-center text-gray-500 mt-8">
-              <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>No expeditors found</p>
-            </div>
-          ) : (
-            filteredExpeditors.map((expeditor) => (
-              <Card
-                key={expeditor.id}
-                className={`cursor-pointer transition-all hover:shadow-md ${
-                  selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
-                }`}
-                onClick={() => handleExpeditorSelect(expeditor)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
-                      <AvatarFallback>
-                        {expeditor.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("") || "EX"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
-                      <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
-                      <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
-                      {expeditor.filial && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          <strong>Filial:</strong> {expeditor.filial}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      </div>
-    ),
-    [
-      filters,
-      activeFiltersCount,
-      isFiltersOpen,
-      expeditorSearchQuery,
-      isLoadingExpeditors,
-      filteredExpeditors,
-      selectedExpeditor,
-      filials,
-      projects,
-      sklads,
-      cities,
-      handleExpeditorSelect,
-      clearAllFilters,
-    ],
-  )
+  // Handle filter changes
+  const handleFilterChange = useCallback((key: keyof FilterState, value: any) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+  }, [])
 
   if (isLoadingInitial) {
     return (
@@ -497,14 +260,452 @@ export default function ExpeditorTracker() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0">
-              {SidebarContent}
+              <div className="h-full flex flex-col">
+                <div className="p-4 border-b border-gray-200">
+                  <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Expeditor Tracker
+                  </h1>
+
+                  {/* Date Range Filter */}
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+                    <DatePickerWithRange
+                      dateRange={filters.dateRange}
+                      onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
+                    />
+                  </div>
+
+                  {/* Advanced Filters Toggle */}
+                  <div className="mb-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                      className="w-full justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4" />
+                        Advanced Filters
+                        {activeFiltersCount > 0 && (
+                          <Badge variant="secondary" className="ml-2">
+                            {activeFiltersCount}
+                          </Badge>
+                        )}
+                      </div>
+                      {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+
+                    {isFiltersOpen && (
+                      <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
+                        {/* Filial Filter */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
+                          <Select
+                            value={filters.filial || "all"}
+                            onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="All Filials" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Filials</SelectItem>
+                              {filials.map((filial) => (
+                                <SelectItem key={filial.id} value={String(filial.id)}>
+                                  {filial.filial_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Project Filter */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
+                          <Select
+                            value={filters.project || "all"}
+                            onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="All Projects" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Projects</SelectItem>
+                              {projects.map((project) => (
+                                <SelectItem key={project.id} value={project.project_name}>
+                                  {project.project_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Sklad Filter */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
+                          <Select
+                            value={filters.sklad || "all"}
+                            onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="All Warehouses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Warehouses</SelectItem>
+                              {sklads.map((sklad) => (
+                                <SelectItem key={sklad.id} value={sklad.sklad_name}>
+                                  {sklad.sklad_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* City Filter */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
+                          <Select
+                            value={filters.city || "all"}
+                            onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="All Cities" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Cities</SelectItem>
+                              {cities.map((city) => (
+                                <SelectItem key={city.id} value={city.city_name}>
+                                  {city.city_name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
+                          <Select
+                            value={filters.status || "all"}
+                            onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue placeholder="All Statuses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="failed">Failed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {activeFiltersCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearAllFilters}
+                            className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Clear All Filters
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  {/* Expeditor Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                    <Input
+                      placeholder="Search expeditors..."
+                      value={expeditorSearchQuery}
+                      onChange={(e) => setExpeditorSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Expeditors List */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {isLoadingExpeditors ? (
+                    <div className="text-center py-8">
+                      <LoadingSpinner size="sm" />
+                      <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
+                    </div>
+                  ) : filteredExpeditors.length === 0 ? (
+                    <div className="text-center text-gray-500 mt-8">
+                      <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p>No expeditors with checks found</p>
+                      {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
+                    </div>
+                  ) : (
+                    filteredExpeditors.map((expeditor) => (
+                      <Card
+                        key={expeditor.id}
+                        className={`cursor-pointer transition-all hover:shadow-md ${
+                          selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
+                        }`}
+                        onClick={() => handleExpeditorSelect(expeditor)}
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center space-x-3">
+                            <Avatar>
+                              <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
+                              <AvatarFallback>
+                                {expeditor.name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("") || "EX"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
+                              <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
+                              <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
+                              {expeditor.filial && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  <strong>Filial:</strong> {expeditor.filial}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
       )}
 
       <div className={`flex ${isMobile ? "flex-col" : "h-screen"}`}>
-        {!isMobile && <div className="w-80 bg-white border-r border-gray-200 flex flex-col">{SidebarContent}</div>}
+        {!isMobile && (
+          <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+              <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Expeditor Tracker
+              </h1>
+
+              {/* Date Range Filter */}
+              <div className="mb-4">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+                <DatePickerWithRange
+                  dateRange={filters.dateRange}
+                  onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
+                />
+              </div>
+
+              {/* Advanced Filters Toggle */}
+              <div className="mb-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                  className="w-full justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4" />
+                    Advanced Filters
+                    {activeFiltersCount > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {activeFiltersCount}
+                      </Badge>
+                    )}
+                  </div>
+                  {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+
+                {isFiltersOpen && (
+                  <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
+                    {/* Filial Filter */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
+                      <Select
+                        value={filters.filial || "all"}
+                        onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="All Filials" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Filials</SelectItem>
+                          {filials.map((filial) => (
+                            <SelectItem key={filial.id} value={String(filial.id)}>
+                              {filial.filial_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Project Filter */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
+                      <Select
+                        value={filters.project || "all"}
+                        onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="All Projects" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Projects</SelectItem>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={project.project_name}>
+                              {project.project_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Sklad Filter */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
+                      <Select
+                        value={filters.sklad || "all"}
+                        onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="All Warehouses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Warehouses</SelectItem>
+                          {sklads.map((sklad) => (
+                            <SelectItem key={sklad.id} value={sklad.sklad_name}>
+                              {sklad.sklad_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* City Filter */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
+                      <Select
+                        value={filters.city || "all"}
+                        onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="All Cities" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Cities</SelectItem>
+                          {cities.map((city) => (
+                            <SelectItem key={city.id} value={city.city_name}>
+                              {city.city_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
+                      <Select
+                        value={filters.status || "all"}
+                        onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
+                      >
+                        <SelectTrigger className="h-8">
+                          <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="failed">Failed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {activeFiltersCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="h-3 w-3 mr-1" />
+                        Clear All Filters
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Expeditor Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+                <Input
+                  placeholder="Search expeditors..."
+                  value={expeditorSearchQuery}
+                  onChange={(e) => setExpeditorSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Expeditors List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {isLoadingExpeditors ? (
+                <div className="text-center py-8">
+                  <LoadingSpinner size="sm" />
+                  <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
+                </div>
+              ) : filteredExpeditors.length === 0 ? (
+                <div className="text-center text-gray-500 mt-8">
+                  <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>No expeditors with checks found</p>
+                  {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
+                </div>
+              ) : (
+                filteredExpeditors.map((expeditor) => (
+                  <Card
+                    key={expeditor.id}
+                    className={`cursor-pointer transition-all hover:shadow-md ${
+                      selectedExpeditor?.id === expeditor.id ? "ring-2 ring-blue-500 bg-blue-50" : ""
+                    }`}
+                    onClick={() => handleExpeditorSelect(expeditor)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center space-x-3">
+                        <Avatar>
+                          <AvatarImage src={expeditor.photo || "/placeholder-user.jpg"} />
+                          <AvatarFallback>
+                            {expeditor.name
+                              ?.split(" ")
+                              .map((n) => n[0])
+                              .join("") || "EX"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{expeditor.name}</p>
+                          <p className="text-sm text-gray-500">{expeditor.phone_number}</p>
+                          <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
+                          {expeditor.filial && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              <strong>Filial:</strong> {expeditor.filial}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         <div className={`flex-1 ${isMobile ? "flex flex-col" : "flex"}`}>
           <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
@@ -557,6 +758,7 @@ export default function ExpeditorTracker() {
                 ) : checks.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
                     <p>No checks found</p>
+                    <p className="text-xs mt-2">Try adjusting the date range or filters</p>
                   </div>
                 ) : (
                   <div className="space-y-3">

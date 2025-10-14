@@ -2,29 +2,40 @@ import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
-// Safe request helper with better error handling
-async function apiRequestSafe<T>(endpoint: string): Promise<T | null> {
+// Request configuration
+const REQUEST_CONFIG = {
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  cache: "no-store" as RequestCache,
+}
+
+// Safe request helper with better error handling and retry logic
+async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | null> {
   const url = `${API_BASE_URL}${endpoint}`
 
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      cache: "no-store",
-    })
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, REQUEST_CONFIG)
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+      }
+
+      const data = await res.json()
+      return data as T
+    } catch (err) {
+      if (attempt === retries) {
+        console.error(`API request failed for ${endpoint} after ${retries + 1} attempts:`, err)
+        return null
+      }
+      // Wait before retry
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
     }
-
-    const data = await res.json()
-    return data as T
-  } catch (err) {
-    console.error(`API request failed for ${endpoint}:`, err)
-    return null
   }
+
+  return null
 }
 
 // Transform backend data to frontend format
@@ -72,115 +83,100 @@ function transformCheck(item: any): Check {
 
 // Projects API
 export async function getProjects(): Promise<Project[]> {
-  const data = await apiRequestSafe<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: any[]
-  }>("/projects/")
+  const data = await apiRequestSafe<Project[] | { results: any[] }>("/projects/")
 
-  if (data && Array.isArray(data.results)) {
-    return data.results.map((item) => ({
-      id: item.id?.toString() || "",
-      project_name: item.project_name || "",
-      project_description: item.project_description || "",
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString(),
-    }))
-  }
+  if (!data) return []
 
-  return []
+  // Handle both paginated and non-paginated responses
+  const results = Array.isArray(data) ? data : data.results || []
+
+  return results.map((item) => ({
+    id: item.id?.toString() || "",
+    project_name: item.project_name || "",
+    project_description: item.project_description || "",
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: item.updated_at || new Date().toISOString(),
+  }))
 }
 
 // Sklads API
 export async function getSklads(): Promise<Sklad[]> {
-  const data = await apiRequestSafe<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: any[]
-  }>("/sklad/")
+  const data = await apiRequestSafe<Sklad[] | { results: any[] }>("/sklad/")
 
-  if (data && Array.isArray(data.results)) {
-    return data.results.map((item) => ({
-      id: item.id?.toString() || "",
-      sklad_name: item.sklad_name || "",
-      sklad_code: item.sklad_code || "",
-      description: item.description || "",
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString(),
-    }))
-  }
+  if (!data) return []
 
-  return []
+  const results = Array.isArray(data) ? data : data.results || []
+
+  return results.map((item) => ({
+    id: item.id?.toString() || "",
+    sklad_name: item.sklad_name || "",
+    sklad_code: item.sklad_code || "",
+    description: item.description || "",
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: item.updated_at || new Date().toISOString(),
+  }))
 }
 
 // Cities API
 export async function getCities(): Promise<City[]> {
-  const data = await apiRequestSafe<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: any[]
-  }>("/city/")
+  const data = await apiRequestSafe<City[] | { results: any[] }>("/city/")
 
-  if (data && Array.isArray(data.results)) {
-    return data.results.map((item) => ({
-      id: item.id?.toString() || "",
-      city_name: item.city_name || "",
-      city_code: item.city_code || "",
-      description: item.description || "",
-      created_at: item.created_at || new Date().toISOString(),
-      updated_at: item.updated_at || new Date().toISOString(),
-    }))
-  }
+  if (!data) return []
 
-  return []
+  const results = Array.isArray(data) ? data : data.results || []
+
+  return results.map((item) => ({
+    id: item.id?.toString() || "",
+    city_name: item.city_name || "",
+    city_code: item.city_code || "",
+    description: item.description || "",
+    created_at: item.created_at || new Date().toISOString(),
+    updated_at: item.updated_at || new Date().toISOString(),
+  }))
 }
 
 // Filials API
 export async function getFilials(): Promise<Filial[]> {
-  const data = await apiRequestSafe<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: any[]
-  }>("/filial/")
+  const data = await apiRequestSafe<Filial[] | { results: any[] }>("/filial/")
 
-  if (data && Array.isArray(data.results)) {
-    return data.results.map((item) => ({
-      id: item.id?.toString() || "",
-      filial_name: item.filial_name || "",
-      filial_code: item.filial_code || "",
-    }))
-  }
+  if (!data) return []
 
-  return []
+  const results = Array.isArray(data) ? data : data.results || []
+
+  return results.map((item) => ({
+    id: item.id?.toString() || "",
+    filial_name: item.filial_name || "",
+    filial_code: item.filial_code || "",
+  }))
 }
 
-// Expeditors API with filial filter
-export async function getExpeditors(filialId?: string): Promise<Expeditor[]> {
+// Expeditors API with optimized filtering
+export async function getExpeditors(filialId?: string, hasChecks = false): Promise<Expeditor[]> {
   let endpoint = "/ekispiditor/"
+  const params = new URLSearchParams()
 
   if (filialId && filialId !== "all") {
-    endpoint += `?filial=${filialId}`
+    params.append("filial", filialId)
   }
 
-  const data = await apiRequestSafe<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: any[]
-  }>(endpoint)
-
-  if (data && Array.isArray(data.results)) {
-    return data.results.map(transformExpeditor)
+  if (hasChecks) {
+    params.append("has_checks", "true")
   }
 
-  return []
+  if (params.toString()) {
+    endpoint += `?${params.toString()}`
+  }
+
+  const data = await apiRequestSafe<Expeditor[] | { results: any[] }>(endpoint)
+
+  if (!data) return []
+
+  const results = Array.isArray(data) ? data : data.results || []
+
+  return results.map(transformExpeditor)
 }
 
-// Checks API with proper filtering
+// Checks API with proper filtering and no pagination
 export async function getChecks(filters?: {
   expeditor_id?: string
   dateRange?: { from: Date | undefined; to: Date | undefined }
@@ -199,7 +195,7 @@ export async function getChecks(filters?: {
       queryParams.append("ekispiditor_id", filters.expeditor_id)
     }
 
-    // Date range filters - format as YYYY-MM-DD for backend
+    // Date range filters
     if (filters.dateRange?.from) {
       const fromDate = new Date(filters.dateRange.from)
       fromDate.setHours(0, 0, 0, 0)
@@ -223,21 +219,17 @@ export async function getChecks(filters?: {
     endpoint += `?${queryParams.toString()}`
   }
 
-  const data = await apiRequestSafe<{
-    count: number
-    next: string | null
-    previous: string | null
-    results: any[]
-  }>(endpoint)
+  const data = await apiRequestSafe<Check[] | { results: any[] }>(endpoint)
 
-  if (data && Array.isArray(data.results)) {
-    return data.results.map(transformCheck)
-  }
+  if (!data) return []
 
-  return []
+  // Handle both array and paginated response
+  const results = Array.isArray(data) ? data : data.results || []
+
+  return results.map(transformCheck)
 }
 
-// Statistics API
+// Statistics API with optimized queries
 export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
   const queryParams = new URLSearchParams()
