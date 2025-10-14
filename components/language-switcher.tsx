@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Languages } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEffect, useState } from "react"
+import { useUserPreferences } from "@/hooks/use-user-preferences"
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation()
+  const { preferences, updateNestedPreference, isLoaded } = useUserPreferences()
   const [mounted, setMounted] = useState(false)
   const [currentLang, setCurrentLang] = useState("en")
 
@@ -18,10 +20,20 @@ export function LanguageSwitcher() {
     }
   }, [i18n])
 
+  // Sync with user preferences when loaded
+  useEffect(() => {
+    if (isLoaded && preferences.language && preferences.language !== i18n.language) {
+      i18n.changeLanguage(preferences.language)
+      setCurrentLang(preferences.language)
+    }
+  }, [isLoaded, preferences.language, i18n])
+
   const handleLanguageChange = (value: string) => {
     if (i18n.isInitialized) {
       i18n.changeLanguage(value)
       setCurrentLang(value)
+      // Update user preferences
+      updateNestedPreference("language", value)
     }
   }
 

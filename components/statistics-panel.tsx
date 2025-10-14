@@ -171,10 +171,10 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
             {Object.entries(statistics.paymentMethods).map(([method, amount]) => {
               const percentage = totalPayments > 0 ? (amount / totalPayments) * 100 : 0
               const methodLabels: Record<string, string> = {
-                nalichniy: "Cash",
-                uzcard: "UzCard",
-                humo: "Humo",
-                click: "Click",
+                nalichniy: t("cash"),
+                uzcard: t("uzcard"),
+                humo: t("humo"),
+                click: t("click"),
               }
 
               return (
@@ -284,7 +284,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
             </CardTitle>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-40 mt-2">
-                <SelectValue placeholder="Oy tanlang" />
+                <SelectValue placeholder={t("selectMonth")} />
               </SelectTrigger>
               <SelectContent>
                 {/* {Array.from({ length: 12 }, (_, i) => {
@@ -311,7 +311,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           <CardContent>
             <div className="grid grid-cols-7 gap-1 text-xs text-center">
               {/* Weekday headers */}
-              {["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"].map((day) => (
+              {[t("monday"), t("tuesday"), t("wednesday"), t("thursday"), t("friday"), t("saturday"), t("sunday")].map((day) => (
                 <div key={day} className="font-medium text-gray-600">
                   {day}
                 </div>

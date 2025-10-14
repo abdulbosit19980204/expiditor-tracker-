@@ -114,6 +114,18 @@ export function useUserPreferences() {
     }
   }, [])
 
+  // Sync language preference with i18n when preferences change
+  useEffect(() => {
+    if (isLoaded && typeof window !== "undefined") {
+      // Import i18n dynamically to avoid SSR issues
+      import("../app/i18n").then(({ default: i18n }) => {
+        if (i18n.isInitialized && preferences.language && preferences.language !== i18n.language) {
+          i18n.changeLanguage(preferences.language)
+        }
+      })
+    }
+  }, [preferences.language, isLoaded])
+
   // Save preferences to localStorage whenever they change
   const updatePreferences = useCallback((updates: Partial<UserPreferences>) => {
     setPreferences(prev => {

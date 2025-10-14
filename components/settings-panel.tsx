@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useUserPreferences } from "@/hooks/use-user-preferences"
+import { useThemeWithPreferences } from "@/hooks/use-theme"
 import { LanguageSwitcher } from "@/components/language-switcher"
 
 interface SettingsPanelProps {
@@ -50,6 +51,7 @@ interface SettingsPanelProps {
 export function SettingsPanel({ className }: SettingsPanelProps) {
   const { t } = useTranslation()
   const { preferences, updatePreferences, updateNestedPreference, resetPreferences } = useUserPreferences()
+  const { theme, setTheme } = useThemeWithPreferences()
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("general")
 
@@ -241,8 +243,8 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                 <div className="space-y-2">
                   <Label>{t("themePreference")}</Label>
                   <Select
-                    value={preferences.ui.theme}
-                    onValueChange={(value) => updateNestedPreference("ui", { theme: value as any })}
+                    value={theme}
+                    onValueChange={setTheme}
                   >
                     <SelectTrigger>
                       <SelectValue />

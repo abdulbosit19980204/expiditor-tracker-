@@ -33,7 +33,7 @@ export default function RootLayout({
         <meta name="telegram-web-app-status-bar-style" content="default" />
       </head>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
           <ClientI18nProvider>
             {children}
             <Toaster />
