@@ -72,7 +72,11 @@ export const MapComponent = memo(function MapComponent({
   const [errMsg, setErrMsg] = useState("")
 
   useEffect(() => {
-    if (typeof window === "undefined" || window.ymaps) {
+    if (typeof window === "undefined") {
+      return
+    }
+    
+    if (window.ymaps) {
       setStatus("ready")
       return
     }
@@ -117,6 +121,14 @@ export const MapComponent = memo(function MapComponent({
     }
 
     init()
+    
+    // Cleanup function
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.destroy?.()
+        mapRef.current = null
+      }
+    }
   }, [])
 
   useEffect(() => {

@@ -398,14 +398,14 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                 <div className="space-y-2">
                   <Label>Default Status Filter</Label>
                   <Select
-                    value={preferences.defaultFilters.status}
-                    onValueChange={(value) => updateNestedPreference("defaultFilters", { status: value })}
+                    value={preferences.defaultFilters.status || "all"}
+                    onValueChange={(value) => updateNestedPreference("defaultFilters", { status: value === "all" ? "" : value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Statuses</SelectItem>
+                      <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="delivered">Delivered</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="failed">Failed</SelectItem>

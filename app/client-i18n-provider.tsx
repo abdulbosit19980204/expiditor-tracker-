@@ -1,15 +1,29 @@
 "use client"
 
-import type React from "react"
-
-import { useEffect } from "react"
-import "../app/i18n"
+import { useEffect, useState } from "react"
+import { I18nextProvider } from "react-i18next"
+import i18n from "./i18n"
 
 export function ClientI18nProvider({ children }: { children: React.ReactNode }) {
+  const [isInitialized, setIsInitialized] = useState(false)
+
   useEffect(() => {
-    // Initialize i18n on client side only
-    import("../app/i18n")
+    if (i18n.isInitialized) {
+      setIsInitialized(true)
+    } else {
+      i18n.on('initialized', () => {
+        setIsInitialized(true)
+      })
+    }
   }, [])
 
-  return <>{children}</>
+  if (!isInitialized) {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <I18nextProvider i18n={i18n}>
+      {children}
+    </I18nextProvider>
+  )
 }

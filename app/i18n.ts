@@ -143,23 +143,21 @@ const resources = {
   },
 }
 
-// Only initialize in browser environment
-if (typeof window !== "undefined") {
-  i18n
-    .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
-      resources,
-      fallbackLng: "en",
-      lng: "en",
-      interpolation: {
-        escapeValue: false,
-      },
-      detection: {
-        order: ["localStorage", "navigator"],
-        caches: ["localStorage"],
-      },
-    })
-}
+// Initialize i18n
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: "en",
+    lng: "en",
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
+    },
+  })
 
 export default i18n
