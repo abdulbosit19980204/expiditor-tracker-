@@ -2,81 +2,40 @@ import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
-// Request configuration with optimized caching
+// Request configuration
 const REQUEST_CONFIG = {
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  cache: "default" as RequestCache, // Changed from "no-store" to allow caching
+  cache: "no-store" as RequestCache,
 }
 
-// Simple in-memory cache for API responses
-const apiCache = new Map<string, { data: any; timestamp: number }>()
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-
-// Cache helper functions
-function getCacheKey(endpoint: string, params?: Record<string, any>): string {
-  const paramString = params ? JSON.stringify(params) : ""
-  return `${endpoint}${paramString}`
-}
-
-function getCachedData(key: string): any | null {
-  const cached = apiCache.get(key)
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data
-  }
-  apiCache.delete(key)
-  return null
-}
-
-function setCachedData(key: string, data: any): void {
-  apiCache.set(key, { data, timestamp: Date.now() })
-}
-
-// Optimized request helper with caching and better error handling
-async function apiRequestSafe<T>(endpoint: string, retries = 2, params?: Record<string, any>): Promise<T | null> {
-  const cacheKey = getCacheKey(endpoint, params)
-  
-  // Check cache first
-  const cachedData = getCachedData(cacheKey)
-  if (cachedData) {
-    return cachedData as T
-  }
-
+// Safe request helper with better error handling and retry logic
+async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | null> {
   const url = `${API_BASE_URL}${endpoint}`
-  const urlWithParams = params ? `${url}?${new URLSearchParams(params).toString()}` : url
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(urlWithParams, REQUEST_CONFIG)
+      const res = await fetch(url, REQUEST_CONFIG)
 
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       }
 
       const data = await res.json()
-      
-      // Cache successful responses
-      setCachedData(cacheKey, data)
-      
       return data as T
     } catch (err) {
       if (attempt === retries) {
         console.error(`API request failed for ${endpoint} after ${retries + 1} attempts:`, err)
         return null
       }
-      // Wait before retry with exponential backoff
-      await new Promise((resolve) => setTimeout(resolve, 500 * Math.pow(2, attempt)))
+      // Wait before retry
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
     }
   }
 
   return null
-}
-
-// Clear cache function for manual cache invalidation
-export function clearApiCache(): void {
-  apiCache.clear()
 }
 
 // Transform backend data to frontend format
@@ -84,7 +43,7 @@ function transformExpeditor(backendData: any): Expeditor {
   return {
     id: backendData.id?.toString() || "",
     name: backendData.ekispiditor_name || backendData.name || "",
-    filial: backendData.filial?.filial_name || backendData.filial || "Biriktirilmagan",
+    filial: backendData.filial || "Biriktirilmagan",
     phone_number: backendData.phone_number || "",
     transport_number: backendData.transport_number || "",
     photo: backendData.photo || "/placeholder-user.jpg",
@@ -122,7 +81,7 @@ function transformCheck(item: any): Check {
   }
 }
 
-// Projects API with caching
+// Projects API
 export async function getProjects(): Promise<Project[]> {
   const data = await apiRequestSafe<Project[] | { results: any[] }>("/projects/")
 
@@ -140,7 +99,7 @@ export async function getProjects(): Promise<Project[]> {
   }))
 }
 
-// Sklads API with caching
+// Sklads API
 export async function getSklads(): Promise<Sklad[]> {
   const data = await apiRequestSafe<Sklad[] | { results: any[] }>("/sklad/")
 
@@ -158,7 +117,7 @@ export async function getSklads(): Promise<Sklad[]> {
   }))
 }
 
-// Cities API with caching
+// Cities API
 export async function getCities(): Promise<City[]> {
   const data = await apiRequestSafe<City[] | { results: any[] }>("/city/")
 
@@ -176,7 +135,7 @@ export async function getCities(): Promise<City[]> {
   }))
 }
 
-// Filials API with caching
+// Filials API
 export async function getFilials(): Promise<Filial[]> {
   const data = await apiRequestSafe<Filial[] | { results: any[] }>("/filial/")
 
