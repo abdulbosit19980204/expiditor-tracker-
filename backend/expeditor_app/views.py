@@ -319,7 +319,6 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-<<<<<<< HEAD
         # Get top expeditors with counts and sums - optimized approach
         # Since Check and CheckDetail are linked by check_id (not FK), we need to join manually
         expeditor_stats = {}
