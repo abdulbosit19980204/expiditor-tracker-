@@ -18,7 +18,9 @@ import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { SettingsPanel } from "@/components/settings-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useUserPreferences } from "@/hooks/use-user-preferences"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -42,6 +44,7 @@ function getCurrentMonthRange() {
 const ExpeditorTracker = memo(function ExpeditorTracker() {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const { preferences, isLoaded } = useUserPreferences()
 
   // State management
   const [checks, setChecks] = useState<Check[]>([])
@@ -259,8 +262,12 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
           </h1>
           <div className="flex items-center gap-2">
             <LanguageSwitcher variant="button" className="hidden sm:flex" />
+            <SettingsPanel className="hidden sm:flex" />
             <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
               <BarChart3 className="h-4 w-4" /> {t('statistics')}
+            </Link>
+            <Link href="/enhanced-stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-600">
+              <TrendingUp className="h-4 w-4" /> {t('enhancedStatistics')}
             </Link>
           </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -509,8 +516,12 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               </h1>
               <div className="mb-4 space-y-3">
                 <LanguageSwitcher variant="select" />
+                <SettingsPanel />
                 <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
                   <BarChart3 className="h-4 w-4" /> {t('statistics')}
+                </Link>
+                <Link href="/enhanced-stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-600">
+                  <TrendingUp className="h-4 w-4" /> {t('enhancedStatistics')}
                 </Link>
               </div>
 
