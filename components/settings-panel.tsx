@@ -77,7 +77,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
           updatePreferences(importedSettings)
         } catch (error) {
           console.error("Error importing settings:", error)
-          alert("Error importing settings. Please check the file format.")
+          alert(t("errorImportingSettings"))
         }
       }
       reader.readAsText(file)
@@ -85,7 +85,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
   }
 
   const handleResetSettings = () => {
-    if (confirm("Are you sure you want to reset all settings to defaults? This action cannot be undone.")) {
+    if (confirm(t("confirmResetSettings"))) {
       resetPreferences()
     }
   }

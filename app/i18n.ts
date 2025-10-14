@@ -343,6 +343,123 @@ const resources = {
   topCities: "Top Cities",
   warehouseDistribution: "Warehouse Distribution",
   chartVisibilitySettings: "Chart Visibility Settings",
+
+  // Help Modal
+  help: "Help",
+  userGuide: "User Guide",
+  gettingStarted: "Getting Started",
+  stepByStepGuide: "Step-by-Step Guide",
+  features: "Features",
+  shortcuts: "Shortcuts",
+  overview: "Overview",
+  quickStart: "Quick Start",
+  
+  // Getting Started Steps
+  step1SelectExpeditor: "Select an Expeditor",
+  step1SelectExpeditorDesc: "Choose an expeditor from the list to view their delivery data and performance metrics.",
+  step2ViewMap: "View Delivery Map",
+  step2ViewMapDesc: "See all delivery locations on an interactive map with real-time status indicators.",
+  step3CheckDetails: "Check Details",
+  step3CheckDetailsDesc: "Click on any delivery point to view detailed check information and payment details.",
+  step4ViewStats: "View Statistics",
+  step4ViewStatsDesc: "Analyze performance metrics, payment breakdowns, and delivery trends.",
+  
+  // Filtering Guide
+  filteringData: "Filtering Data",
+  filterByDate: "Filter by Date Range",
+  filterByDateDesc: "Use the date picker to filter deliveries within specific time periods.",
+  filterByProject: "Filter by Project",
+  filterByProjectDesc: "Select specific projects to focus on particular delivery types or services.",
+  filterByLocation: "Filter by Location",
+  filterByLocationDesc: "Filter by city, warehouse, or filial to focus on specific geographical areas.",
+  combineFilters: "Combine Multiple Filters",
+  combineFiltersDesc: "Use multiple filters together to get precise data views for your analysis.",
+  
+  // Analytics Guide
+  analyticsAndReports: "Analytics & Reports",
+  viewAnalytics: "View Comprehensive Analytics",
+  viewAnalyticsDesc: "Access the analytics dashboard for detailed charts and performance insights.",
+  exportData: "Export Data",
+  exportDataDesc: "Export filtered data in CSV, Excel, or PDF formats for external analysis.",
+  performanceMetrics: "Performance Metrics",
+  performanceMetricsDesc: "Monitor success rates, average delivery times, and efficiency metrics.",
+  
+  // Customization Guide
+  customization: "Customization",
+  changeLanguage: "Change Language",
+  changeLanguageDesc: "Switch between English, Uzbek, and Russian for interface language.",
+  changeTheme: "Change Theme",
+  changeThemeDesc: "Toggle between light and dark themes for comfortable viewing.",
+  panelSettings: "Panel Settings",
+  panelSettingsDesc: "Configure which panels are expanded by default and customize the interface layout.",
+  
+  // Features
+  realTimeTracking: "Real-Time Tracking",
+  realTimeTrackingDesc: "Monitor delivery status and locations in real-time",
+  comprehensiveAnalytics: "Comprehensive Analytics",
+  comprehensiveAnalyticsDesc: "Detailed charts and metrics for performance analysis",
+  multiLanguageSupport: "Multi-Language Support",
+  multiLanguageSupportDesc: "Available in English, Uzbek, and Russian",
+  exportCapabilities: "Export Capabilities",
+  exportCapabilitiesDesc: "Export data in multiple formats for reporting",
+  
+  // Quick Start
+  selectExpeditorFromList: "Select an expeditor from the list",
+  viewDeliveryLocations: "View delivery locations on the map",
+  checkPerformanceStats: "Check performance statistics",
+  exportDataForReports: "Export data for reports",
+  
+  // Map Features
+  mapFeatures: "Map Features",
+  realTimeLocationTracking: "Real-time location tracking",
+  deliveryStatusIndicators: "Delivery status indicators",
+  routeVisualization: "Route visualization",
+  interactiveMarkers: "Interactive markers",
+  
+  // Analytics Features
+  analyticsFeatures: "Analytics Features",
+  trendAnalysis: "Trend analysis",
+  paymentBreakdowns: "Payment breakdowns",
+  comparativeReports: "Comparative reports",
+  
+  // Filtering Features
+  filteringFeatures: "Filtering Features",
+  dateRangeFiltering: "Date range filtering",
+  multiCriteriaFiltering: "Multi-criteria filtering",
+  realTimeFiltering: "Real-time filtering",
+  filterPresets: "Filter presets",
+  
+  // Export Features
+  exportFeatures: "Export Features",
+  csvExport: "CSV export",
+  excelExport: "Excel export",
+  pdfReports: "PDF reports",
+  customFormats: "Custom formats",
+  
+  // Keyboard Shortcuts
+  keyboardShortcuts: "Keyboard Shortcuts",
+  openFilters: "Open filters",
+  openSettings: "Open settings",
+  openHelp: "Open help",
+  openAnalytics: "Open analytics",
+  closeModal: "Close modal",
+  
+  // Tips and Tricks
+  tipsAndTricks: "Tips & Tricks",
+  tip1Title: "Use Advanced Filters",
+  tip1Description: "Combine multiple filters to get precise data views for your analysis needs.",
+  tip2Title: "Export for Reporting",
+  tip2Description: "Regularly export data to create comprehensive reports for management review.",
+  tip3Title: "Monitor Trends",
+  tip3Description: "Use the analytics dashboard to identify patterns and optimize delivery operations.",
+  
+  // Welcome
+  welcomeToExpeditorTracker: "Welcome to Expeditor Tracker",
+  welcomeDescription: "A comprehensive system for tracking expeditor performance, managing delivery operations, and analyzing business metrics. Get started with the step-by-step guide below.",
+  
+  // Error Messages
+  errorImportingSettings: "Error importing settings. Please check the file format.",
+  confirmResetSettings: "Are you sure you want to reset all settings to defaults? This action cannot be undone.",
     },
   },
   uz: {
@@ -685,6 +802,123 @@ const resources = {
       topCities: "Eng Yaxshi Shaharlar",
       warehouseDistribution: "Omborxona Taqsimoti",
       chartVisibilitySettings: "Grafik Ko'rinish Sozlamalari",
+
+      // Help Modal
+      help: "Yordam",
+      userGuide: "Foydalanuvchi Qo'llanmasi",
+      gettingStarted: "Boshlash",
+      stepByStepGuide: "Qadam-baqadam Qo'llanma",
+      features: "Xususiyatlar",
+      shortcuts: "Qisqa Yo'llar",
+      overview: "Umumiy Ko'rinish",
+      quickStart: "Tezkor Boshlash",
+      
+      // Getting Started Steps
+      step1SelectExpeditor: "Ekspeditorni Tanlang",
+      step1SelectExpeditorDesc: "Yetkazib berish ma'lumotlari va ishlash ko'rsatkichlarini ko'rish uchun ro'yxatdan ekspeditorni tanlang.",
+      step2ViewMap: "Yetkazib Berish Xaritasini Ko'ring",
+      step2ViewMapDesc: "Real vaqtda holat ko'rsatkichlari bilan barcha yetkazib berish joylarini interaktiv xaritada ko'ring.",
+      step3CheckDetails: "Chek Tafsilotlari",
+      step3CheckDetailsDesc: "Batafsil chek ma'lumotlari va to'lov tafsilotlarini ko'rish uchun har qanday yetkazib berish nuqtasini bosing.",
+      step4ViewStats: "Statistikani Ko'ring",
+      step4ViewStatsDesc: "Ishlash ko'rsatkichlari, to'lov bo'linishi va yetkazib berish tendentsiyalarini tahlil qiling.",
+      
+      // Filtering Guide
+      filteringData: "Ma'lumotlarni Filtrlash",
+      filterByDate: "Sana Oralig'i Bo'yicha Filtrlash",
+      filterByDateDesc: "Muayyan vaqt oralig'idagi yetkazib berishlarni filtrlash uchun sana tanlovchisidan foydalaning.",
+      filterByProject: "Loyiha Bo'yicha Filtrlash",
+      filterByProjectDesc: "Muayyan yetkazib berish turlari yoki xizmatlariga e'tibor qaratish uchun maxsus loyihalarni tanlang.",
+      filterByLocation: "Joylashuv Bo'yicha Filtrlash",
+      filterByLocationDesc: "Muayyan geografik hududlarga e'tibor qaratish uchun shahar, ombor yoki filial bo'yicha filtrlash.",
+      combineFilters: "Bir Nechta Filtrlarni Birlashtirish",
+      combineFiltersDesc: "Tahlilingiz uchun aniq ma'lumot ko'rinishlarini olish uchun bir nechta filtrlarni birga ishlatish.",
+      
+      // Analytics Guide
+      analyticsAndReports: "Tahlil va Hisobotlar",
+      viewAnalytics: "Keng Qamrovli Tahlilni Ko'ring",
+      viewAnalyticsDesc: "Batafsil grafiklar va ishlash tushunchalari uchun tahlil boshqaruv paneliga kirish.",
+      exportData: "Ma'lumotlarni Eksport Qilish",
+      exportDataDesc: "Tashqi tahlil uchun CSV, Excel yoki PDF formatlarida filtr qilingan ma'lumotlarni eksport qilish.",
+      performanceMetrics: "Ishlash Ko'rsatkichlari",
+      performanceMetricsDesc: "Muvaffaqiyat darajasi, o'rtacha yetkazib berish vaqti va samaradorlik ko'rsatkichlarini kuzatish.",
+      
+      // Customization Guide
+      customization: "Sozlash",
+      changeLanguage: "Tilni O'zgartirish",
+      changeLanguageDesc: "Interfeys tili uchun ingliz, o'zbek va rus tillari o'rtasida almashtirish.",
+      changeTheme: "Mavzuni O'zgartirish",
+      changeThemeDesc: "Qulay ko'rish uchun yorug' va qorong'i mavzular o'rtasida almashtirish.",
+      panelSettings: "Panel Sozlamalari",
+      panelSettingsDesc: "Sahifa yuklanganda qaysi panellar kengaytirilgan bo'lishini sozlash va interfeys tartibini sozlash.",
+      
+      // Features
+      realTimeTracking: "Real Vaqtdagi Kuzatish",
+      realTimeTrackingDesc: "Yetkazib berish holati va joylashuvlarini real vaqtda kuzatish",
+      comprehensiveAnalytics: "Keng Qamrovli Tahlil",
+      comprehensiveAnalyticsDesc: "Ishlash tahlili uchun batafsil grafiklar va ko'rsatkichlar",
+      multiLanguageSupport: "Ko'p Tillik Qo'llab-quvvatlash",
+      multiLanguageSupportDesc: "Ingliz, o'zbek va rus tillarida mavjud",
+      exportCapabilities: "Eksport Imkoniyatlari",
+      exportCapabilitiesDesc: "Hisobot uchun turli formatlarda ma'lumotlarni eksport qilish",
+      
+      // Quick Start
+      selectExpeditorFromList: "Ro'yxatdan ekspeditorni tanlang",
+      viewDeliveryLocations: "Xaritada yetkazib berish joylarini ko'ring",
+      checkPerformanceStats: "Ishlash statistikasini tekshiring",
+      exportDataForReports: "Hisobotlar uchun ma'lumotlarni eksport qiling",
+      
+      // Map Features
+      mapFeatures: "Xarita Xususiyatlari",
+      realTimeLocationTracking: "Real vaqtda joylashuv kuzatishi",
+      deliveryStatusIndicators: "Yetkazib berish holati ko'rsatkichlari",
+      routeVisualization: "Marshrut vizualizatsiyasi",
+      interactiveMarkers: "Interaktiv markerlar",
+      
+      // Analytics Features
+      analyticsFeatures: "Tahlil Xususiyatlari",
+      trendAnalysis: "Trend tahlili",
+      paymentBreakdowns: "To'lov bo'linishi",
+      comparativeReports: "Qiyosiy hisobotlar",
+      
+      // Filtering Features
+      filteringFeatures: "Filtrlash Xususiyatlari",
+      dateRangeFiltering: "Sana oralig'i filtrlash",
+      multiCriteriaFiltering: "Ko'p mezonli filtrlash",
+      realTimeFiltering: "Real vaqtda filtrlash",
+      filterPresets: "Filtr sozlamalari",
+      
+      // Export Features
+      exportFeatures: "Eksport Xususiyatlari",
+      csvExport: "CSV eksport",
+      excelExport: "Excel eksport",
+      pdfReports: "PDF hisobotlar",
+      customFormats: "Maxsus formatlar",
+      
+      // Keyboard Shortcuts
+      keyboardShortcuts: "Klaviatura Qisqa Yo'llari",
+      openFilters: "Filtrlarni ochish",
+      openSettings: "Sozlamalarni ochish",
+      openHelp: "Yordamni ochish",
+      openAnalytics: "Tahlilni ochish",
+      closeModal: "Modal oynasini yopish",
+      
+      // Tips and Tricks
+      tipsAndTricks: "Maslahat va Hiylalar",
+      tip1Title: "Kengaytirilgan Filtrlardan Foydalaning",
+      tip1Description: "Tahlilingiz uchun aniq ma'lumot ko'rinishlarini olish uchun bir nechta filtrlarni birlashtiring.",
+      tip2Title: "Hisobot uchun Eksport Qiling",
+      tip2Description: "Rahbariyat ko'rib chiqishi uchun keng qamrovli hisobotlar yaratish uchun muntazam ravishda ma'lumotlarni eksport qiling.",
+      tip3Title: "Trendlarni Kuzating",
+      tip3Description: "Yetkazib berish operatsiyalarini optimallashtirish uchun naqshlarni aniqlash va tahlil boshqaruv panelidan foydalaning.",
+      
+      // Welcome
+      welcomeToExpeditorTracker: "Ekspeditor Kuzatuvi xush kelibsiz",
+      welcomeDescription: "Ekspeditor ishlashini kuzatish, yetkazib berish operatsiyalarini boshqarish va biznes ko'rsatkichlarini tahlil qilish uchun keng qamrovli tizim. Quyidagi qadam-baqadam qo'llanma bilan boshlang.",
+      
+      // Error Messages
+      errorImportingSettings: "Sozlamalarni import qilishda xatolik. Fayl formatini tekshiring.",
+      confirmResetSettings: "Barcha sozlamalarni standartga qaytarishni xohlaysizmi? Bu amalni bekor qilib bo'lmaydi.",
     },
   },
   ru: {
@@ -1027,6 +1261,123 @@ const resources = {
       topCities: "Топ Города",
       warehouseDistribution: "Распределение Складов",
       chartVisibilitySettings: "Настройки Видимости Графиков",
+
+      // Help Modal
+      help: "Помощь",
+      userGuide: "Руководство Пользователя",
+      gettingStarted: "Начало Работы",
+      stepByStepGuide: "Пошаговое Руководство",
+      features: "Функции",
+      shortcuts: "Горячие Клавиши",
+      overview: "Обзор",
+      quickStart: "Быстрый Старт",
+      
+      // Getting Started Steps
+      step1SelectExpeditor: "Выберите Экспедитора",
+      step1SelectExpeditorDesc: "Выберите экспедитора из списка для просмотра данных о доставке и показателей производительности.",
+      step2ViewMap: "Просмотр Карты Доставки",
+      step2ViewMapDesc: "Посмотрите все места доставки на интерактивной карте с индикаторами статуса в реальном времени.",
+      step3CheckDetails: "Детали Чека",
+      step3CheckDetailsDesc: "Нажмите на любую точку доставки для просмотра подробной информации о чеке и деталях платежа.",
+      step4ViewStats: "Просмотр Статистики",
+      step4ViewStatsDesc: "Анализируйте показатели производительности, разбивку платежей и тенденции доставки.",
+      
+      // Filtering Guide
+      filteringData: "Фильтрация Данных",
+      filterByDate: "Фильтрация по Диапазону Дат",
+      filterByDateDesc: "Используйте селектор дат для фильтрации доставок в определенные периоды времени.",
+      filterByProject: "Фильтрация по Проекту",
+      filterByProjectDesc: "Выберите конкретные проекты для фокусировки на определенных типах доставки или услугах.",
+      filterByLocation: "Фильтрация по Местоположению",
+      filterByLocationDesc: "Фильтруйте по городу, складу или филиалу для фокусировки на конкретных географических областях.",
+      combineFilters: "Комбинирование Нескольких Фильтров",
+      combineFiltersDesc: "Используйте несколько фильтров вместе для получения точных представлений данных для вашего анализа.",
+      
+      // Analytics Guide
+      analyticsAndReports: "Аналитика и Отчеты",
+      viewAnalytics: "Просмотр Комплексной Аналитики",
+      viewAnalyticsDesc: "Доступ к панели аналитики для подробных графиков и инсайтов производительности.",
+      exportData: "Экспорт Данных",
+      exportDataDesc: "Экспорт отфильтрованных данных в форматах CSV, Excel или PDF для внешнего анализа.",
+      performanceMetrics: "Показатели Производительности",
+      performanceMetricsDesc: "Мониторинг показателей успеха, среднего времени доставки и эффективности.",
+      
+      // Customization Guide
+      customization: "Настройка",
+      changeLanguage: "Изменение Языка",
+      changeLanguageDesc: "Переключение между английским, узбекским и русским языками для интерфейса.",
+      changeTheme: "Изменение Темы",
+      changeThemeDesc: "Переключение между светлой и темной темами для комфортного просмотра.",
+      panelSettings: "Настройки Панелей",
+      panelSettingsDesc: "Настройка того, какие панели развернуты по умолчанию и настройка макета интерфейса.",
+      
+      // Features
+      realTimeTracking: "Отслеживание в Реальном Времени",
+      realTimeTrackingDesc: "Мониторинг статуса доставки и местоположений в реальном времени",
+      comprehensiveAnalytics: "Комплексная Аналитика",
+      comprehensiveAnalyticsDesc: "Подробные графики и показатели для анализа производительности",
+      multiLanguageSupport: "Многоязычная Поддержка",
+      multiLanguageSupportDesc: "Доступно на английском, узбекском и русском языках",
+      exportCapabilities: "Возможности Экспорта",
+      exportCapabilitiesDesc: "Экспорт данных в различных форматах для отчетности",
+      
+      // Quick Start
+      selectExpeditorFromList: "Выберите экспедитора из списка",
+      viewDeliveryLocations: "Просмотрите места доставки на карте",
+      checkPerformanceStats: "Проверьте статистику производительности",
+      exportDataForReports: "Экспортируйте данные для отчетов",
+      
+      // Map Features
+      mapFeatures: "Функции Карты",
+      realTimeLocationTracking: "Отслеживание местоположения в реальном времени",
+      deliveryStatusIndicators: "Индикаторы статуса доставки",
+      routeVisualization: "Визуализация маршрутов",
+      interactiveMarkers: "Интерактивные маркеры",
+      
+      // Analytics Features
+      analyticsFeatures: "Функции Аналитики",
+      trendAnalysis: "Анализ тенденций",
+      paymentBreakdowns: "Разбивка платежей",
+      comparativeReports: "Сравнительные отчеты",
+      
+      // Filtering Features
+      filteringFeatures: "Функции Фильтрации",
+      dateRangeFiltering: "Фильтрация по диапазону дат",
+      multiCriteriaFiltering: "Многокритериальная фильтрация",
+      realTimeFiltering: "Фильтрация в реальном времени",
+      filterPresets: "Предустановки фильтров",
+      
+      // Export Features
+      exportFeatures: "Функции Экспорта",
+      csvExport: "CSV экспорт",
+      excelExport: "Excel экспорт",
+      pdfReports: "PDF отчеты",
+      customFormats: "Пользовательские форматы",
+      
+      // Keyboard Shortcuts
+      keyboardShortcuts: "Горячие Клавиши",
+      openFilters: "Открыть фильтры",
+      openSettings: "Открыть настройки",
+      openHelp: "Открыть помощь",
+      openAnalytics: "Открыть аналитику",
+      closeModal: "Закрыть модальное окно",
+      
+      // Tips and Tricks
+      tipsAndTricks: "Советы и Хитрости",
+      tip1Title: "Используйте Расширенные Фильтры",
+      tip1Description: "Комбинируйте несколько фильтров для получения точных представлений данных для ваших аналитических потребностей.",
+      tip2Title: "Экспортируйте для Отчетности",
+      tip2Description: "Регулярно экспортируйте данные для создания комплексных отчетов для рассмотрения руководством.",
+      tip3Title: "Мониторьте Тенденции",
+      tip3Description: "Используйте панель аналитики для выявления закономерностей и оптимизации операций доставки.",
+      
+      // Welcome
+      welcomeToExpeditorTracker: "Добро пожаловать в Систему Отслеживания Экспедиторов",
+      welcomeDescription: "Комплексная система для отслеживания производительности экспедиторов, управления операциями доставки и анализа бизнес-показателей. Начните с пошагового руководства ниже.",
+      
+      // Error Messages
+      errorImportingSettings: "Ошибка импорта настроек. Проверьте формат файла.",
+      confirmResetSettings: "Вы уверены, что хотите сбросить все настройки к значениям по умолчанию? Это действие нельзя отменить.",
     },
   },
 }

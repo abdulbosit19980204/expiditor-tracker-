@@ -19,6 +19,7 @@ import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { SettingsPanel } from "@/components/settings-panel"
+import { HelpModal } from "@/components/help-modal"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useUserPreferences } from "@/hooks/use-user-preferences"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
@@ -288,6 +289,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
           <div className="flex items-center gap-2">
             <LanguageSwitcher variant="button" className="hidden sm:flex" />
             <SettingsPanel className="hidden sm:flex" />
+            <HelpModal className="hidden sm:flex" />
             <Link
               href="/analytics"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
@@ -545,6 +547,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               <div className="mb-4 space-y-3">
                 <LanguageSwitcher variant="select" />
                 <SettingsPanel />
+                <HelpModal />
                 <Link
                   href="/analytics"
                   className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
