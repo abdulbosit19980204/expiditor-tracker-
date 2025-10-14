@@ -419,7 +419,7 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
-                  Saved Filter Presets
+                  {t("savedFilterPresets")}
                   <Badge variant="secondary">{preferences.savedFilters.length}</Badge>
                 </CardTitle>
               </CardHeader>
@@ -427,8 +427,8 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                 {preferences.savedFilters.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Filter className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>No saved filter presets</p>
-                    <p className="text-sm">Create and save filter combinations for quick access</p>
+                    <p>{t("noSavedFilterPresets")}</p>
+                    <p className="text-sm">{t("createAndSaveFilterCombinations")}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -437,12 +437,12 @@ export function SettingsPanel({ className }: SettingsPanelProps) {
                         <div>
                           <p className="font-medium">{savedFilter.name}</p>
                           <p className="text-sm text-gray-500">
-                            Created {new Date(savedFilter.createdAt).toLocaleDateString()}
+                            {t("createdOn")} {new Date(savedFilter.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm">
-                            Load
+                            {t("load")}
                           </Button>
                           <Button variant="ghost" size="sm">
                             <Trash2 className="h-4 w-4" />
