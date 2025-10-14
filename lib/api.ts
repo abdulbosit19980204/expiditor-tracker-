@@ -317,6 +317,7 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     totalSum: 0,
     todayChecks: 0,
     successRate: 0,
+    avgCheckSum: 0,
     paymentMethods: {
       nalichniy: 0,
       uzcard: 0,
@@ -327,6 +328,9 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     topProjects: [],
     topCities: [],
     dailyStats: [],
+    topSklads: [],
+    hourlyStats: [],
+    dowStats: [],
   }
 }
 
@@ -424,6 +428,13 @@ export async function getGlobalStatistics(filters?: any): Promise<Statistics> {
   }
 }
 
+// Export aliases for compatibility with stats page
+export const fetchGlobalStatistics = getGlobalStatistics
+export const fetchProjects = getProjects
+export const fetchSklads = getSklads
+export const fetchCities = getCities
+
+// Export api object with all methods
 export const api = {
   getProjects,
   getSklads,
@@ -433,4 +444,8 @@ export const api = {
   getStatistics,
   getGlobalStatistics,
   getFilials,
+  fetchGlobalStatistics,
+  fetchProjects,
+  fetchSklads,
+  fetchCities,
 }
