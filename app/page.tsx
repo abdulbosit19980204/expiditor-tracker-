@@ -48,6 +48,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
   // State management
   const [checks, setChecks] = useState<Check[]>([])
+  const [mapKey, setMapKey] = useState(0) // Key to force map re-mount
   const [expeditors, setExpeditors] = useState<Expeditor[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
@@ -100,6 +101,30 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     }
 
     loadInitialData()
+  }, [])
+
+  // Handle visibility change to refresh map when returning from other pages
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Page became visible, refresh map
+        setMapKey(prev => prev + 1)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    // Also handle focus events
+    const handleFocus = () => {
+      setMapKey(prev => prev + 1)
+    }
+    
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [])
 
   // Load expeditors when filial filter changes
@@ -264,10 +289,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             <LanguageSwitcher variant="button" className="hidden sm:flex" />
             <SettingsPanel className="hidden sm:flex" />
             <Link
-              href="/stats"
+              href="/analytics"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
             >
-              <BarChart3 className="h-4 w-4" /> {t("statistics")}
+              <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
             </Link>
           </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -285,10 +310,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   </h1>
                   <div className="mb-3 flex flex-col gap-2">
                     <Link
-                      href="/stats"
+                      href="/analytics"
                       className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
                     >
-                      <BarChart3 className="h-4 w-4" /> {t("openStats")}
+                      <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
                     </Link>
                   </div>
 
@@ -521,10 +546,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 <LanguageSwitcher variant="select" />
                 <SettingsPanel />
                 <Link
-                  href="/stats"
+                  href="/analytics"
                   className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
                 >
-                  <BarChart3 className="h-4 w-4" /> {t("statistics")}
+                  <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
                 </Link>
               </div>
 
@@ -745,6 +770,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         <div className={`flex-1 ${isMobile ? "flex flex-col" : "flex"}`}>
           <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
             <MapComponent
+              key={mapKey}
               checks={checks}
               selectedExpeditor={selectedExpeditor}
               loading={isLoadingChecks}
