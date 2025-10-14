@@ -187,24 +187,6 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
         # The serializer will use a more efficient approach
         return Check.objects.all()
     
-    def list(self, request, *args, **kwargs):
-        # Optimize by pre-fetching check details to avoid N+1 queries
-        queryset = self.filter_queryset(self.get_queryset())
-        
-        # Pre-fetch check details in bulk
-        check_ids = list(queryset.values_list('check_id', flat=True))
-        check_details_map = {}
-        if check_ids:
-            check_details = CheckDetail.objects.filter(check_id__in=check_ids)
-            check_details_map = {cd.check_id: cd for cd in check_details}
-        
-        # Add check details to serializer context
-        serializer = self.get_serializer(queryset, many=True, context={
-            'check_details_map': check_details_map
-        })
-        
-        return Response(serializer.data)
-    
     @action(detail=False, methods=['get'])
     def today_checks(self, request):
         today = timezone.now().date()
@@ -337,6 +319,7 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
+<<<<<<< HEAD
         # Get top expeditors with counts and sums - optimized approach
         # Since Check and CheckDetail are linked by check_id (not FK), we need to join manually
         expeditor_stats = {}
