@@ -1,17 +1,15 @@
 "use client"
-
-import { useEffect, useMemo, useState, useCallback } from "react"
-import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import { Home, TrendingUp } from "lucide-react"
 import type { Statistics, Project, Sklad, City } from "@/lib/types"
 import { api } from "@/lib/api"
+import { useState, useCallback, useEffect } from "react"
+import Link from "next/link"
 
 function getCurrentMonthRange() {
   const now = new Date()
@@ -20,7 +18,7 @@ function getCurrentMonthRange() {
   return { from: firstDay, to: lastDay }
 }
 
-export default function StatsPage() {
+const StatsPage = () => {
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>(getCurrentMonthRange())
   const [project, setProject] = useState("")
   const [sklad, setSklad] = useState("")
@@ -70,12 +68,19 @@ export default function StatsPage() {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-semibold flex items-center gap-2"><TrendingUp className="h-5 w-5"/> Global Statistics</h1>
+          <h1 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" /> Global Statistics
+          </h1>
           <div className="flex items-center gap-2">
-            <Link href="/" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-              <Home className="h-4 w-4"/> Home
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
+            >
+              <Home className="h-4 w-4" /> Home
             </Link>
-            <Button variant="outline" onClick={loadStats}>Refresh</Button>
+            <Button variant="outline" onClick={loadStats}>
+              Refresh
+            </Button>
           </div>
         </div>
 
@@ -84,38 +89,63 @@ export default function StatsPage() {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
-                <DatePickerWithRange dateRange={dateRange} onDateRangeChange={(r) => setDateRange(r || getCurrentMonthRange())} />
+                <DatePickerWithRange
+                  dateRange={dateRange}
+                  onDateRangeChange={(r) => setDateRange(r || getCurrentMonthRange())}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Project</label>
-                <SearchableSelect
-                  items={projects.map(p => p.project_name)}
-                  value={project}
-                  onChange={setProject}
-                  placeholder="All projects"
-                />
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((p) => (
+                      <SelectItem key={p.project_id} value={p.project_name}>
+                        {p.project_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Warehouse</label>
-                <SearchableSelect
-                  items={sklads.map(s => s.sklad_name)}
-                  value={sklad}
-                  onChange={setSklad}
-                  placeholder="All warehouses"
-                />
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All warehouses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sklads.map((s) => (
+                      <SelectItem key={s.sklad_id} value={s.sklad_name}>
+                        {s.sklad_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">City</label>
-                <SearchableSelect
-                  items={cities.map(c => c.city_name)}
-                  value={city}
-                  onChange={setCity}
-                  placeholder="All cities"
-                />
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All cities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((c) => (
+                      <SelectItem key={c.city_id} value={c.city_name}>
+                        {c.city_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
-                <select className="w-full border rounded-md px-3 py-2" value={status} onChange={(e) => setStatus(e.target.value)}>
+                <select
+                  className="w-full border rounded-md px-3 py-2"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
                   <option value="">All</option>
                   <option value="delivered">Delivered</option>
                   <option value="pending">Pending</option>
@@ -167,42 +197,63 @@ export default function StatsPage() {
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Top Projects</h3>
-                <List items={(stats.topProjects || []).map(p => ({ label: p.name, value: p.checkCount }))} format={formatNumber} />
+                <List
+                  items={(stats.topProjects || []).map((p) => ({ label: p.name, value: p.checkCount }))}
+                  format={formatNumber}
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Top Cities</h3>
-                <List items={(stats.topCities || []).map(c => ({ label: c.name, value: c.checkCount }))} format={formatNumber} />
+                <List
+                  items={(stats.topCities || []).map((c) => ({ label: c.name, value: c.checkCount }))}
+                  format={formatNumber}
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Top Warehouses</h3>
-                <List items={(stats.topSklads || []).map(s => ({ label: s.name, value: s.checkCount }))} format={formatNumber} />
+                <List
+                  items={(stats.topSklads || []).map((s) => ({ label: s.name, value: s.checkCount }))}
+                  format={formatNumber}
+                />
               </CardContent>
             </Card>
 
             <Card className="lg:col-span-3">
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Daily Checks</h3>
-                <LineChart data={(stats.dailyStats || []).map(d => ({ x: new Date(d.date).getTime(), y: d.checks }))} height={140} />
+                <LineChart
+                  data={(stats.dailyStats || []).map((d) => ({ x: new Date(d.date).getTime(), y: d.checks }))}
+                  height={140}
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Hourly Distribution</h3>
-                <BarChart data={(stats.hourlyStats || []).map(h => ({ label: String(new Date(h.hour).getHours()), value: h.checks }))} height={140} />
+                <BarChart
+                  data={(stats.hourlyStats || []).map((h) => ({
+                    label: String(new Date(h.hour).getHours()),
+                    value: h.checks,
+                  }))}
+                  height={140}
+                />
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="p-4 md:p-6">
                 <h3 className="font-semibold mb-3">Weekday Distribution</h3>
-                <BarChart data={(stats.dowStats || []).map(d => ({ label: dowLabel(d.dow), value: d.checks }))} height={140} />
+                <BarChart
+                  data={(stats.dowStats || []).map((d) => ({ label: dowLabel(d.dow), value: d.checks }))}
+                  height={140}
+                />
               </CardContent>
             </Card>
           </div>
@@ -229,7 +280,7 @@ function List({ items, format }: { items: { label: string; value: number }[]; fo
       ) : (
         items.map((i) => (
           <div key={i.label} className="flex justify-between text-sm">
-            <span className="truncate mr-2">{i.label || '-'}</span>
+            <span className="truncate mr-2">{i.label || "-"}</span>
             <Badge variant="outline">{format(i.value)}</Badge>
           </div>
         ))
@@ -239,7 +290,7 @@ function List({ items, format }: { items: { label: string; value: number }[]; fo
 }
 
 function BarChart({ data, height = 120 }: { data: { label: string; value: number }[]; height?: number }) {
-  const max = Math.max(1, ...data.map(d => d.value || 0))
+  const max = Math.max(1, ...data.map((d) => d.value || 0))
   return (
     <svg width="100%" height={height} viewBox={`0 0 100 ${height}`} className="bg-white border rounded">
       {data.map((d, i) => {
@@ -250,7 +301,9 @@ function BarChart({ data, height = 120 }: { data: { label: string; value: number
         return (
           <g key={i}>
             <rect x={x} y={y} width={bw * 0.8} height={h} fill="#2563eb" opacity={0.85} />
-            <text x={x + bw * 0.4} y={height - 8} fontSize="3" textAnchor="middle" fill="#6b7280">{d.label}</text>
+            <text x={x + bw * 0.4} y={height - 8} fontSize="3" textAnchor="middle" fill="#6b7280">
+              {d.label}
+            </text>
           </g>
         )
       })}
@@ -260,8 +313,8 @@ function BarChart({ data, height = 120 }: { data: { label: string; value: number
 
 function LineChart({ data, height = 140 }: { data: { x: number; y: number }[]; height?: number }) {
   if (!data.length) return <div className="text-sm text-gray-500">No data</div>
-  const xs = data.map(d => d.x)
-  const ys = data.map(d => d.y)
+  const xs = data.map((d) => d.x)
+  const ys = data.map((d) => d.y)
   const minX = Math.min(...xs)
   const maxX = Math.max(...xs)
   const minY = 0
@@ -272,7 +325,7 @@ function LineChart({ data, height = 140 }: { data: { x: number; y: number }[]; h
   })
   const points = data
     .sort((a, b) => a.x - b.x)
-    .map(p => {
+    .map((p) => {
       const { nx, ny } = norm(p.x, p.y)
       return `${nx},${ny}`
     })
@@ -285,6 +338,8 @@ function LineChart({ data, height = 140 }: { data: { x: number; y: number }[]; h
 }
 
 function dowLabel(dow: number) {
-  const map: Record<number, string> = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu', 6: 'Fri', 7: 'Sat' }
+  const map: Record<number, string> = { 1: "Sun", 2: "Mon", 3: "Tue", 4: "Wed", 5: "Thu", 6: "Fri", 7: "Sat" }
   return map[dow] || String(dow)
 }
+
+export default StatsPage
