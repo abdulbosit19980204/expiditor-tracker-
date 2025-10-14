@@ -281,14 +281,14 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 <div className="p-4 border-b border-gray-200">
                   <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    {t("expeditorTracker")}
+                    Expeditor Tracker
                   </h1>
                   <div className="mb-3 flex flex-col gap-2">
                     <Link
                       href="/stats"
                       className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
                     >
-                      <BarChart3 className="h-4 w-4" /> {t("openStats")}
+                      <BarChart3 className="h-4 w-4" /> Open Stats
                     </Link>
                   </div>
 
@@ -414,7 +414,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder={t("allStatuses")} />
+                              <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">{t("allStatuses")}</SelectItem>
@@ -602,13 +602,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* Sklad Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("warehouse")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
                       <Select
                         value={filters.sklad || "all"}
                         onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder={t("allWarehouses")} />
+                          <SelectValue placeholder="All Warehouses" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("allWarehouses")}</SelectItem>
@@ -623,13 +623,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* City Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("city")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
                       <Select
                         value={filters.city || "all"}
                         onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder={t("allCities")} />
+                          <SelectValue placeholder="All Cities" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("allCities")}</SelectItem>
@@ -644,13 +644,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* Status Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("status")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
                       <Select
                         value={filters.status || "all"}
                         onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder={t("allStatuses")} />
+                          <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("allStatuses")}</SelectItem>
@@ -682,7 +682,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                 <Input
-                  placeholder={t("searchExpeditors")}
+                  placeholder="Search expeditors..."
                   value={expeditorSearchQuery}
                   onChange={(e) => setExpeditorSearchQuery(e.target.value)}
                   className="pl-10"
@@ -695,13 +695,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               {isLoadingExpeditors ? (
                 <div className="text-center py-8">
                   <LoadingSpinner size="sm" />
-                  <p className="text-sm text-gray-500 mt-2">{t("loadingExpeditors")}</p>
+                  <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
                 </div>
               ) : filteredExpeditors.length === 0 ? (
                 <div className="text-center text-gray-500 mt-8">
                   <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>{t("noExpeditorsFound")}</p>
-                  {filters.filial && <p className="text-xs mt-2">{t("tryChangingFilial")}</p>}
+                  <p>No expeditors with checks found</p>
+                  {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
                 </div>
               ) : (
                 filteredExpeditors.map((expeditor) => (
