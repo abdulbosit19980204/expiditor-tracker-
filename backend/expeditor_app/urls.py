@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    StatisticsView, ProjectsViewSet, CheckDetailViewSet, 
-    SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet,FilialViewSet,
+    StatisticsView, GlobalStatisticsView, ProjectsViewSet, CheckDetailViewSet, 
+    SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet, FilialViewSet,
 )
 from .integration import UpdateChecksView
 
@@ -20,5 +20,6 @@ router.register(r'check', CheckViewSet, basename='check')
 urlpatterns = [
     path('', include(router.urls)),
     path('statistics/', StatisticsView.as_view(), name='statistics'),
+    path('statistics/global/', GlobalStatisticsView.as_view(), name='statistics-global'),
     path('update-checks/', UpdateChecksView.as_view(), name='update-checks'),
 ]

@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
-from django.db.models import Count, Sum, Q, OuterRef, Subquery, IntegerField
-from django.db.models.functions import TruncDate
+from django.db.models import Count, Sum, Q, OuterRef, Subquery, IntegerField, FloatField, F, Value
+from django.db.models.functions import TruncDate, TruncHour, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django_filters.rest_framework import DjangoFilterBackend
@@ -269,14 +269,18 @@ class StatisticsView(APIView):
         
         success_rate = (delivered_checks / total_checks * 100) if total_checks > 0 else 0
         
-        # Payment statistics
+        # Payment statistics and shares
         payment_stats = check_details_qs.aggregate(
-            total_sum=Sum('total_sum'),
-            total_nalichniy=Sum('nalichniy'),
-            total_uzcard=Sum('uzcard'),
-            total_humo=Sum('humo'),
-            total_click=Sum('click'),
+            total_sum=Coalesce(Sum('total_sum', output_field=FloatField()), Value(0.0), output_field=FloatField()),
+            total_nalichniy=Coalesce(Sum('nalichniy', output_field=FloatField()), Value(0.0), output_field=FloatField()),
+            total_uzcard=Coalesce(Sum('uzcard', output_field=FloatField()), Value(0.0), output_field=FloatField()),
+            total_humo=Coalesce(Sum('humo', output_field=FloatField()), Value(0.0), output_field=FloatField()),
+            total_click=Coalesce(Sum('click', output_field=FloatField()), Value(0.0), output_field=FloatField()),
         )
+
+        avg_check_sum = 0
+        if payment_stats['total_sum'] and total_checks:
+            avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
         # Top expeditors with optimized query
         top_expeditors = list(
@@ -342,6 +346,35 @@ class StatisticsView(APIView):
             start_date = today.replace(day=1)
             end_date = today
         
+        # Top warehouses (sklads)
+        top_sklads = list(
+            checks_qs.values('sklad')
+            .annotate(check_count=Count('id'))
+            .order_by('-check_count')[:5]
+        )
+
+        # Hourly distribution
+        hourly_data = (
+            checks_qs.exclude(yetkazilgan_vaqti__isnull=True)
+            .annotate(hour=TruncHour('yetkazilgan_vaqti'))
+            .values('hour')
+            .annotate(checks=Count('id'))
+            .order_by('hour')
+        )
+        hourly_stats = [
+            {'hour': (item['hour'].isoformat() if hasattr(item['hour'], 'isoformat') else str(item['hour'])), 'checks': item['checks']}
+            for item in hourly_data
+        ]
+
+        # Day of week distribution
+        dow_counts = list(
+            checks_qs.exclude(yetkazilgan_vaqti__isnull=True)
+            .annotate(dow=F('yetkazilgan_vaqti__week_day'))
+            .values('dow')
+            .annotate(checks=Count('id'))
+            .order_by('dow')
+        )
+
         # Get daily stats using TruncDate for portability
         daily_data = (
             checks_qs.filter(
@@ -366,7 +399,8 @@ class StatisticsView(APIView):
                 'failed_checks': failed_checks,
                 'pending_checks': pending_checks,
                 'success_rate': round(success_rate, 2),
-                'today_checks_count': today_checks_count
+                'today_checks_count': today_checks_count,
+                'avg_check_sum': round(avg_check_sum, 2),
             },
             'payment_stats': {
                 'total_sum': payment_stats['total_sum'] or 0,
@@ -378,5 +412,18 @@ class StatisticsView(APIView):
             'top_expeditors': top_expeditors,
             'top_projects': top_projects,
             'top_cities': top_cities,
+            'top_sklads': top_sklads,
             'daily_stats': daily_stats,
+            'hourly_stats': hourly_stats,
+            'dow_stats': dow_counts,
         })
+
+
+class GlobalStatisticsView(APIView):
+    def get(self, request):
+        # Reuse StatisticsView logic without ekispiditor filter
+        request.GET._mutable = True  # type: ignore
+        if 'ekispiditor_id' in request.GET:
+            request.GET.pop('ekispiditor_id')
+        request.GET._mutable = False  # type: ignore
+        return StatisticsView().get(request)

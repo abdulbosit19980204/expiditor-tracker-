@@ -139,6 +139,7 @@ export interface Statistics {
   totalSum: number
   todayChecks: number
   successRate: number
+  avgCheckSum?: number
   paymentMethods: {
     nalichniy: number
     uzcard: number
@@ -162,6 +163,19 @@ export interface Statistics {
   }>
   dailyStats: Array<{
     date: string
+    checks: number
+  }>
+  topSklads?: Array<{
+    name: string
+    checkCount: number
+    totalSum?: number
+  }>
+  hourlyStats?: Array<{
+    hour: string
+    checks: number
+  }>
+  dowStats?: Array<{
+    dow: number
     checks: number
   }>
 }
