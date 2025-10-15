@@ -220,7 +220,6 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
   const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    // Load locale from localStorage if available
     const savedLocale = localStorage.getItem("locale") as Locale | null
     if (savedLocale && ["en", "ru", "uz"].includes(savedLocale)) {
       setLocale(savedLocale)
@@ -230,7 +229,6 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
 
   const router = useRouter()
 
-  // Translation function
   const t = useCallback(
     (key: string, options: Record<string, any> = {}) => {
       let translation = translations[locale][key] as string | undefined
@@ -239,7 +237,6 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
         return key
       }
 
-      // Replace variables in the translation
       Object.keys(options).forEach((optionKey) => {
         const regex = new RegExp(`\\{\\{\\s*${optionKey}\\s*\\}\\}`, "g")
         translation = translation!.replace(regex, options[optionKey])
@@ -286,5 +283,13 @@ export function useTranslation() {
   return context
 }
 
+// Create a default export object that contains both exports
+const simpleI18n = {
+  I18nProvider,
+  useTranslation,
+}
+
+export default simpleI18n
+
 // Export types
-export type { Locale, Translation, Translations }
+export type { Locale, Translation, Translations, I18nContextProps }
