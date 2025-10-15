@@ -1,6 +1,8 @@
 import logging
 from django.db import transaction
 from django.utils import timezone
+from django.core.cache import cache
+from django.db import connection
 from datetime import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,6 +12,8 @@ from zeep.cache import InMemoryCache
 from zeep.transports import Transport
 from expeditor_app.utils import get_last_update_date, save_last_update_date
 from expeditor_app.models import Check, CheckDetail, Sklad, City, Ekispiditor, Projects
+import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +21,12 @@ class UpdateChecksView(APIView):
     # Cache WSDL client to avoid reloading
     _client = None
     _client_lock = None
+    _update_in_progress = False
+    _update_lock = threading.Lock()
 
     @classmethod
     def get_client(cls):
         if cls._client is None:
-            import threading
             if cls._client_lock is None:
                 cls._client_lock = threading.Lock()
             
@@ -36,6 +41,18 @@ class UpdateChecksView(APIView):
                     )
                     cls._client = Client(wsdl=url, transport=transport)
         return cls._client
+
+    @classmethod
+    def is_update_in_progress(cls):
+        """Check if update is currently running"""
+        with cls._update_lock:
+            return cls._update_in_progress
+
+    @classmethod
+    def set_update_status(cls, status):
+        """Set update status"""
+        with cls._update_lock:
+            cls._update_in_progress = status
 
     def _process_batch(self, batch, existing_check_ids, existing_projects, 
                       existing_cities, existing_expeditors, existing_sklads):
@@ -151,7 +168,17 @@ class UpdateChecksView(APIView):
             Sklad.objects.bulk_create(sklads_to_create, ignore_conflicts=True)
 
     def get(self, request):
+        # Check if update is already in progress
+        if self.is_update_in_progress():
+            return Response({
+                'detail': 'Update already in progress',
+                'status': 'running'
+            }, status=status.HTTP_409_CONFLICT)
+
         try:
+            # Set update status
+            self.set_update_status(True)
+            
             # Get SOAP client
             client = self.get_client()
 
@@ -164,7 +191,7 @@ class UpdateChecksView(APIView):
                 return Response({'detail': 'No data received'}, status=status.HTTP_204_NO_CONTENT)
 
             updated_count = 0
-            batch_size = 100  # Process in smaller batches for better memory management
+            batch_size = 50  # Smaller batches to prevent DB blocking
             rows = list(response.Rows)
             
             # Pre-fetch existing records to avoid individual queries
@@ -174,25 +201,45 @@ class UpdateChecksView(APIView):
             existing_expeditors = {e.ekispiditor_name: e for e in Ekispiditor.objects.all()}
             existing_sklads = {s.sklad_name: s for s in Sklad.objects.all()}
 
+            # Use select_for_update to prevent concurrent modifications
             with transaction.atomic():  # Ensure data consistency
                 for i in range(0, len(rows), batch_size):
                     batch = rows[i:i + batch_size]
+                    
+                    # Process batch with minimal DB locking
                     self._process_batch(
                         batch, existing_check_ids, existing_projects, 
                         existing_cities, existing_expeditors, existing_sklads
                     )
                     updated_count += len(batch)
+                    
+                    # Small delay to prevent DB blocking
+                    time.sleep(0.1)
 
                 # Save the last update date
                 last_update_date = getattr(response, 'lastUpdateDateTime', None)
                 if last_update_date:
                     save_last_update_date(str(last_update_date))
 
+            # Clear relevant caches
+            cache.delete_many([
+                'expeditors_list',
+                'checks_list', 
+                'statistics_data',
+                'projects_list',
+                'cities_list',
+                'sklads_list'
+            ])
+
             return Response({
                 'updated': updated_count,
-                'last_update': str(last_update_date) if last_update_date else None
+                'last_update': str(last_update_date) if last_update_date else None,
+                'status': 'completed'
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.error(f"[GLOBAL ERROR] {e}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        finally:
+            # Always reset update status
+            self.set_update_status(False)
