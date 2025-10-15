@@ -73,7 +73,6 @@ const resources = {
       settings: "Settings",
       general: "General",
       appearance: "Appearance",
-      filters: "Filters",
       data: "Data",
       language: "Language",
       theme: "Theme",
@@ -92,8 +91,6 @@ const resources = {
       // Common
       loadingApplication: "Loading application...",
       openStats: "Open Stats",
-      
-      // Additional missing translations
       error: "Error",
       errorLoadingData: "Error loading data",
       errorLoadingExpeditors: "Error loading expeditors",
@@ -120,121 +117,18 @@ const resources = {
       loadingStatistics: "Loading statistics...",
       loadingStatisticsPage: "Loading statistics page...",
       noStatisticsAvailable: "No statistics available",
-      refresh: "Refresh",
       exportCSV: "Export CSV",
-      home: "Home",
       resetFilters: "Reset Filters",
       retry: "Retry",
       failedToLoadMap: "Failed to load map",
       mapPreviewUnavailable: "Map preview unavailable",
       willWorkInProduction: "Will work in production",
-      loadingChecks: "Loading checks...",
       loadingMap: "Loading map...",
       kkm: "KKM",
       details: "Details",
-      
-      // Additional missing translations found in components
-      allProjects: "All Projects",
-      allWarehouses: "All Warehouses", 
-      allCities: "All Cities",
-      allStatuses: "All Statuses",
-      allFilials: "All Filials",
-      searchExpeditors: "Search expeditors...",
-      openStats: "Open Stats",
-      expeditorTracker: "Expeditor Tracker",
-      loadingExpeditors: "Loading expeditors...",
-      noExpeditorsFound: "No expeditors with checks found",
-      tryChangingFilial: "Try changing the filial filter",
-      loadingChecks: "Loading checks...",
-      noChecksFound: "No checks found",
-      tryAdjustingFilters: "Try adjusting filters",
-      
-      // Map component translations
-      mapPreviewUnavailable: "Map preview unavailable",
-      willWorkInProduction: "Will work in production",
-      failedToLoadMap: "Failed to load map",
-      retry: "Retry",
-      
-      // Check modal translations
-      checkDetails: "Check Details",
-      receiptId: "Receipt ID",
-      client: "Client",
-      phone: "Phone",
-      address: "Address",
-      paymentMethod: "Payment Method",
-      totalSum: "Total Sum",
-      deliveryDate: "Delivery Date",
-      expeditor: "Expeditor",
-      transportNumber: "Transport Number",
-      
-      // Settings panel translations
-      settings: "Settings",
-      general: "General",
-      appearance: "Appearance",
-      filters: "Filters",
-      data: "Data",
-      language: "Language",
-      theme: "Theme",
-      light: "Light",
-      dark: "Dark",
-      system: "System",
-      save: "Save",
-      cancel: "Cancel",
-      reset: "Reset",
-      export: "Export",
-      import: "Import",
-      resetSettings: "Reset Settings",
-      exportSettings: "Export Settings",
-      importSettings: "Import Settings",
-      
-      // Statistics panel translations
-      totalChecks: "Total Checks",
-      deliveredChecks: "Delivered Checks",
-      pendingChecks: "Pending Checks",
-      failedChecks: "Failed Checks",
-      successRate: "Success Rate",
-      avgCheckSum: "Avg Check Sum",
-      todayChecks: "Today's Checks",
-      
-      // Enhanced statistics translations
-      enhancedStatistics: "Enhanced Statistics",
-      overviewOfAllActivities: "Overview of all expeditor activities",
-      globalStatistics: "Global Statistics",
-      dailyDistribution: "Daily Distribution",
-      numberOfChecksPerDay: "Number of checks per day",
-      hourlyDistribution: "Hourly Distribution",
-      checksByHour: "Checks by hour of day",
-      weekdayDistribution: "Weekday Distribution",
-      checksByDayOfWeek: "Checks by day of week",
-      topWarehouses: "Top Warehouses",
-      mostActiveLocations: "Most active locations",
-      noData: "No data",
-      loadingStatistics: "Loading statistics...",
-      loadingStatisticsPage: "Loading statistics page...",
-      noStatisticsAvailable: "No statistics available",
-      exportCSV: "Export CSV",
-      resetFilters: "Reset Filters",
-      
-      // Common UI elements
-      loadingApplication: "Loading application...",
-      error: "Error",
-      errorLoadingData: "Error loading data",
-      errorLoadingExpeditors: "Error loading expeditors",
-      errorLoadingChecks: "Error loading checks",
-      pickDate: "Pick a date",
-      pickDateRange: "Pick a date range",
-      allExpeditorChecks: "All expeditor checks",
-      totalAmount: "Total Amount",
-      totalCheckValue: "Total check value",
-      averageCheck: "Average Check",
-      perCheckAverage: "Per check average",
-      activeExpeditors: "Active Expeditors",
-      inSelectedPeriod: "In selected period",
-      
-      // Additional missing translations
       unknown: "Unknown",
       currentMonth: "Current Month",
-      lastWeek: "Last Week", 
+      lastWeek: "Last Week",
       lastMonth: "Last Month",
       customRange: "Custom Range",
       defaultProjectFilter: "Default Project Filter",
@@ -249,9 +143,7 @@ const resources = {
       load: "Load",
       delete: "Delete",
       importAndExport: "Import & Export",
-      exportSettings: "Export Settings",
       downloadCurrentSettings: "Download your current settings as a JSON file",
-      importSettings: "Import Settings",
       uploadExportedSettings: "Upload a previously exported settings file",
       resetToDefaults: "Reset to Defaults",
       clearAllCustomSettings: "Clear all custom settings and restore defaults",
@@ -283,199 +175,144 @@ const resources = {
       settingsAndPreferences: "Settings & Preferences",
       customizeExperience: "Customize your experience with the Expeditor Tracker application.",
       close: "Close",
-      
-      // Check modal additional translations
       expeditor: "Expeditor",
       transport: "Transport",
       kkmNumber: "KKM Number",
-      warehouse: "Warehouse",
       agent: "Agent",
       collector: "Collector",
       deliveryTime: "Delivery Time",
-      
-      // Statistics translations
-      delivered: "Delivered",
-      failed: "Failed",
       awaitingDelivery: "Awaiting delivery",
       successfullyDelivered: "Successfully delivered",
       failedDeliveries: "Failed deliveries",
       deliverySuccessRate: "Delivery success rate",
       todayChecks: "Today's Checks",
-      
-      // Map component translations
       mapPlaceholder: "Map placeholder",
       loadingChecksEllipsis: "Loading checks…",
-      
-      // Weekday names
       monday: "Mo",
-      tuesday: "Tu", 
+      tuesday: "Tu",
       wednesday: "We",
       thursday: "Th",
       friday: "Fr",
       saturday: "Sa",
       sunday: "Su",
-      
-  // Month names
-  selectMonth: "Select month",
-
-  // Analytics Dashboard
-  analyticsDashboard: "Analytics Dashboard",
-  comprehensiveAnalytics: "Comprehensive analytics and insights for expeditor performance",
-  allExpeditorChecks: "All expeditor checks",
-  totalCheckValue: "Total check value",
-  perCheckAverage: "Per check average",
-  successfulDeliveries: "Successful deliveries",
-  advancedFilters: "Advanced Filters",
-  active: "active",
-  allProjects: "All projects",
-  allWarehouses: "All warehouses",
-  allCities: "All cities",
-  allFilials: "All filials",
-  allStatuses: "All statuses",
-  clearAllFilters: "Clear All Filters",
-  exportData: "Export Data",
-  loadingStatistics: "Loading statistics...",
-  dailyCheckDistribution: "Daily Check Distribution",
-  paymentMethodsDistribution: "Payment Methods Distribution",
-  hourlyDistribution: "Hourly Distribution",
-  topExpeditors: "Top Expeditors",
-  topProjects: "Top Projects",
-  topCities: "Top Cities",
-  warehouseDistribution: "Warehouse Distribution",
-  chartVisibilitySettings: "Chart Visibility Settings",
-
-  // Help Modal
-  help: "Help",
-  userGuide: "User Guide",
-  gettingStarted: "Getting Started",
-  stepByStepGuide: "Step-by-Step Guide",
-  features: "Features",
-  shortcuts: "Shortcuts",
-  overview: "Overview",
-  quickStart: "Quick Start",
-  
-  // Getting Started Steps
-  step1SelectExpeditor: "Select an Expeditor",
-  step1SelectExpeditorDesc: "Choose an expeditor from the list to view their delivery data and performance metrics.",
-  step2ViewMap: "View Delivery Map",
-  step2ViewMapDesc: "See all delivery locations on an interactive map with real-time status indicators.",
-  step3CheckDetails: "Check Details",
-  step3CheckDetailsDesc: "Click on any delivery point to view detailed check information and payment details.",
-  step4ViewStats: "View Statistics",
-  step4ViewStatsDesc: "Analyze performance metrics, payment breakdowns, and delivery trends.",
-  
-  // Filtering Guide
-  filteringData: "Filtering Data",
-  filterByDate: "Filter by Date Range",
-  filterByDateDesc: "Use the date picker to filter deliveries within specific time periods.",
-  filterByProject: "Filter by Project",
-  filterByProjectDesc: "Select specific projects to focus on particular delivery types or services.",
-  filterByLocation: "Filter by Location",
-  filterByLocationDesc: "Filter by city, warehouse, or filial to focus on specific geographical areas.",
-  combineFilters: "Combine Multiple Filters",
-  combineFiltersDesc: "Use multiple filters together to get precise data views for your analysis.",
-  
-  // Analytics Guide
-  analyticsAndReports: "Analytics & Reports",
-  viewAnalytics: "View Comprehensive Analytics",
-  viewAnalyticsDesc: "Access the analytics dashboard for detailed charts and performance insights.",
-  exportData: "Export Data",
-  exportDataDesc: "Export filtered data in CSV, Excel, or PDF formats for external analysis.",
-  performanceMetrics: "Performance Metrics",
-  performanceMetricsDesc: "Monitor success rates, average delivery times, and efficiency metrics.",
-  
-  // Customization Guide
-  customization: "Customization",
-  changeLanguage: "Change Language",
-  changeLanguageDesc: "Switch between English, Uzbek, and Russian for interface language.",
-  changeTheme: "Change Theme",
-  changeThemeDesc: "Toggle between light and dark themes for comfortable viewing.",
-  panelSettings: "Panel Settings",
-  panelSettingsDesc: "Configure which panels are expanded by default and customize the interface layout.",
-  
-  // Features
-  realTimeTracking: "Real-Time Tracking",
-  realTimeTrackingDesc: "Monitor delivery status and locations in real-time",
-  comprehensiveAnalytics: "Comprehensive Analytics",
-  comprehensiveAnalyticsDesc: "Detailed charts and metrics for performance analysis",
-  multiLanguageSupport: "Multi-Language Support",
-  multiLanguageSupportDesc: "Available in English, Uzbek, and Russian",
-  exportCapabilities: "Export Capabilities",
-  exportCapabilitiesDesc: "Export data in multiple formats for reporting",
-  
-  // Quick Start
-  selectExpeditorFromList: "Select an expeditor from the list",
-  viewDeliveryLocations: "View delivery locations on the map",
-  checkPerformanceStats: "Check performance statistics",
-  exportDataForReports: "Export data for reports",
-  
-  // Map Features
-  mapFeatures: "Map Features",
-  realTimeLocationTracking: "Real-time location tracking",
-  deliveryStatusIndicators: "Delivery status indicators",
-  routeVisualization: "Route visualization",
-  interactiveMarkers: "Interactive markers",
-  
-  // Analytics Features
-  analyticsFeatures: "Analytics Features",
-  trendAnalysis: "Trend analysis",
-  paymentBreakdowns: "Payment breakdowns",
-  comparativeReports: "Comparative reports",
-  
-  // Filtering Features
-  filteringFeatures: "Filtering Features",
-  dateRangeFiltering: "Date range filtering",
-  multiCriteriaFiltering: "Multi-criteria filtering",
-  realTimeFiltering: "Real-time filtering",
-  filterPresets: "Filter presets",
-  
-  // Export Features
-  exportFeatures: "Export Features",
-  csvExport: "CSV export",
-  excelExport: "Excel export",
-  pdfReports: "PDF reports",
-  customFormats: "Custom formats",
-  
-  // Keyboard Shortcuts
-  keyboardShortcuts: "Keyboard Shortcuts",
-  openFilters: "Open filters",
-  openSettings: "Open settings",
-  openHelp: "Open help",
-  openAnalytics: "Open analytics",
-  closeModal: "Close modal",
-  
-  // Tips and Tricks
-  tipsAndTricks: "Tips & Tricks",
-  tip1Title: "Use Advanced Filters",
-  tip1Description: "Combine multiple filters to get precise data views for your analysis needs.",
-  tip2Title: "Export for Reporting",
-  tip2Description: "Regularly export data to create comprehensive reports for management review.",
-  tip3Title: "Monitor Trends",
-  tip3Description: "Use the analytics dashboard to identify patterns and optimize delivery operations.",
-  
-  // Welcome
-  welcomeToExpeditorTracker: "Welcome to Expeditor Tracker",
-  welcomeDescription: "A comprehensive system for tracking expeditor performance, managing delivery operations, and analyzing business metrics. Get started with the step-by-step guide below.",
-  
-  // Error Messages
-  errorImportingSettings: "Error importing settings. Please check the file format.",
-  confirmResetSettings: "Are you sure you want to reset all settings to defaults? This action cannot be undone.",
-  
-  // Statistics Page
-  statusDistribution: "Status Distribution",
-  filialPerformance: "Filial Performance",
-  checks: "checks",
-  expeditors: "expeditors",
+      selectMonth: "Select month",
+      analyticsDashboard: "Analytics Dashboard",
+      comprehensiveAnalytics: "Comprehensive analytics and insights for expeditor performance",
+      successfulDeliveries: "Successful deliveries",
+      active: "active",
+      exportData: "Export Data",
+      dailyCheckDistribution: "Daily Check Distribution",
+      paymentMethodsDistribution: "Payment Methods Distribution",
+      topExpeditors: "Top Expeditors",
+      topProjects: "Top Projects",
+      topCities: "Top Cities",
+      warehouseDistribution: "Warehouse Distribution",
+      chartVisibilitySettings: "Chart Visibility Settings",
+      help: "Help",
+      userGuide: "User Guide",
+      gettingStarted: "Getting Started",
+      stepByStepGuide: "Step-by-Step Guide",
+      features: "Features",
+      shortcuts: "Shortcuts",
+      overview: "Overview",
+      quickStart: "Quick Start",
+      step1SelectExpeditor: "Select an Expeditor",
+      step1SelectExpeditorDesc:
+        "Choose an expeditor from the list to view their delivery data and performance metrics.",
+      step2ViewMap: "View Delivery Map",
+      step2ViewMapDesc: "See all delivery locations on an interactive map with real-time status indicators.",
+      step3CheckDetails: "Check Details",
+      step3CheckDetailsDesc: "Click on any delivery point to view detailed check information and payment details.",
+      step4ViewStats: "View Statistics",
+      step4ViewStatsDesc: "Analyze performance metrics, payment breakdowns, and delivery trends.",
+      filteringData: "Filtering Data",
+      filterByDate: "Filter by Date Range",
+      filterByDateDesc: "Use the date picker to filter deliveries within specific time periods.",
+      filterByProject: "Filter by Project",
+      filterByProjectDesc: "Select specific projects to focus on particular delivery types or services.",
+      filterByLocation: "Filter by Location",
+      filterByLocationDesc: "Filter by city, warehouse, or filial to focus on specific geographical areas.",
+      combineFilters: "Combine Multiple Filters",
+      combineFiltersDesc: "Use multiple filters together to get precise data views for your analysis.",
+      analyticsAndReports: "Analytics & Reports",
+      viewAnalytics: "View Comprehensive Analytics",
+      viewAnalyticsDesc: "Access the analytics dashboard for detailed charts and performance insights.",
+      exportDataDesc: "Export filtered data in CSV, Excel, or PDF formats for external analysis.",
+      performanceMetrics: "Performance Metrics",
+      performanceMetricsDesc: "Monitor success rates, average delivery times, and efficiency metrics.",
+      customization: "Customization",
+      changeLanguage: "Change Language",
+      changeLanguageDesc: "Switch between English, Uzbek, and Russian for interface language.",
+      changeTheme: "Change Theme",
+      changeThemeDesc: "Toggle between light and dark themes for comfortable viewing.",
+      panelSettings: "Panel Settings",
+      panelSettingsDesc: "Configure which panels are expanded by default and customize the interface layout.",
+      realTimeTracking: "Real-Time Tracking",
+      realTimeTrackingDesc: "Monitor delivery status and locations in real-time",
+      comprehensiveAnalyticsDesc: "Detailed charts and metrics for performance analysis",
+      multiLanguageSupport: "Multi-Language Support",
+      multiLanguageSupportDesc: "Available in English, Uzbek, and Russian",
+      exportCapabilities: "Export Capabilities",
+      exportCapabilitiesDesc: "Export data in multiple formats for reporting",
+      selectExpeditorFromList: "Select an expeditor from the list",
+      viewDeliveryLocations: "View delivery locations on the map",
+      checkPerformanceStats: "Check performance statistics",
+      exportDataForReports: "Export data for reports",
+      mapFeatures: "Map Features",
+      realTimeLocationTracking: "Real-time location tracking",
+      deliveryStatusIndicators: "Delivery status indicators",
+      routeVisualization: "Route visualization",
+      interactiveMarkers: "Interactive markers",
+      analyticsFeatures: "Analytics Features",
+      trendAnalysis: "Trend analysis",
+      paymentBreakdowns: "Payment breakdowns",
+      comparativeReports: "Comparative reports",
+      filteringFeatures: "Filtering Features",
+      dateRangeFiltering: "Date range filtering",
+      multiCriteriaFiltering: "Multi-criteria filtering",
+      realTimeFiltering: "Real-time filtering",
+      filterPresets: "Filter presets",
+      exportFeatures: "Export Features",
+      csvExport: "CSV export",
+      excelExport: "Excel export",
+      pdfReports: "PDF reports",
+      customFormats: "Custom formats",
+      keyboardShortcuts: "Keyboard Shortcuts",
+      openFilters: "Open filters",
+      openSettings: "Open settings",
+      openHelp: "Open help",
+      openAnalytics: "Open analytics",
+      closeModal: "Close modal",
+      tipsAndTricks: "Tips & Tricks",
+      tip1Title: "Use Advanced Filters",
+      tip1Description: "Combine multiple filters to get precise data views for your analysis needs.",
+      tip2Title: "Export for Reporting",
+      tip2Description: "Regularly export data to create comprehensive reports for management review.",
+      tip3Title: "Monitor Trends",
+      tip3Description: "Use the analytics dashboard to identify patterns and optimize delivery operations.",
+      welcomeToExpeditorTracker: "Welcome to Expeditor Tracker",
+      welcomeDescription:
+        "A comprehensive system for tracking expeditor performance, managing delivery operations, and analyzing business metrics. Get started with the step-by-step guide below.",
+      errorImportingSettings: "Error importing settings. Please check the file format.",
+      confirmResetSettings: "Are you sure you want to reset all settings to defaults? This action cannot be undone.",
+      statusDistribution: "Status Distribution",
+      filialPerformance: "Filial Performance",
+      checks: "checks",
+      expeditors: "expeditors",
+      deliveryDate: "Delivery Date",
+      transportNumber: "Transport Number",
+      deliveredChecks: "Delivered Checks",
+      pendingChecks: "Pending Checks",
+      failedChecks: "Failed Checks",
+      avgCheckSum: "Avg Check Sum",
+      pickDateRange: "Pick a date range",
     },
   },
   uz: {
     translation: {
-      // Navigation
       home: "Bosh sahifa",
       statistics: "Statistika",
       enhancedStatistics: "Kengaytirilgan Statistika",
-
-      // Expeditor Tracker
       expeditorTracker: "Ekspeditor Kuzatuvi",
       searchExpeditors: "Ekspeditorlarni qidirish...",
       selectExpeditor: "Cheklar uchun ekspeditorni tanlang",
@@ -483,8 +320,6 @@ const resources = {
       noExpeditorsFound: "Cheklar bilan ekspeditorlar topilmadi",
       tryChangingFilial: "Filial filterini o'zgartirishga harakat qiling",
       loadingExpeditors: "Ekspeditorlar yuklanmoqda...",
-
-      // Filters
       filters: "Filterlar",
       advancedFilters: "Kengaytirilgan Filterlar",
       dateRange: "Sana oralig'i",
@@ -499,21 +334,15 @@ const resources = {
       pending: "Kutilmoqda",
       failed: "Muvaffaqiyatsiz",
       clearAllFilters: "Barcha filterlarni tozalash",
-
-      // Statistics
       totalChecks: "Jami cheklar",
       totalSum: "Jami summa",
       avgCheckSum: "O'rtacha chek",
       successRate: "Muvaffaqiyat darajasi",
-
-      // Actions
       refresh: "Yangilash",
       export: "Eksport",
       loading: "Yuklanmoqda...",
       loadingChecks: "Cheklar yuklanmoqda...",
       show: "Ko'rsatish",
-
-      // Check Details
       checkDetails: "Chek tafsilotlari",
       receiptId: "Chek ID",
       client: "Mijoz",
@@ -527,18 +356,13 @@ const resources = {
       searchChecks: "Cheklarni qidirish...",
       noChecksFound: "Cheklar topilmadi",
       tryAdjustingFilters: "Filterlarni sozlashga harakat qiling",
-
-      // Payment Methods
       cash: "Naqd",
       uzcard: "UzCard",
       humo: "Humo",
       click: "Click",
-
-      // Settings
       settings: "Sozlamalar",
       general: "Umumiy",
       appearance: "Ko'rinish",
-      filters: "Filterlar",
       data: "Ma'lumotlar",
       language: "Til",
       theme: "Mavzu",
@@ -548,17 +372,12 @@ const resources = {
       save: "Saqlash",
       cancel: "Bekor qilish",
       reset: "Qayta o'rnatish",
-      export: "Eksport",
       import: "Import",
       resetSettings: "Sozlamalarni qayta o'rnatish",
       exportSettings: "Sozlamalarni eksport qilish",
       importSettings: "Sozlamalarni import qilish",
-
-      // Common
       loadingApplication: "Ilova yuklanmoqda...",
       openStats: "Statistikani ochish",
-      
-      // Additional missing translations
       error: "Xatolik",
       errorLoadingData: "Ma'lumotlarni yuklashda xatolik",
       errorLoadingExpeditors: "Ekspeditorlarni yuklashda xatolik",
@@ -585,121 +404,18 @@ const resources = {
       loadingStatistics: "Statistika yuklanmoqda...",
       loadingStatisticsPage: "Statistika sahifasi yuklanmoqda...",
       noStatisticsAvailable: "Statistika mavjud emas",
-      refresh: "Yangilash",
       exportCSV: "CSV eksport",
-      home: "Bosh sahifa",
       resetFilters: "Filterlarni qayta o'rnatish",
       retry: "Qayta urinish",
       failedToLoadMap: "Xaritani yuklashda xatolik",
       mapPreviewUnavailable: "Xarita ko'rinishi mavjud emas",
       willWorkInProduction: "Ishlab chiqarishda ishlaydi",
-      loadingChecks: "Cheklar yuklanmoqda...",
       loadingMap: "Xarita yuklanmoqda...",
       kkm: "KKM",
       details: "Tafsilotlar",
-      
-      // Additional missing translations found in components
-      allProjects: "Barcha loyihalar",
-      allWarehouses: "Barcha omborlar",
-      allCities: "Barcha shaharlar", 
-      allStatuses: "Barcha holatlar",
-      allFilials: "Barcha filiallar",
-      searchExpeditors: "Ekspeditorlarni qidirish...",
-      openStats: "Statistikani ochish",
-      expeditorTracker: "Ekspeditor Kuzatuvi",
-      loadingExpeditors: "Ekspeditorlar yuklanmoqda...",
-      noExpeditorsFound: "Cheklar bilan ekspeditorlar topilmadi",
-      tryChangingFilial: "Filial filterini o'zgartirishga harakat qiling",
-      loadingChecks: "Cheklar yuklanmoqda...",
-      noChecksFound: "Cheklar topilmadi",
-      tryAdjustingFilters: "Filterlarni sozlashga harakat qiling",
-      
-      // Map component translations
-      mapPreviewUnavailable: "Xarita ko'rinishi mavjud emas",
-      willWorkInProduction: "Ishlab chiqarishda ishlaydi",
-      failedToLoadMap: "Xaritani yuklashda xatolik",
-      retry: "Qayta urinish",
-      
-      // Check modal translations
-      checkDetails: "Chek tafsilotlari",
-      receiptId: "Chek ID",
-      client: "Mijoz",
-      phone: "Telefon",
-      address: "Manzil",
-      paymentMethod: "To'lov usuli",
-      totalSum: "Jami summa",
-      deliveryDate: "Yetkazish sanasi",
-      expeditor: "Ekspeditor",
-      transportNumber: "Transport raqami",
-      
-      // Settings panel translations
-      settings: "Sozlamalar",
-      general: "Umumiy",
-      appearance: "Ko'rinish",
-      filters: "Filterlar",
-      data: "Ma'lumotlar",
-      language: "Til",
-      theme: "Mavzu",
-      light: "Yorug'",
-      dark: "Qorong'u",
-      system: "Tizim",
-      save: "Saqlash",
-      cancel: "Bekor qilish",
-      reset: "Qayta o'rnatish",
-      export: "Eksport",
-      import: "Import",
-      resetSettings: "Sozlamalarni qayta o'rnatish",
-      exportSettings: "Sozlamalarni eksport qilish",
-      importSettings: "Sozlamalarni import qilish",
-      
-      // Statistics panel translations
-      totalChecks: "Jami cheklar",
-      deliveredChecks: "Yetkazilgan cheklar",
-      pendingChecks: "Kutilayotgan cheklar",
-      failedChecks: "Muvaffaqiyatsiz cheklar",
-      successRate: "Muvaffaqiyat darajasi",
-      avgCheckSum: "O'rtacha chek summasi",
-      todayChecks: "Bugungi cheklar",
-      
-      // Enhanced statistics translations
-      enhancedStatistics: "Kengaytirilgan Statistika",
-      overviewOfAllActivities: "Barcha ekspeditor faoliyatining ko'rinishi",
-      globalStatistics: "Global Statistika",
-      dailyDistribution: "Kunlik taqsimot",
-      numberOfChecksPerDay: "Kuniga cheklar soni",
-      hourlyDistribution: "Soatlik taqsimot",
-      checksByHour: "Kunning soatlariga ko'ra cheklar",
-      weekdayDistribution: "Hafta kuni taqsimoti",
-      checksByDayOfWeek: "Hafta kunlariga ko'ra cheklar",
-      topWarehouses: "Eng faol omborlar",
-      mostActiveLocations: "Eng faol joylar",
-      noData: "Ma'lumot yo'q",
-      loadingStatistics: "Statistika yuklanmoqda...",
-      loadingStatisticsPage: "Statistika sahifasi yuklanmoqda...",
-      noStatisticsAvailable: "Statistika mavjud emas",
-      exportCSV: "CSV eksport",
-      resetFilters: "Filterlarni qayta o'rnatish",
-      
-      // Common UI elements
-      loadingApplication: "Ilova yuklanmoqda...",
-      error: "Xatolik",
-      errorLoadingData: "Ma'lumotlarni yuklashda xatolik",
-      errorLoadingExpeditors: "Ekspeditorlarni yuklashda xatolik",
-      errorLoadingChecks: "Cheklarni yuklashda xatolik",
-      pickDate: "Sana tanlang",
-      pickDateRange: "Sana oralig'ini tanlang",
-      allExpeditorChecks: "Barcha ekspeditor cheklari",
-      totalAmount: "Jami summa",
-      totalCheckValue: "Jami chek qiymati",
-      averageCheck: "O'rtacha chek",
-      perCheckAverage: "Har bir chek uchun o'rtacha",
-      activeExpeditors: "Faol ekspeditorlar",
-      inSelectedPeriod: "Tanlangan davrda",
-      
-      // Additional missing translations
       unknown: "Noma'lum",
       currentMonth: "Joriy oy",
-      lastWeek: "O'tgan hafta", 
+      lastWeek: "O'tgan hafta",
       lastMonth: "O'tgan oy",
       customRange: "Maxsus oralig'",
       defaultProjectFilter: "Standart loyiha filtri",
@@ -714,14 +430,13 @@ const resources = {
       load: "Yuklash",
       delete: "O'chirish",
       importAndExport: "Import va Eksport",
-      exportSettings: "Sozlamalarni eksport qilish",
       downloadCurrentSettings: "Joriy sozlamalarni JSON fayl sifatida yuklab oling",
-      importSettings: "Sozlamalarni import qilish",
       uploadExportedSettings: "Ilgari eksport qilingan sozlamalar faylini yuklang",
       resetToDefaults: "Standartga qaytarish",
       clearAllCustomSettings: "Barcha maxsus sozlamalarni tozalang va standartlarni tiklang",
       dataManagement: "Ma'lumotlar boshqaruvi",
-      settingsStoredLocally: "Sozlamalaringiz brauzeringizda mahalliy ravishda saqlanadi va quyidagilarni o'z ichiga oladi:",
+      settingsStoredLocally:
+        "Sozlamalaringiz brauzeringizda mahalliy ravishda saqlanadi va quyidagilarni o'z ichiga oladi:",
       languagePreferences: "Til sozlamalari",
       uiLayoutAndPanelStates: "UI tartibi va panel holatlari",
       defaultFiltersAndDateRanges: "Standart filtrlar va sana oralig'lari",
@@ -748,68 +463,39 @@ const resources = {
       settingsAndPreferences: "Sozlamalar va afzalliklar",
       customizeExperience: "Ekspeditor Kuzatuvchi ilovasida tajribangizni sozlang.",
       close: "Yopish",
-      
-      // Check modal additional translations
       expeditor: "Ekspeditor",
       transport: "Transport",
       kkmNumber: "KKM raqami",
-      warehouse: "Ombor",
       agent: "Agent",
       collector: "Yig'uvchi",
       deliveryTime: "Yetkazish vaqti",
-      
-      // Statistics translations
-      delivered: "Yetkazildi",
-      failed: "Muvaffaqiyatsiz",
       awaitingDelivery: "Yetkazishni kutmoqda",
       successfullyDelivered: "Muvaffaqiyatli yetkazildi",
       failedDeliveries: "Muvaffaqiyatsiz yetkazishlar",
       deliverySuccessRate: "Yetkazish muvaffaqiyat darajasi",
       todayChecks: "Bugungi cheklar",
-      
-      // Map component translations
       mapPlaceholder: "Xarita plaseholder",
       loadingChecksEllipsis: "Cheklar yuklanmoqda…",
-      
-      // Weekday names
       monday: "Du",
-      tuesday: "Se", 
+      tuesday: "Se",
       wednesday: "Ch",
       thursday: "Pa",
       friday: "Ju",
       saturday: "Sh",
       sunday: "Ya",
-      
-      // Month names
       selectMonth: "Oyni tanlang",
-
-      // Analytics Dashboard
       analyticsDashboard: "Analitika Boshqaruvi",
       comprehensiveAnalytics: "Ekspeditor faoliyatining keng qamrovli tahlili va tushunchalari",
-      allExpeditorChecks: "Barcha ekspeditor tekshiruvlari",
-      totalCheckValue: "Jami tekshiruv qiymati",
-      perCheckAverage: "Har bir tekshiruv uchun o'rtacha",
       successfulDeliveries: "Muvaffaqiyatli yetkazib berishlar",
-      advancedFilters: "Kengaytirilgan Filtrlash",
       active: "faol",
-      allProjects: "Barcha loyihalar",
-      allWarehouses: "Barcha omborxonalar",
-      allCities: "Barcha shaharlar",
-      allFilials: "Barcha filiallar",
-      allStatuses: "Barcha holatlar",
-      clearAllFilters: "Barcha Filtrlarni Tozalash",
       exportData: "Ma'lumotlarni Eksport Qilish",
-      loadingStatistics: "Statistika yuklanmoqda...",
       dailyCheckDistribution: "Kunlik Tekshiruv Taqsimoti",
       paymentMethodsDistribution: "To'lov Usullari Taqsimoti",
-      hourlyDistribution: "Soatlik Taqsimot",
       topExpeditors: "Eng Yaxshi Ekspeditorlar",
       topProjects: "Eng Yaxshi Loyihalar",
       topCities: "Eng Yaxshi Shaharlar",
       warehouseDistribution: "Omborxona Taqsimoti",
       chartVisibilitySettings: "Grafik Ko'rinish Sozlamalari",
-
-      // Help Modal
       help: "Yordam",
       userGuide: "Foydalanuvchi Qo'llanmasi",
       gettingStarted: "Boshlash",
@@ -818,129 +504,115 @@ const resources = {
       shortcuts: "Qisqa Yo'llar",
       overview: "Umumiy Ko'rinish",
       quickStart: "Tezkor Boshlash",
-      
-      // Getting Started Steps
       step1SelectExpeditor: "Ekspeditorni Tanlang",
-      step1SelectExpeditorDesc: "Yetkazib berish ma'lumotlari va ishlash ko'rsatkichlarini ko'rish uchun ro'yxatdan ekspeditorni tanlang.",
+      step1SelectExpeditorDesc:
+        "Yetkazib berish ma'lumotlari va ishlash ko'rsatkichlarini ko'rish uchun ro'yxatdan ekspeditorni tanlang.",
       step2ViewMap: "Yetkazib Berish Xaritasini Ko'ring",
-      step2ViewMapDesc: "Real vaqtda holat ko'rsatkichlari bilan barcha yetkazib berish joylarini interaktiv xaritada ko'ring.",
+      step2ViewMapDesc:
+        "Real vaqtda holat ko'rsatkichlari bilan barcha yetkazib berish joylarini interaktiv xaritada ko'ring.",
       step3CheckDetails: "Chek Tafsilotlari",
-      step3CheckDetailsDesc: "Batafsil chek ma'lumotlari va to'lov tafsilotlarini ko'rish uchun har qanday yetkazib berish nuqtasini bosing.",
+      step3CheckDetailsDesc:
+        "Batafsil chek ma'lumotlari va to'lov tafsilotlarini ko'rish uchun har qanday yetkazib berish nuqtasini bosing.",
       step4ViewStats: "Statistikani Ko'ring",
-      step4ViewStatsDesc: "Ishlash ko'rsatkichlari, to'lov bo'linishi va yetkazib berish tendentsiyalarini tahlil qiling.",
-      
-      // Filtering Guide
+      step4ViewStatsDesc:
+        "Ishlash ko'rsatkichlari, to'lov bo'linishi va yetkazib berish tendentsiyalarini tahlil qiling.",
       filteringData: "Ma'lumotlarni Filtrlash",
       filterByDate: "Sana Oralig'i Bo'yicha Filtrlash",
-      filterByDateDesc: "Muayyan vaqt oralig'idagi yetkazib berishlarni filtrlash uchun sana tanlovchisidan foydalaning.",
+      filterByDateDesc:
+        "Muayyan vaqt oralig'idagi yetkazib berishlarni filtrlash uchun sana tanlovchisidan foydalaning.",
       filterByProject: "Loyiha Bo'yicha Filtrlash",
-      filterByProjectDesc: "Muayyan yetkazib berish turlari yoki xizmatlariga e'tibor qaratish uchun maxsus loyihalarni tanlang.",
+      filterByProjectDesc:
+        "Muayyan yetkazib berish turlari yoki xizmatlariga e'tibor qaratish uchun maxsus loyihalarni tanlang.",
       filterByLocation: "Joylashuv Bo'yicha Filtrlash",
-      filterByLocationDesc: "Muayyan geografik hududlarga e'tibor qaratish uchun shahar, ombor yoki filial bo'yicha filtrlash.",
+      filterByLocationDesc:
+        "Muayyan geografik hududlarga e'tibor qaratish uchun shahar, ombor yoki filial bo'yicha filtrlash.",
       combineFilters: "Bir Nechta Filtrlarni Birlashtirish",
-      combineFiltersDesc: "Tahlilingiz uchun aniq ma'lumot ko'rinishlarini olish uchun bir nechta filtrlarni birga ishlatish.",
-      
-      // Analytics Guide
+      combineFiltersDesc:
+        "Tahlilingiz uchun aniq ma'lumot ko'rinishlarini olish uchun bir nechta filtrlarni birga ishlatish.",
       analyticsAndReports: "Tahlil va Hisobotlar",
       viewAnalytics: "Keng Qamrovli Tahlilni Ko'ring",
       viewAnalyticsDesc: "Batafsil grafiklar va ishlash tushunchalari uchun tahlil boshqaruv paneliga kirish.",
-      exportData: "Ma'lumotlarni Eksport Qilish",
-      exportDataDesc: "Tashqi tahlil uchun CSV, Excel yoki PDF formatlarida filtr qilingan ma'lumotlarni eksport qilish.",
+      exportDataDesc:
+        "Tashqi tahlil uchun CSV, Excel yoki PDF formatlarida filtr qilingan ma'lumotlarni eksport qilish.",
       performanceMetrics: "Ishlash Ko'rsatkichlari",
-      performanceMetricsDesc: "Muvaffaqiyat darajasi, o'rtacha yetkazib berish vaqti va samaradorlik ko'rsatkichlarini kuzatish.",
-      
-      // Customization Guide
+      performanceMetricsDesc:
+        "Muvaffaqiyat darajasi, o'rtacha yetkazib berish vaqti va samaradorlik ko'rsatkichlarini kuzatish.",
       customization: "Sozlash",
       changeLanguage: "Tilni O'zgartirish",
       changeLanguageDesc: "Interfeys tili uchun ingliz, o'zbek va rus tillari o'rtasida almashtirish.",
       changeTheme: "Mavzuni O'zgartirish",
       changeThemeDesc: "Qulay ko'rish uchun yorug' va qorong'i mavzular o'rtasida almashtirish.",
       panelSettings: "Panel Sozlamalari",
-      panelSettingsDesc: "Sahifa yuklanganda qaysi panellar kengaytirilgan bo'lishini sozlash va interfeys tartibini sozlash.",
-      
-      // Features
+      panelSettingsDesc:
+        "Sahifa yuklanganda qaysi panellar kengaytirilgan bo'lishini sozlash va interfeys tartibini sozlash.",
       realTimeTracking: "Real Vaqtdagi Kuzatish",
       realTimeTrackingDesc: "Yetkazib berish holati va joylashuvlarini real vaqtda kuzatish",
-      comprehensiveAnalytics: "Keng Qamrovli Tahlil",
       comprehensiveAnalyticsDesc: "Ishlash tahlili uchun batafsil grafiklar va ko'rsatkichlar",
       multiLanguageSupport: "Ko'p Tillik Qo'llab-quvvatlash",
       multiLanguageSupportDesc: "Ingliz, o'zbek va rus tillarida mavjud",
       exportCapabilities: "Eksport Imkoniyatlari",
       exportCapabilitiesDesc: "Hisobot uchun turli formatlarda ma'lumotlarni eksport qilish",
-      
-      // Quick Start
       selectExpeditorFromList: "Ro'yxatdan ekspeditorni tanlang",
       viewDeliveryLocations: "Xaritada yetkazib berish joylarini ko'ring",
       checkPerformanceStats: "Ishlash statistikasini tekshiring",
       exportDataForReports: "Hisobotlar uchun ma'lumotlarni eksport qiling",
-      
-      // Map Features
       mapFeatures: "Xarita Xususiyatlari",
       realTimeLocationTracking: "Real vaqtda joylashuv kuzatishi",
       deliveryStatusIndicators: "Yetkazib berish holati ko'rsatkichlari",
       routeVisualization: "Marshrut vizualizatsiyasi",
       interactiveMarkers: "Interaktiv markerlar",
-      
-      // Analytics Features
       analyticsFeatures: "Tahlil Xususiyatlari",
       trendAnalysis: "Trend tahlili",
       paymentBreakdowns: "To'lov bo'linishi",
       comparativeReports: "Qiyosiy hisobotlar",
-      
-      // Filtering Features
       filteringFeatures: "Filtrlash Xususiyatlari",
       dateRangeFiltering: "Sana oralig'i filtrlash",
       multiCriteriaFiltering: "Ko'p mezonli filtrlash",
       realTimeFiltering: "Real vaqtda filtrlash",
       filterPresets: "Filtr sozlamalari",
-      
-      // Export Features
       exportFeatures: "Eksport Xususiyatlari",
       csvExport: "CSV eksport",
       excelExport: "Excel eksport",
       pdfReports: "PDF hisobotlar",
       customFormats: "Maxsus formatlar",
-      
-      // Keyboard Shortcuts
       keyboardShortcuts: "Klaviatura Qisqa Yo'llari",
       openFilters: "Filtrlarni ochish",
       openSettings: "Sozlamalarni ochish",
       openHelp: "Yordamni ochish",
       openAnalytics: "Tahlilni ochish",
       closeModal: "Modal oynasini yopish",
-      
-      // Tips and Tricks
       tipsAndTricks: "Maslahat va Hiylalar",
       tip1Title: "Kengaytirilgan Filtrlardan Foydalaning",
-      tip1Description: "Tahlilingiz uchun aniq ma'lumot ko'rinishlarini olish uchun bir nechta filtrlarni birlashtiring.",
+      tip1Description:
+        "Tahlilingiz uchun aniq ma'lumot ko'rinishlarini olish uchun bir nechta filtrlarni birlashtiring.",
       tip2Title: "Hisobot uchun Eksport Qiling",
-      tip2Description: "Rahbariyat ko'rib chiqishi uchun keng qamrovli hisobotlar yaratish uchun muntazam ravishda ma'lumotlarni eksport qiling.",
+      tip2Description:
+        "Rahbariyat ko'rib chiqishi uchun keng qamrovli hisobotlar yaratish uchun muntazam ravishda ma'lumotlarni eksport qiling.",
       tip3Title: "Trendlarni Kuzating",
-      tip3Description: "Yetkazib berish operatsiyalarini optimallashtirish uchun naqshlarni aniqlash va tahlil boshqaruv panelidan foydalaning.",
-      
-      // Welcome
+      tip3Description:
+        "Yetkazib berish operatsiyalarini optimallashtirish uchun naqshlarni aniqlash va tahlil boshqaruv panelidan foydalaning.",
       welcomeToExpeditorTracker: "Ekspeditor Kuzatuvi xush kelibsiz",
-      welcomeDescription: "Ekspeditor ishlashini kuzatish, yetkazib berish operatsiyalarini boshqarish va biznes ko'rsatkichlarini tahlil qilish uchun keng qamrovli tizim. Quyidagi qadam-baqadam qo'llanma bilan boshlang.",
-      
-      // Error Messages
+      welcomeDescription:
+        "Ekspeditor ishlashini kuzatish, yetkazib berish operatsiyalarini boshqarish va biznes ko'rsatkichlarini tahlil qilish uchun keng qamrovli tizim. Quyidagi qadam-baqadam qo'llanma bilan boshlang.",
       errorImportingSettings: "Sozlamalarni import qilishda xatolik. Fayl formatini tekshiring.",
       confirmResetSettings: "Barcha sozlamalarni standartga qaytarishni xohlaysizmi? Bu amalni bekor qilib bo'lmaydi.",
-      
-      // Statistics Page
       statusDistribution: "Holat Taqsimoti",
       filialPerformance: "Filial Ishlashi",
-      checks: "cheklar",
       expeditors: "ekspeditorlar",
+      deliveryDate: "Yetkazish sanasi",
+      transportNumber: "Transport raqami",
+      deliveredChecks: "Yetkazilgan cheklar",
+      pendingChecks: "Kutilayotgan cheklar",
+      failedChecks: "Muvaffaqiyatsiz cheklar",
+      avgCheckSum: "O'rtacha chek summasi",
+      pickDateRange: "Sana oralig'ini tanlang",
     },
   },
   ru: {
     translation: {
-      // Navigation
       home: "Главная",
       statistics: "Статистика",
       enhancedStatistics: "Расширенная Статистика",
-
-      // Expeditor Tracker
       expeditorTracker: "Отслеживание экспедиторов",
       searchExpeditors: "Поиск экспедиторов...",
       selectExpeditor: "Выберите экспедитора для просмотра чеков",
@@ -948,8 +620,6 @@ const resources = {
       noExpeditorsFound: "Экспедиторы с чеками не найдены",
       tryChangingFilial: "Попробуйте изменить фильтр филиала",
       loadingExpeditors: "Загрузка экспедиторов...",
-
-      // Filters
       filters: "Фильтры",
       advancedFilters: "Расширенные Фильтры",
       dateRange: "Диапазон дат",
@@ -964,21 +634,15 @@ const resources = {
       pending: "В ожидании",
       failed: "Не удалось",
       clearAllFilters: "Очистить все фильтры",
-
-      // Statistics
       totalChecks: "Всего чеков",
       totalSum: "Общая сумма",
       avgCheckSum: "Средний чек",
       successRate: "Процент успеха",
-
-      // Actions
       refresh: "Обновить",
       export: "Экспорт",
       loading: "Загрузка...",
       loadingChecks: "Загрузка чеков...",
       show: "Показать",
-
-      // Check Details
       checkDetails: "Детали чека",
       receiptId: "ID чека",
       client: "Клиент",
@@ -992,18 +656,13 @@ const resources = {
       searchChecks: "Поиск чеков...",
       noChecksFound: "Чеки не найдены",
       tryAdjustingFilters: "Попробуйте настроить фильтры",
-
-      // Payment Methods
       cash: "Наличные",
       uzcard: "UzCard",
       humo: "Humo",
       click: "Click",
-
-      // Settings
       settings: "Настройки",
       general: "Общие",
       appearance: "Внешний вид",
-      filters: "Фильтры",
       data: "Данные",
       language: "Язык",
       theme: "Тема",
@@ -1013,17 +672,12 @@ const resources = {
       save: "Сохранить",
       cancel: "Отмена",
       reset: "Сброс",
-      export: "Экспорт",
       import: "Импорт",
       resetSettings: "Сбросить настройки",
       exportSettings: "Экспорт настроек",
       importSettings: "Импорт настроек",
-
-      // Common
       loadingApplication: "Загрузка приложения...",
       openStats: "Открыть статистику",
-      
-      // Additional missing translations
       error: "Ошибка",
       errorLoadingData: "Ошибка загрузки данных",
       errorLoadingExpeditors: "Ошибка загрузки экспедиторов",
@@ -1050,121 +704,18 @@ const resources = {
       loadingStatistics: "Загрузка статистики...",
       loadingStatisticsPage: "Загрузка страницы статистики...",
       noStatisticsAvailable: "Статистика недоступна",
-      refresh: "Обновить",
       exportCSV: "Экспорт CSV",
-      home: "Главная",
       resetFilters: "Сбросить фильтры",
       retry: "Повторить",
       failedToLoadMap: "Не удалось загрузить карту",
       mapPreviewUnavailable: "Предварительный просмотр карты недоступен",
       willWorkInProduction: "Будет работать в продакшене",
-      loadingChecks: "Загрузка чеков...",
       loadingMap: "Загрузка карты...",
       kkm: "ККМ",
       details: "Детали",
-      
-      // Additional missing translations found in components
-      allProjects: "Все проекты",
-      allWarehouses: "Все склады",
-      allCities: "Все города",
-      allStatuses: "Все статусы", 
-      allFilials: "Все филиалы",
-      searchExpeditors: "Поиск экспедиторов...",
-      openStats: "Открыть статистику",
-      expeditorTracker: "Отслеживание экспедиторов",
-      loadingExpeditors: "Загрузка экспедиторов...",
-      noExpeditorsFound: "Экспедиторы с чеками не найдены",
-      tryChangingFilial: "Попробуйте изменить фильтр филиала",
-      loadingChecks: "Загрузка чеков...",
-      noChecksFound: "Чеки не найдены",
-      tryAdjustingFilters: "Попробуйте настроить фильтры",
-      
-      // Map component translations
-      mapPreviewUnavailable: "Предварительный просмотр карты недоступен",
-      willWorkInProduction: "Будет работать в продакшене",
-      failedToLoadMap: "Не удалось загрузить карту",
-      retry: "Повторить",
-      
-      // Check modal translations
-      checkDetails: "Детали чека",
-      receiptId: "ID чека",
-      client: "Клиент",
-      phone: "Телефон",
-      address: "Адрес",
-      paymentMethod: "Способ оплаты",
-      totalSum: "Общая сумма",
-      deliveryDate: "Дата доставки",
-      expeditor: "Экспедитор",
-      transportNumber: "Номер транспорта",
-      
-      // Settings panel translations
-      settings: "Настройки",
-      general: "Общие",
-      appearance: "Внешний вид",
-      filters: "Фильтры",
-      data: "Данные",
-      language: "Язык",
-      theme: "Тема",
-      light: "Светлая",
-      dark: "Темная",
-      system: "Системная",
-      save: "Сохранить",
-      cancel: "Отмена",
-      reset: "Сброс",
-      export: "Экспорт",
-      import: "Импорт",
-      resetSettings: "Сбросить настройки",
-      exportSettings: "Экспорт настроек",
-      importSettings: "Импорт настроек",
-      
-      // Statistics panel translations
-      totalChecks: "Всего чеков",
-      deliveredChecks: "Доставленные чеки",
-      pendingChecks: "Ожидающие чеки",
-      failedChecks: "Неудачные чеки",
-      successRate: "Процент успеха",
-      avgCheckSum: "Средняя сумма чека",
-      todayChecks: "Сегодняшние чеки",
-      
-      // Enhanced statistics translations
-      enhancedStatistics: "Расширенная статистика",
-      overviewOfAllActivities: "Обзор всех действий экспедиторов",
-      globalStatistics: "Глобальная статистика",
-      dailyDistribution: "Распределение по дням",
-      numberOfChecksPerDay: "Количество чеков в день",
-      hourlyDistribution: "Распределение по часам",
-      checksByHour: "Чеки по часам дня",
-      weekdayDistribution: "Распределение по дням недели",
-      checksByDayOfWeek: "Чеки по дням недели",
-      topWarehouses: "Топ склады",
-      mostActiveLocations: "Самые активные места",
-      noData: "Нет данных",
-      loadingStatistics: "Загрузка статистики...",
-      loadingStatisticsPage: "Загрузка страницы статистики...",
-      noStatisticsAvailable: "Статистика недоступна",
-      exportCSV: "Экспорт CSV",
-      resetFilters: "Сбросить фильтры",
-      
-      // Common UI elements
-      loadingApplication: "Загрузка приложения...",
-      error: "Ошибка",
-      errorLoadingData: "Ошибка загрузки данных",
-      errorLoadingExpeditors: "Ошибка загрузки экспедиторов",
-      errorLoadingChecks: "Ошибка загрузки чеков",
-      pickDate: "Выберите дату",
-      pickDateRange: "Выберите диапазон дат",
-      allExpeditorChecks: "Все чеки экспедиторов",
-      totalAmount: "Общая сумма",
-      totalCheckValue: "Общая стоимость чеков",
-      averageCheck: "Средний чек",
-      perCheckAverage: "Среднее за чек",
-      activeExpeditors: "Активные экспедиторы",
-      inSelectedPeriod: "В выбранном периоде",
-      
-      // Additional missing translations
       unknown: "Неизвестно",
       currentMonth: "Текущий месяц",
-      lastWeek: "Прошлая неделя", 
+      lastWeek: "Прошлая неделя",
       lastMonth: "Прошлый месяц",
       customRange: "Пользовательский диапазон",
       defaultProjectFilter: "Фильтр проекта по умолчанию",
@@ -1179,9 +730,7 @@ const resources = {
       load: "Загрузить",
       delete: "Удалить",
       importAndExport: "Импорт и Экспорт",
-      exportSettings: "Экспорт настроек",
       downloadCurrentSettings: "Скачайте текущие настройки в виде JSON файла",
-      importSettings: "Импорт настроек",
       uploadExportedSettings: "Загрузите ранее экспортированный файл настроек",
       resetToDefaults: "Сброс к умолчанию",
       clearAllCustomSettings: "Очистите все пользовательские настройки и восстановите значения по умолчанию",
@@ -1213,68 +762,39 @@ const resources = {
       settingsAndPreferences: "Настройки и предпочтения",
       customizeExperience: "Настройте свой опыт работы с приложением Отслеживания Экспедиторов.",
       close: "Закрыть",
-      
-      // Check modal additional translations
       expeditor: "Экспедитор",
       transport: "Транспорт",
       kkmNumber: "Номер ККМ",
-      warehouse: "Склад",
       agent: "Агент",
       collector: "Сборщик",
       deliveryTime: "Время доставки",
-      
-      // Statistics translations
-      delivered: "Доставлено",
-      failed: "Неудачно",
       awaitingDelivery: "Ожидает доставки",
       successfullyDelivered: "Успешно доставлено",
       failedDeliveries: "Неудачные доставки",
       deliverySuccessRate: "Процент успешных доставок",
       todayChecks: "Сегодняшние чеки",
-      
-      // Map component translations
       mapPlaceholder: "Заглушка карты",
       loadingChecksEllipsis: "Загрузка чеков…",
-      
-      // Weekday names
       monday: "Пн",
-      tuesday: "Вт", 
+      tuesday: "Вт",
       wednesday: "Ср",
       thursday: "Чт",
       friday: "Пт",
       saturday: "Сб",
       sunday: "Вс",
-      
-      // Month names
       selectMonth: "Выберите месяц",
-
-      // Analytics Dashboard
       analyticsDashboard: "Панель Аналитики",
       comprehensiveAnalytics: "Комплексная аналитика и инсайты для производительности экспедиторов",
-      allExpeditorChecks: "Все проверки экспедиторов",
-      totalCheckValue: "Общая стоимость проверок",
-      perCheckAverage: "Среднее значение на проверку",
       successfulDeliveries: "Успешные доставки",
-      advancedFilters: "Расширенные Фильтры",
       active: "активно",
-      allProjects: "Все проекты",
-      allWarehouses: "Все склады",
-      allCities: "Все города",
-      allFilials: "Все филиалы",
-      allStatuses: "Все статусы",
-      clearAllFilters: "Очистить Все Фильтры",
       exportData: "Экспорт Данных",
-      loadingStatistics: "Загрузка статистики...",
       dailyCheckDistribution: "Распределение Проверок по Дням",
       paymentMethodsDistribution: "Распределение Методов Оплаты",
-      hourlyDistribution: "Почасовое Распределение",
       topExpeditors: "Топ Экспедиторы",
       topProjects: "Топ Проекты",
       topCities: "Топ Города",
       warehouseDistribution: "Распределение Складов",
       chartVisibilitySettings: "Настройки Видимости Графиков",
-
-      // Help Modal
       help: "Помощь",
       userGuide: "Руководство Пользователя",
       gettingStarted: "Начало Работы",
@@ -1283,38 +803,34 @@ const resources = {
       shortcuts: "Горячие Клавиши",
       overview: "Обзор",
       quickStart: "Быстрый Старт",
-      
-      // Getting Started Steps
       step1SelectExpeditor: "Выберите Экспедитора",
-      step1SelectExpeditorDesc: "Выберите экспедитора из списка для просмотра данных о доставке и показателей производительности.",
+      step1SelectExpeditorDesc:
+        "Выберите экспедитора из списка для просмотра данных о доставке и показателей производительности.",
       step2ViewMap: "Просмотр Карты Доставки",
-      step2ViewMapDesc: "Посмотрите все места доставки на интерактивной карте с индикаторами статуса в реальном времени.",
+      step2ViewMapDesc:
+        "Посмотрите все места доставки на интерактивной карте с индикаторами статуса в реальном времени.",
       step3CheckDetails: "Детали Чека",
-      step3CheckDetailsDesc: "Нажмите на любую точку доставки для просмотра подробной информации о чеке и деталях платежа.",
+      step3CheckDetailsDesc:
+        "Нажмите на любую точку доставки для просмотра подробной информации о чеке и деталях платежа.",
       step4ViewStats: "Просмотр Статистики",
       step4ViewStatsDesc: "Анализируйте показатели производительности, разбивку платежей и тенденции доставки.",
-      
-      // Filtering Guide
       filteringData: "Фильтрация Данных",
       filterByDate: "Фильтрация по Диапазону Дат",
       filterByDateDesc: "Используйте селектор дат для фильтрации доставок в определенные периоды времени.",
       filterByProject: "Фильтрация по Проекту",
       filterByProjectDesc: "Выберите конкретные проекты для фокусировки на определенных типах доставки или услугах.",
       filterByLocation: "Фильтрация по Местоположению",
-      filterByLocationDesc: "Фильтруйте по городу, складу или филиалу для фокусировки на конкретных географических областях.",
+      filterByLocationDesc:
+        "Фильтруйте по городу, складу или филиалу для фокусировки на конкретных географических областях.",
       combineFilters: "Комбинирование Нескольких Фильтров",
-      combineFiltersDesc: "Используйте несколько фильтров вместе для получения точных представлений данных для вашего анализа.",
-      
-      // Analytics Guide
+      combineFiltersDesc:
+        "Используйте несколько фильтров вместе для получения точных представлений данных для вашего анализа.",
       analyticsAndReports: "Аналитика и Отчеты",
       viewAnalytics: "Просмотр Комплексной Аналитики",
       viewAnalyticsDesc: "Доступ к панели аналитики для подробных графиков и инсайтов производительности.",
-      exportData: "Экспорт Данных",
       exportDataDesc: "Экспорт отфильтрованных данных в форматах CSV, Excel или PDF для внешнего анализа.",
       performanceMetrics: "Показатели Производительности",
       performanceMetricsDesc: "Мониторинг показателей успеха, среднего времени доставки и эффективности.",
-      
-      // Customization Guide
       customization: "Настройка",
       changeLanguage: "Изменение Языка",
       changeLanguageDesc: "Переключение между английским, узбекским и русским языками для интерфейса.",
@@ -1322,99 +838,106 @@ const resources = {
       changeThemeDesc: "Переключение между светлой и темной темами для комфортного просмотра.",
       panelSettings: "Настройки Панелей",
       panelSettingsDesc: "Настройка того, какие панели развернуты по умолчанию и настройка макета интерфейса.",
-      
-      // Features
       realTimeTracking: "Отслеживание в Реальном Времени",
       realTimeTrackingDesc: "Мониторинг статуса доставки и местоположений в реальном времени",
-      comprehensiveAnalytics: "Комплексная Аналитика",
       comprehensiveAnalyticsDesc: "Подробные графики и показатели для анализа производительности",
       multiLanguageSupport: "Многоязычная Поддержка",
       multiLanguageSupportDesc: "Доступно на английском, узбекском и русском языках",
       exportCapabilities: "Возможности Экспорта",
       exportCapabilitiesDesc: "Экспорт данных в различных форматах для отчетности",
-      
-      // Quick Start
       selectExpeditorFromList: "Выберите экспедитора из списка",
       viewDeliveryLocations: "Просмотрите места доставки на карте",
       checkPerformanceStats: "Проверьте статистику производительности",
       exportDataForReports: "Экспортируйте данные для отчетов",
-      
-      // Map Features
       mapFeatures: "Функции Карты",
       realTimeLocationTracking: "Отслеживание местоположения в реальном времени",
       deliveryStatusIndicators: "Индикаторы статуса доставки",
       routeVisualization: "Визуализация маршрутов",
       interactiveMarkers: "Интерактивные маркеры",
-      
-      // Analytics Features
       analyticsFeatures: "Функции Аналитики",
       trendAnalysis: "Анализ тенденций",
       paymentBreakdowns: "Разбивка платежей",
       comparativeReports: "Сравнительные отчеты",
-      
-      // Filtering Features
       filteringFeatures: "Функции Фильтрации",
       dateRangeFiltering: "Фильтрация по диапазону дат",
       multiCriteriaFiltering: "Многокритериальная фильтрация",
       realTimeFiltering: "Фильтрация в реальном времени",
       filterPresets: "Предустановки фильтров",
-      
-      // Export Features
       exportFeatures: "Функции Экспорта",
       csvExport: "CSV экспорт",
       excelExport: "Excel экспорт",
       pdfReports: "PDF отчеты",
       customFormats: "Пользовательские форматы",
-      
-      // Keyboard Shortcuts
       keyboardShortcuts: "Горячие Клавиши",
       openFilters: "Открыть фильтры",
       openSettings: "Открыть настройки",
       openHelp: "Открыть помощь",
       openAnalytics: "Открыть аналитику",
       closeModal: "Закрыть модальное окно",
-      
-      // Tips and Tricks
       tipsAndTricks: "Советы и Хитрости",
       tip1Title: "Используйте Расширенные Фильтры",
-      tip1Description: "Комбинируйте несколько фильтров для получения точных представлений данных для ваших аналитических потребностей.",
+      tip1Description:
+        "Комбинируйте несколько фильтров для получения точных представлений данных для ваших аналитических потребностей.",
       tip2Title: "Экспортируйте для Отчетности",
       tip2Description: "Регулярно экспортируйте данные для создания комплексных отчетов для рассмотрения руководством.",
       tip3Title: "Мониторьте Тенденции",
       tip3Description: "Используйте панель аналитики для выявления закономерностей и оптимизации операций доставки.",
-      
-      // Welcome
       welcomeToExpeditorTracker: "Добро пожаловать в Систему Отслеживания Экспедиторов",
-      welcomeDescription: "Комплексная система для отслеживания производительности экспедиторов, управления операциями доставки и анализа бизнес-показателей. Начните с пошагового руководства ниже.",
-      
-      // Error Messages
+      welcomeDescription:
+        "Комплексная система для отслеживания производительности экспедиторов, управления операциями доставки и анализа бизнес-показателей. Начните с пошагового руководства ниже.",
       errorImportingSettings: "Ошибка импорта настроек. Проверьте формат файла.",
-      confirmResetSettings: "Вы уверены, что хотите сбросить все настройки к значениям по умолчанию? Это действие нельзя отменить.",
-      
-      // Statistics Page
+      confirmResetSettings:
+        "Вы уверены, что хотите сбросить все настройки к значениям по умолчанию? Это действие нельзя отменить.",
       statusDistribution: "Распределение Статусов",
       filialPerformance: "Производительность Филиалов",
-      checks: "чеки",
       expeditors: "экспедиторы",
+      deliveryDate: "Дата доставки",
+      transportNumber: "Номер транспорта",
+      deliveredChecks: "Доставленные чеки",
+      pendingChecks: "Ожидающие чеки",
+      failedChecks: "Неудачные чеки",
+      avgCheckSum: "Средняя сумма чека",
+      pickDateRange: "Выберите диапазон дат",
     },
   },
 }
 
-// Initialize i18n
+// Safe language detector configuration
+const languageDetector = new LanguageDetector(null, {
+  order: ["localStorage", "navigator"],
+  lookupLocalStorage: "i18nextLng",
+  caches: ["localStorage"],
+  excludeCacheFor: ["cimode"],
+  checkWhitelist: true,
+})
+
+// Initialize i18n with safe configuration
 i18n
-  .use(LanguageDetector)
+  .use(languageDetector)
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: "en",
     lng: "en",
+    supportedLngs: ["en", "uz", "ru"],
+    load: "languageOnly",
     interpolation: {
       escapeValue: false,
     },
+    react: {
+      useSuspense: true,
+    },
     detection: {
       order: ["localStorage", "navigator"],
+      lookupLocalStorage: "i18nextLng",
       caches: ["localStorage"],
+      excludeCacheFor: ["cimode"],
     },
+    returnEmptyString: false,
+    returnNull: false,
+  })
+  .catch((error) => {
+    console.error("[i18n] Initialization error:", error)
   })
 
 export default i18n
