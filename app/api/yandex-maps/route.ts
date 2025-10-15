@@ -5,19 +5,17 @@ export async function GET(request: NextRequest) {
   const lang = searchParams.get("lang") || "en_US"
   const version = searchParams.get("v") || "2.1"
 
-  // Try to get API key from environment or use working fallbacks
-  const apiKeys = [
-    (process as any).env?.YANDEX_MAPS_API_KEY,
-    "60bf1ed7-7273-4bf6-af8a-bb77a1f0c129", // Primary fallback
-    "5080fe14-e264-4e2a-9e31-164d4b96da6e", // Secondary fallback
-    "a8b2c3d4-e5f6-7890-abcd-ef1234567890"  // Tertiary fallback
-  ]
-  const apiKey = apiKeys.find(key => key && key.length > 10)
-  
-  console.log("[Yandex Maps Proxy] API Key:", apiKey ? "Found" : "Not found")
-  console.log("[Yandex Maps Proxy] Lang:", lang, "Version:", version)
+  // Get API key from environment or use fallback
+  const apiKey = process.env.YANDEX_MAPS_API_KEY || process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || "60bf1ed7-7273-4bf6-af8a-bb77a1f0c129"
 
-  // Fallback implementation for when API fails
+  console.log("[Yandex Maps Proxy] Request params:", { lang, version })
+  console.log("[Yandex Maps Proxy] Using API key:", apiKey ? `${apiKey.substring(0, 8)}...` : "none")
+  
+  // Check if we're in development mode
+  const isDev = process.env.NODE_ENV === 'development'
+  if (isDev) {
+    console.log("[Yandex Maps Proxy] Development mode detected")
+  }
   const fallbackScript = `
 console.log("[Yandex Maps] Using fallback implementation to prevent errors");
 
@@ -88,89 +86,61 @@ window.ymaps._loaded = true;
 `
 
   try {
-    // Try multiple API keys if the first one fails
-    for (let i = 0; i < apiKeys.length; i++) {
-      const currentApiKey = apiKeys[i]
-      if (!currentApiKey || currentApiKey.length < 10) continue
-      
-      try {
-        console.log(`[Yandex Maps Proxy] Trying API key ${i + 1}/${apiKeys.length}`)
-        
-        const yandexUrl = `https://api-maps.yandex.ru/${version}/?apikey=${currentApiKey}&lang=${lang}`
-        
-        console.log("[Yandex Maps Proxy] Fetching from:", yandexUrl)
-        
-        const response = await fetch(yandexUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'application/javascript, text/javascript, */*',
-            'Accept-Language': lang,
-          },
-          // Add timeout to prevent hanging
-          signal: AbortSignal.timeout(10000) // 10 second timeout
-        })
-
-        if (!response.ok) {
-          console.error(`[Yandex Maps Proxy] API key ${i + 1} returned status:`, response.status, response.statusText)
-          if (i === apiKeys.length - 1) {
-            throw new Error(`All API keys failed. Last error: ${response.status} ${response.statusText}`)
-          }
-          continue // Try next API key
-        }
-
-        const scriptContent = await response.text()
-
-        if (scriptContent.trim().startsWith("<")) {
-          console.error(`[Yandex Maps Proxy] API key ${i + 1} returned HTML instead of JavaScript`)
-          if (i === apiKeys.length - 1) {
-            throw new Error("All API keys returned HTML instead of JavaScript")
-          }
-          continue // Try next API key
-        }
-
-        if (!scriptContent.includes('ymaps') && !scriptContent.includes('window.ymaps')) {
-          console.warn(`[Yandex Maps Proxy] API key ${i + 1} returned invalid script content`)
-          if (i === apiKeys.length - 1) {
-            throw new Error("All API keys returned invalid script content")
-          }
-          continue // Try next API key
-        }
-
-        console.log(`[Yandex Maps Proxy] Successfully loaded Yandex Maps script with API key ${i + 1}`)
-
-        return new NextResponse(scriptContent, {
-          status: 200,
-          headers: {
-            "Content-Type": "application/javascript",
-            "Cache-Control": "public, max-age=3600",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET",
-            "Access-Control-Allow-Headers": "Content-Type",
-          },
-        })
-        
-      } catch (error) {
-        console.error(`[Yandex Maps Proxy] API key ${i + 1} failed:`, error)
-        if (i === apiKeys.length - 1) {
-          throw error // Re-throw if this was the last API key
-        }
-        // Continue to next API key
-      }
+    // Check if API key is available
+    if (!apiKey || apiKey === "your-api-key-here") {
+      console.warn("[Yandex Maps Proxy] No valid API key found, using fallback")
+      return new NextResponse(fallbackScript, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/javascript",
+          "Cache-Control": "no-cache",
+        },
+      })
     }
+
+    // Try to load the real Yandex Maps API
+    const yandexUrl = `https://api-maps.yandex.ru/${version}/?apikey=${apiKey}&lang=${lang}`
     
-    // If we get here, all API keys failed
-    throw new Error("All Yandex Maps API keys failed")
+    console.log("[Yandex Maps Proxy] Fetching from:", yandexUrl)
+    
+    const response = await fetch(yandexUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    })
+
+    if (!response.ok) {
+      console.error("[Yandex Maps Proxy] API returned status:", response.status)
+      throw new Error(`Yandex API returned ${response.status}: ${response.statusText}`)
+    }
+
+    const scriptContent = await response.text()
+
+    if (scriptContent.trim().startsWith("<")) {
+      console.error("[Yandex Maps Proxy] Received HTML instead of JavaScript")
+      throw new Error("Yandex returned HTML instead of JavaScript")
+    }
+
+    if (!scriptContent.includes('ymaps') && !scriptContent.includes('window.ymaps')) {
+      console.warn("[Yandex Maps Proxy] Script content doesn't look like Yandex Maps")
+    }
+
+    console.log("[Yandex Maps Proxy] Successfully loaded Yandex Maps script")
+
+    return new NextResponse(scriptContent, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/javascript",
+        "Cache-Control": "public, max-age=3600",
+      },
+    })
   } catch (error) {
     console.error("[Yandex Maps Proxy] Error:", error)
-    console.log("[Yandex Maps Proxy] Falling back to stub implementation")
     return new NextResponse(fallbackScript, {
       status: 200,
       headers: {
         "Content-Type": "application/javascript",
         "Cache-Control": "no-cache",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET",
-        "Access-Control-Allow-Headers": "Content-Type",
       },
     })
   }
