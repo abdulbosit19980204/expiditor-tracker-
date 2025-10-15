@@ -24,7 +24,6 @@ import {
   ExpeditorTooltip, 
   PaymentTooltip 
 } from "../../components/analytics/memoized-tooltips"
-import PerformanceMonitor from "../../components/analytics/performance-monitor"
 import { 
   LineChart,
   PieChart,
@@ -388,9 +387,6 @@ const OptimizedAnalyticsPageContent = memo(() => {
           </div>
         </div>
       </div>
-
-      {/* Performance Monitor (Development Only) */}
-      <PerformanceMonitor componentName="AnalyticsDashboard" />
     </div>
   )
 })
