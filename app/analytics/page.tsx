@@ -30,7 +30,7 @@ import {
   Activity
 } from "lucide-react"
 import Link from "next/link"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "../../lib/simple-i18n"
 import type { Statistics, Project, Sklad, City, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 import { 
