@@ -7,7 +7,7 @@ import { TrendingUp, Users, MapPin, CreditCard, Calendar, DollarSign } from "luc
 import type { Statistics } from "@/lib/types"
 import { useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useTranslation } from "../lib/simple-i18n"
+import { useTranslation } from "react-i18next"
 
 interface StatisticsPanelProps {
   statistics: Statistics | null
