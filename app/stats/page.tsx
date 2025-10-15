@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { Home, TrendingUp, Download, Search } from "lucide-react"
+import { Home, TrendingUp, Download } from "lucide-react"
 import type { Statistics, Project, Sklad, City } from "@/lib/types"
 import { api } from "@/lib/api"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Suspense } from "react"
+import { useTranslation } from "../../lib/simple-i18n"
 
 function getCurrentMonthRange() {
   const now = new Date()
@@ -39,47 +40,48 @@ function useDebounce<T>(value: T, delay: number): T {
 // CSV Export function
 const exportToCSV = (stats: Statistics, filters: any) => {
   const csvData = [
-    ['Metric', 'Value'],
-    ['Total Checks', stats.totalChecks],
-    ['Delivered Checks', stats.deliveredChecks],
-    ['Failed Checks', stats.failedChecks],
-    ['Pending Checks', stats.pendingChecks],
-    ['Total Sum (UZS)', stats.totalSum],
-    ['Average Check Sum (UZS)', stats.avgCheckSum || 0],
-    ['Success Rate (%)', stats.successRate],
-    ['', ''],
-    ['Payment Methods', ''],
-    ['Cash', stats.paymentMethods.nalichniy],
-    ['UzCard', stats.paymentMethods.uzcard],
-    ['Humo', stats.paymentMethods.humo],
-    ['Click', stats.paymentMethods.click],
-    ['', ''],
-    ['Top Expeditors', ''],
-    ...stats.topExpeditors.map(exp => [exp.name, exp.checkCount]),
-    ['', ''],
-    ['Top Projects', ''],
-    ...stats.topProjects.map(proj => [proj.name, proj.checkCount]),
-    ['', ''],
-    ['Top Cities', ''],
-    ...stats.topCities.map(city => [city.name, city.checkCount]),
-    ['', ''],
-    ['Top Warehouses', ''],
-    ...(stats.topSklads || []).map(sklad => [sklad.name, sklad.checkCount]),
+    ["Metric", "Value"],
+    ["Total Checks", stats.totalChecks],
+    ["Delivered Checks", stats.deliveredChecks],
+    ["Failed Checks", stats.failedChecks],
+    ["Pending Checks", stats.pendingChecks],
+    ["Total Sum (UZS)", stats.totalSum],
+    ["Average Check Sum (UZS)", stats.avgCheckSum || 0],
+    ["Success Rate (%)", stats.successRate],
+    ["", ""],
+    ["Payment Methods", ""],
+    ["Cash", stats.paymentMethods.nalichniy],
+    ["UzCard", stats.paymentMethods.uzcard],
+    ["Humo", stats.paymentMethods.humo],
+    ["Click", stats.paymentMethods.click],
+    ["", ""],
+    ["Top Expeditors", ""],
+    ...stats.topExpeditors.map((exp) => [exp.name, exp.checkCount]),
+    ["", ""],
+    ["Top Projects", ""],
+    ...stats.topProjects.map((proj) => [proj.name, proj.checkCount]),
+    ["", ""],
+    ["Top Cities", ""],
+    ...stats.topCities.map((city) => [city.name, city.checkCount]),
+    ["", ""],
+    ["Top Warehouses", ""],
+    ...(stats.topSklads || []).map((sklad) => [sklad.name, sklad.checkCount]),
   ]
 
-  const csvContent = csvData.map(row => row.join(',')).join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const link = document.createElement('a')
+  const csvContent = csvData.map((row) => row.join(",")).join("\n")
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+  const link = document.createElement("a")
   const url = URL.createObjectURL(blob)
-  link.setAttribute('href', url)
-  link.setAttribute('download', `statistics_${new Date().toISOString().split('T')[0]}.csv`)
-  link.style.visibility = 'hidden'
+  link.setAttribute("href", url)
+  link.setAttribute("download", `statistics_${new Date().toISOString().split("T")[0]}.csv`)
+  link.style.visibility = "hidden"
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
 }
 
 const StatsPageContent = () => {
+  const { t } = useTranslation()
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>(getCurrentMonthRange())
   const [project, setProject] = useState("")
   const [sklad, setSklad] = useState("")
@@ -133,17 +135,17 @@ const StatsPageContent = () => {
   // Filtered options for searchable selects
   const filteredProjects = useMemo(() => {
     if (!projSearch) return projects
-    return projects.filter(p => p.project_name.toLowerCase().includes(projSearch.toLowerCase()))
+    return projects.filter((p) => p.project_name.toLowerCase().includes(projSearch.toLowerCase()))
   }, [projects, projSearch])
 
   const filteredSklads = useMemo(() => {
     if (!skladSearch) return sklads
-    return sklads.filter(s => s.sklad_name.toLowerCase().includes(skladSearch.toLowerCase()))
+    return sklads.filter((s) => s.sklad_name.toLowerCase().includes(skladSearch.toLowerCase()))
   }, [sklads, skladSearch])
 
   const filteredCities = useMemo(() => {
     if (!citySearch) return cities
-    return cities.filter(c => c.city_name.toLowerCase().includes(citySearch.toLowerCase()))
+    return cities.filter((c) => c.city_name.toLowerCase().includes(citySearch.toLowerCase()))
   }, [cities, citySearch])
 
   const handleExport = () => {
@@ -438,16 +440,18 @@ function dowLabel(dow: number) {
 
 export default function StatsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="py-20 flex items-center justify-center">
-            <LoadingSpinner size="lg" />
-            <span className="ml-2 text-gray-600">Loading statistics page...</span>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="py-20 flex items-center justify-center">
+              <LoadingSpinner size="lg" />
+              <span className="ml-2 text-gray-600">Loading statistics page...</span>
+            </div>
           </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <StatsPageContent />
     </Suspense>
   )

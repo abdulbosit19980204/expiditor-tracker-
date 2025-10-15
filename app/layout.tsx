@@ -4,8 +4,8 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { ClientI18nProvider } from "./client-i18n-provider"
 import ErrorBoundary from "../components/error-boundary"
+import { I18nProvider } from "@/lib/simple-i18n"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -148,10 +148,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>
-            <ClientI18nProvider>
+            <I18nProvider>
               {children}
               <Toaster />
-            </ClientI18nProvider>
+            </I18nProvider>
           </ThemeProvider>
         </ErrorBoundary>
       </body>
