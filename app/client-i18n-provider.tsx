@@ -2,32 +2,23 @@
 
 import { useEffect, useState } from "react"
 import { I18nextProvider } from "react-i18next"
-import i18n from "./i18n"
+import simpleI18n from "../lib/simple-i18n"
+
+// Create a mock i18next-compatible object
+const mockI18n = {
+  ...simpleI18n,
+  // Add any missing methods that components might expect
+  on: () => () => {}, // Mock event listener
+  off: () => {}, // Mock event remover
+  emit: () => {}, // Mock event emitter
+}
 
 export function ClientI18nProvider({ children }: { children: React.ReactNode }) {
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(true) // Simple i18n is always ready
 
   useEffect(() => {
-    try {
-      if (i18n.isInitialized) {
-        setIsInitialized(true)
-      } else {
-        i18n.on('initialized', () => {
-          setIsInitialized(true)
-        })
-        
-        // Fallback timeout to ensure initialization
-        const timeout = setTimeout(() => {
-          console.warn("[ClientI18n] Initialization timeout, forcing ready state")
-          setIsInitialized(true)
-        }, 5000)
-        
-        return () => clearTimeout(timeout)
-      }
-    } catch (error) {
-      console.error("[ClientI18n] Initialization error:", error)
-      setIsInitialized(true) // Force initialization to prevent infinite loading
-    }
+    console.log("[ClientI18n] Using simple i18n implementation")
+    setIsInitialized(true)
   }, [])
 
   if (!isInitialized) {
@@ -42,7 +33,7 @@ export function ClientI18nProvider({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <I18nextProvider i18n={i18n}>
+    <I18nextProvider i18n={mockI18n}>
       {children}
     </I18nextProvider>
   )
