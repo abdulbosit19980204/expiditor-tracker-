@@ -70,14 +70,17 @@ export function useOptimizedAnalyticsData(): UseOptimizedAnalyticsDataReturn {
   const [isRefreshing, setIsRefreshing] = useState(false)
   
   // Filters state (memoized initial value)
-  const initialFilters = useMemo(() => ({
-    dateRange: getCurrentMonthRange(),
-    project: "",
-    sklad: "",
-    city: "",
-    filial: "",
-    status: "",
-  }), [])
+  const initialFilters = useMemo(() => {
+    const currentRange = getCurrentMonthRange()
+    return {
+      dateRange: currentRange,
+      project: "",
+      sklad: "",
+      city: "",
+      filial: "",
+      status: "",
+    }
+  }, [])
   
   const [filters, setFilters] = useState<FilterState>(initialFilters)
   
