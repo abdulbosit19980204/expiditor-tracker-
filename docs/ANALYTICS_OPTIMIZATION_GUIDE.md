@@ -29,7 +29,7 @@ This guide documents the comprehensive performance optimizations applied to the 
 ### **1. Custom Hooks for Data Management**
 
 #### **`useAnalyticsData` Hook**
-```typescript
+\`\`\`typescript
 // Centralized data management with caching
 const {
   statistics,
@@ -44,7 +44,7 @@ const {
   refreshData,
   activeFiltersCount,
 } = useAnalyticsData()
-```
+\`\`\`
 
 **Features:**
 - **API Caching**: 5-minute TTL with intelligent cache invalidation
@@ -53,7 +53,7 @@ const {
 - **Error Handling**: Graceful fallbacks and retry logic
 
 #### **`useChartData` Hook**
-```typescript
+\`\`\`typescript
 // Memoized chart data transformations
 const {
   dailyChartData,
@@ -65,7 +65,7 @@ const {
   warehouseChartData,
   COLORS
 } = useChartData({ statistics, chartModes, dailyGroupingMode })
-```
+\`\`\`
 
 **Features:**
 - **Memoized Calculations**: Only recalculates when dependencies change
@@ -87,16 +87,16 @@ const {
 ### **3. Map Optimization**
 
 #### **Before:**
-```typescript
+\`\`\`typescript
 // Re-created map instance on every render
 useEffect(() => {
   const map = new window.ymaps.Map(container, options)
   // Removed on every filter change
 }, [filters])
-```
+\`\`\`
 
 #### **After:**
-```typescript
+\`\`\`typescript
 // Stable map instance with efficient marker updates
 const mapInstanceRef = useRef<any>(null)
 const markersRef = useRef<Map<string, any>>(new Map())
@@ -109,7 +109,7 @@ useEffect(() => {
   })
   // Add new markers efficiently
 }, [memoizedChecks])
-```
+\`\`\`
 
 **Improvements:**
 - **Single Map Instance**: Created once, reused across renders
@@ -120,7 +120,7 @@ useEffect(() => {
 ### **4. API Optimization**
 
 #### **Caching Strategy**
-```typescript
+\`\`\`typescript
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 const DEBOUNCE_DELAY = 300 // 300ms
 
@@ -133,10 +133,10 @@ if (cached && !forceRefresh) {
   setStatistics(cached)
   return
 }
-```
+\`\`\`
 
 #### **Request Management**
-```typescript
+\`\`\`typescript
 // AbortController for cleanup
 const abortControllerRef = useRef<AbortController>()
 
@@ -145,12 +145,12 @@ useEffect(() => {
   const timeoutId = setTimeout(loadStatistics, DEBOUNCE_DELAY)
   return () => clearTimeout(timeoutId)
 }, [filters])
-```
+\`\`\`
 
 ### **5. Performance Monitoring**
 
 #### **Development Tools**
-```typescript
+\`\`\`typescript
 // Performance monitor component
 <PerformanceMonitor componentName="AnalyticsDashboard" />
 
@@ -159,7 +159,7 @@ useEffect(() => {
 // - Render times
 // - Memory usage
 // - Performance warnings
-```
+\`\`\`
 
 ## 🎯 **Performance Metrics**
 
@@ -181,7 +181,7 @@ useEffect(() => {
 ## 🛠️ **Implementation Details**
 
 ### **File Structure**
-```
+\`\`\`
 hooks/
 ├── use-analytics-data.ts      # Data management & caching
 └── use-chart-data.ts          # Chart data transformations
@@ -197,39 +197,39 @@ components/analytics/
 
 app/analytics/
 └── optimized-page.tsx         # Main optimized page
-```
+\`\`\`
 
 ### **Key Optimizations**
 
 #### **1. React.memo Usage**
-```typescript
+\`\`\`typescript
 const MemoizedComponent = memo<Props>(({ data, onUpdate }) => {
   // Component logic
 })
 
 MemoizedComponent.displayName = "MemoizedComponent"
-```
+\`\`\`
 
 #### **2. useCallback for Event Handlers**
-```typescript
+\`\`\`typescript
 const handleFilterChange = useCallback((key: string, value: any) => {
   updateFilters({ [key]: value })
 }, [updateFilters])
-```
+\`\`\`
 
 #### **3. useMemo for Expensive Calculations**
-```typescript
+\`\`\`typescript
 const chartData = useMemo(() => {
   return processChartData(rawData, chartModes)
 }, [rawData, chartModes])
-```
+\`\`\`
 
 #### **4. Stable References**
-```typescript
+\`\`\`typescript
 const COLORS = useMemo(() => [
   "#2563eb", "#059669", "#d97706", "#dc2626"
 ], []) // Stable color array
-```
+\`\`\`
 
 ## 🧪 **Testing & Validation**
 
