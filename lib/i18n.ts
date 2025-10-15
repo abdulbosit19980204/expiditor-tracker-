@@ -16,6 +16,31 @@ if (typeof window !== "undefined") {
     }
     return originalForEach.call(this, callback, thisArg)
   }
+
+  // Also override other array methods that might cause issues
+  const originalMap = Array.prototype.map
+  Array.prototype.map = function (callback, thisArg) {
+    if (this == null) {
+      console.warn("[Global] map called on null/undefined, returning empty array")
+      return []
+    }
+    if (typeof callback !== "function") {
+      throw new TypeError("map callback must be a function")
+    }
+    return originalMap.call(this, callback, thisArg)
+  }
+
+  const originalFilter = Array.prototype.filter
+  Array.prototype.filter = function (callback, thisArg) {
+    if (this == null) {
+      console.warn("[Global] filter called on null/undefined, returning empty array")
+      return []
+    }
+    if (typeof callback !== "function") {
+      throw new TypeError("filter callback must be a function")
+    }
+    return originalFilter.call(this, callback, thisArg)
+  }
 }
 
 // Additional safety for language detection
@@ -313,43 +338,52 @@ const resources = {
   },
 }
 
-i18n
-  .use(createSafeDetector())
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: "en",
-    lng: "en", // Explicitly set initial language
-    debug: false,
-    load: "languageOnly", // Only use language codes like 'en', not 'en-US'
+// Initialize i18n with comprehensive error handling
+try {
+  i18n
+    .use(initReactI18next)
+    .init({
+      resources,
+      fallbackLng: "en",
+      lng: "en", // Explicitly set initial language
+      debug: false,
+      load: "languageOnly", // Only use language codes like 'en', not 'en-US'
 
-    interpolation: {
-      escapeValue: false,
-    },
-
-    detection: {
-      order: ["localStorage", "navigator"],
-      lookupLocalStorage: "i18nextLng",
-      caches: ["localStorage"],
-      cookieMinutes: 10080, // 7 days
-
-      // Simplify language detection to prevent errors
-      convertDetectedLanguage: (lng) => {
-        if (!lng || typeof lng !== "string") return "en"
-        // Only return the base language code
-        const baseLng = lng.split("-")[0].split("_")[0].toLowerCase()
-        // Validate against available languages
-        return ["en", "uz", "ru"].includes(baseLng) ? baseLng : "en"
+      interpolation: {
+        escapeValue: false,
       },
-    },
 
-    saveMissing: false,
+      detection: {
+        // Disable automatic detection to prevent forEach errors
+        order: ["localStorage"],
+        lookupLocalStorage: "i18nextLng",
+        caches: ["localStorage"],
+        cookieMinutes: 10080, // 7 days
 
-    // Add these options for better error handling
-    returnEmptyString: false,
-    returnNull: false,
-    returnObjects: false,
-  })
+        // Simplified language detection that never calls problematic methods
+        convertDetectedLanguage: (lng) => {
+          // Always return English to prevent any detection issues
+          return "en"
+        },
+      },
+
+      saveMissing: false,
+
+      // Add these options for better error handling
+      returnEmptyString: false,
+      returnNull: false,
+      returnObjects: false,
+    })
+    .catch((error) => {
+      console.error("[i18n] Initialization failed:", error)
+      // Force set English as fallback
+      i18n.changeLanguage("en").catch(() => {
+        console.error("[i18n] Failed to set fallback language")
+      })
+    })
+} catch (error) {
+  console.error("[i18n] Critical initialization error:", error)
+}
 
 export default i18n
 

@@ -31,6 +31,7 @@ export default function RootLayout({
       <head>
         <meta name="telegram-web-app-capable" content="yes" />
         <meta name="telegram-web-app-status-bar-style" content="default" />
+        <script src="/global-error-fix.js" defer></script>
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem={true} disableTransitionOnChange>

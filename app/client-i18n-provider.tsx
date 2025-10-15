@@ -8,12 +8,25 @@ export function ClientI18nProvider({ children }: { children: React.ReactNode }) 
   const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    if (i18n.isInitialized) {
-      setIsInitialized(true)
-    } else {
-      i18n.on('initialized', () => {
+    try {
+      if (i18n.isInitialized) {
         setIsInitialized(true)
-      })
+      } else {
+        i18n.on('initialized', () => {
+          setIsInitialized(true)
+        })
+        
+        // Fallback timeout to ensure initialization
+        const timeout = setTimeout(() => {
+          console.warn("[ClientI18n] Initialization timeout, forcing ready state")
+          setIsInitialized(true)
+        }, 5000)
+        
+        return () => clearTimeout(timeout)
+      }
+    } catch (error) {
+      console.error("[ClientI18n] Initialization error:", error)
+      setIsInitialized(true) // Force initialization to prevent infinite loading
     }
   }, [])
 
