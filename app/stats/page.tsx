@@ -11,7 +11,7 @@ import { api } from "@/lib/api"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Suspense } from "react"
-import { useTranslation } from "../../lib/simple-i18n"
+import { useTranslation } from "@/lib/simple-i18n"
 
 function getCurrentMonthRange() {
   const now = new Date()

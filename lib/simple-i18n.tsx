@@ -1,10 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
-
-import React from "react"
-
-import { useCallback, useContext, useEffect, useState } from "react"
+import React, { useCallback, useContext, useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 
 // Define types
@@ -221,10 +217,14 @@ interface I18nProviderProps {
 
 export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderProps) {
   const [locale, setLocale] = useState<Locale>(initialLocale)
-  const [isInitialized, setIsInitialized] = useState(false) // Track initialization
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    // Perform initialization logic here
+    // Load locale from localStorage if available
+    const savedLocale = localStorage.getItem("locale") as Locale | null
+    if (savedLocale && ["en", "ru", "uz"].includes(savedLocale)) {
+      setLocale(savedLocale)
+    }
     setIsInitialized(true)
   }, [])
 
@@ -236,7 +236,7 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
       let translation = translations[locale][key] as string | undefined
       if (!translation) {
         console.warn(`Translation not found for key: ${key} in locale: ${locale}`)
-        return key // Fallback to the key itself
+        return key
       }
 
       // Replace variables in the translation
@@ -253,7 +253,9 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
   const setAppLocale = useCallback(
     (newLocale: Locale) => {
       setLocale(newLocale)
-      localStorage.setItem("locale", newLocale)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("locale", newLocale)
+      }
       router.refresh()
     },
     [router],
@@ -269,9 +271,8 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
     [locale, setAppLocale, t],
   )
 
-  // Prevent rendering children until initialized
   if (!isInitialized) {
-    return <div>Loading...</div>
+    return null
   }
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
@@ -280,7 +281,10 @@ export function I18nProvider({ children, initialLocale = "uz" }: I18nProviderPro
 export function useTranslation() {
   const context = useContext(I18nContext)
   if (!context) {
-    throw new Error("useTranslation must be used within a I18nProvider")
+    throw new Error("useTranslation must be used within an I18nProvider")
   }
   return context
 }
+
+// Export types
+export type { Locale, Translation, Translations }

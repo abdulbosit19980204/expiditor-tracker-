@@ -5,7 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import ErrorBoundary from "../components/error-boundary"
-import { I18nProvider } from "@/lib/simple-i18n"
+import { I18nProvider } from "../lib/simple-i18n"
 
 const inter = Inter({ subsets: ["latin"] })
 
