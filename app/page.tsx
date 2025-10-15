@@ -34,13 +34,26 @@ interface FilterState {
   status: string
 }
 
-// Helper function to get current month's first and last day
-function getCurrentMonthRange() {
-  const now = new Date()
-  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-  return { from: firstDay, to: lastDay }
-}
+// Helper function to get current month's first and last day (memoized)
+const getCurrentMonthRange = (() => {
+  let cachedRange: { from: Date; to: Date } | null = null
+  let lastMonth = -1
+  
+  return () => {
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    
+    // Only recalculate if month changed
+    if (cachedRange === null || lastMonth !== currentMonth) {
+      const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      cachedRange = { from: firstDay, to: lastDay }
+      lastMonth = currentMonth
+    }
+    
+    return cachedRange
+  }
+})()
 
 const ExpeditorTracker = memo(function ExpeditorTracker() {
   const { t } = useTranslation()
@@ -68,15 +81,17 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
   const [expeditorSearchQuery, setExpeditorSearchQuery] = useState("")
   const [checkSearchQuery, setCheckSearchQuery] = useState("")
 
-  // Initialize filters with current month as default
-  const [filters, setFilters] = useState<FilterState>(() => ({
+  // Initialize filters with current month as default (memoized)
+  const initialFilters = useMemo(() => ({
     dateRange: getCurrentMonthRange(),
     project: "",
     sklad: "",
     city: "",
     filial: "",
     status: "",
-  }))
+  }), [])
+  
+  const [filters, setFilters] = useState<FilterState>(initialFilters)
 
   // Load initial data (only once)
   useEffect(() => {
@@ -195,7 +210,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     }
 
     loadChecksAndStats()
-  }, [selectedExpeditor, filters, checkSearchQuery])
+  }, [selectedExpeditor, filters.dateRange, filters.project, filters.sklad, filters.city, filters.status, checkSearchQuery])
 
   // Optimized filter expeditors by search query with better memoization
   const filteredExpeditors = useMemo(() => {
@@ -224,17 +239,10 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
-    setFilters({
-      dateRange: getCurrentMonthRange(),
-      project: "",
-      sklad: "",
-      city: "",
-      filial: "",
-      status: "",
-    })
+    setFilters(initialFilters)
     setCheckSearchQuery("")
     setExpeditorSearchQuery("")
-  }, [])
+  }, [initialFilters])
 
   // Handle check click
   const handleCheckClick = useCallback((check: Check) => {
