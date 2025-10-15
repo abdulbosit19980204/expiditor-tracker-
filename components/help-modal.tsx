@@ -27,7 +27,7 @@ import {
   Clock,
   Target
 } from "lucide-react"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "../lib/simple-i18n"
 
 interface HelpModalProps {
   className?: string

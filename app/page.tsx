@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
 import Link from "next/link"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "../lib/simple-i18n"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"

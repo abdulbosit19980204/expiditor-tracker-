@@ -80,6 +80,19 @@ const resources: LanguageResources = {
       "english": "English",
       "uzbek": "Uzbek",
       "russian": "Russian",
+      
+      // Expeditor Tracker specific translations
+      "expeditorTracker": "Expeditor Tracker",
+      "analyticsDashboard": "Analytics Dashboard",
+      "dateRange": "Date Range",
+      "advancedFilters": "Advanced Filters",
+      "languageAndLocalization": "Language & Localization",
+      "interfaceLanguage": "Interface Language",
+      "defaultDateRange": "Default Date Range",
+      "currentMonth": "Current Month",
+      "lastWeek": "Last Week",
+      "lastMonth": "Last Month",
+      "customRange": "Custom Range",
     }
   },
   uz: {
@@ -150,6 +163,19 @@ const resources: LanguageResources = {
       "english": "Ingliz tili",
       "uzbek": "O'zbek tili",
       "russian": "Rus tili",
+      
+      // Expeditor Tracker specific translations
+      "expeditorTracker": "Expeditor Tracker",
+      "analyticsDashboard": "Analitika Dashboard",
+      "dateRange": "Sana oralig'i",
+      "advancedFilters": "Kengaytirilgan filterlar",
+      "languageAndLocalization": "Til va lokalizatsiya",
+      "interfaceLanguage": "Interfeys tili",
+      "defaultDateRange": "Standart sana oralig'i",
+      "currentMonth": "Joriy oy",
+      "lastWeek": "O'tgan hafta",
+      "lastMonth": "O'tgan oy",
+      "customRange": "Maxsus oralik",
     }
   },
   ru: {
@@ -220,6 +246,19 @@ const resources: LanguageResources = {
       "english": "Английский",
       "uzbek": "Узбекский",
       "russian": "Русский",
+      
+      // Expeditor Tracker specific translations
+      "expeditorTracker": "Expeditor Tracker",
+      "analyticsDashboard": "Панель аналитики",
+      "dateRange": "Диапазон дат",
+      "advancedFilters": "Расширенные фильтры",
+      "languageAndLocalization": "Язык и локализация",
+      "interfaceLanguage": "Язык интерфейса",
+      "defaultDateRange": "Диапазон дат по умолчанию",
+      "currentMonth": "Текущий месяц",
+      "lastWeek": "Прошлая неделя",
+      "lastMonth": "Прошлый месяц",
+      "customRange": "Пользовательский диапазон",
     }
   },
 }
