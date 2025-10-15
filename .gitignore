@@ -117,6 +117,3 @@ local_settings.py
 
 .env
 db.sqlite3
-
-/backend/expeditor_backend/migrations/
-/backend/expeditor_app/migrations/

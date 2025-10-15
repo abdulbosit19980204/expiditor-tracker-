@@ -12,8 +12,6 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
-from drf_spectacular.types import OpenApiTypes
 import django_filters
 import hashlib
 
@@ -101,47 +99,7 @@ class EkispiditorFilter(django_filters.FilterSet):
         fields = ['filial', 'filial_name', 'is_active', 'has_checks']
 
 
-@extend_schema_view(
-    list=extend_schema(
-        summary="List all projects",
-        description="""
-        Retrieve a list of all projects in the system.
-        
-        This endpoint returns all available projects that can be used for filtering checks and statistics.
-        The response is not paginated since it's typically used for dropdown selections.
-        
-        **Use Cases:**
-        - Populate project filter dropdowns
-        - Display project selection in forms
-        - Get all available project options
-        """,
-        tags=["Projects"],
-        examples=[
-            OpenApiExample(
-                "Example Response",
-                summary="Sample project list",
-                value={
-                    "results": [
-                        {
-                            "id": 1,
-                            "project_name": "Express Delivery",
-                            "project_description": "Fast delivery service",
-                            "created_at": "2024-01-15T10:30:00Z",
-                            "updated_at": "2024-01-15T10:30:00Z"
-                        }
-                    ]
-                }
-            )
-        ]
-    )
-)
 class ProjectsViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for managing projects.
-    
-    Provides read-only access to project data. Projects are used to categorize
-    and filter delivery checks and expeditor activities.
-    """
     queryset = Projects.objects.all()
     serializer_class = ProjectsSerializer
     pagination_class = None  # No pagination for dropdown data
@@ -224,9 +182,8 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-yetkazilgan_vaqti']
     
     def get_queryset(self):
-        # Optimized queryset - since CheckDetail is linked by check_id (not FK),
-        # we'll handle the relationship in the serializer for better performance
-        # The serializer will use a more efficient approach
+        # Optimized queryset - CheckDetail is linked by check_id, not FK
+        # We'll handle the relationship in the serializer for better performance
         return Check.objects.all()
     
     @action(detail=False, methods=['get'])
@@ -245,155 +202,7 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = self.get_serializer(checks, many=True)
         return Response(serializer.data)
 
-@extend_schema(
-    summary="Get expeditor statistics",
-    description="""
-    Retrieve comprehensive statistics for a specific expeditor.
-    
-    This endpoint provides detailed statistics including:
-    - Total checks, delivered, failed, and pending counts
-    - Payment method breakdown (cash, cards, etc.)
-    - Top projects, cities, and warehouses
-    - Daily and hourly distribution patterns
-    - Success rates and performance metrics
-    
-    **Filtering Options:**
-    - Date range filtering for specific time periods
-    - Project, warehouse, city, and status filtering
-    - Expeditor-specific filtering
-    
-    **Caching:** Results are cached for 5 minutes to improve performance.
-    """,
-    tags=["Statistics"],
-    parameters=[
-        OpenApiParameter(
-            name='ekispiditor_id',
-            description='ID of the expeditor to get statistics for',
-            required=True,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='date_from',
-            description='Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)',
-            required=False,
-            type=OpenApiTypes.DATETIME,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='date_to',
-            description='End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)',
-            required=False,
-            type=OpenApiTypes.DATETIME,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='project',
-            description='Filter by project name',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='sklad',
-            description='Filter by warehouse name',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='city',
-            description='Filter by city name',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='status',
-            description='Filter by check status',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-    ],
-    examples=[
-        OpenApiExample(
-            "Example Request",
-            summary="Get expeditor statistics for a date range",
-            description="Get statistics for expeditor ID 1 from January 1st to January 31st, 2024",
-            value={
-                "ekispiditor_id": "1",
-                "date_from": "2024-01-01T00:00:00Z",
-                "date_to": "2024-01-31T23:59:59Z"
-            }
-        ),
-        OpenApiExample(
-            "Example Response",
-            summary="Sample statistics response",
-            value={
-                "overview": {
-                    "total_checks": 150,
-                    "delivered_checks": 120,
-                    "failed_checks": 20,
-                    "pending_checks": 10,
-                    "success_rate": 80.0,
-                    "avg_check_sum": 25000.0,
-                    "today_checks_count": 5
-                },
-                "payment_stats": {
-                    "total_sum": 3750000.0,
-                    "nalichniy": 1500000.0,
-                    "uzcard": 1000000.0,
-                    "humo": 750000.0,
-                    "click": 500000.0
-                },
-                "top_expeditors": [
-                    {
-                        "ekispiditor": "John Doe",
-                        "check_count": 45,
-                        "total_sum": 1125000.0
-                    }
-                ],
-                "top_projects": [
-                    {
-                        "project": "Express Delivery",
-                        "check_count": 80,
-                        "total_sum": 2000000.0
-                    }
-                ],
-                "top_cities": [
-                    {
-                        "city": "Tashkent",
-                        "check_count": 60,
-                        "total_sum": 1500000.0
-                    }
-                ],
-                "daily_stats": [
-                    {
-                        "date": "2024-01-15",
-                        "checks": 8
-                    }
-                ],
-                "hourly_stats": [
-                    {
-                        "hour": "09",
-                        "checks": 12
-                    }
-                ]
-            }
-        )
-    ]
-)
 class StatisticsView(APIView):
-    """
-    API View for retrieving expeditor-specific statistics.
-    
-    Provides comprehensive analytics and performance metrics for individual expeditors.
-    Includes filtering capabilities and caching for optimal performance.
-    """
-    serializer_class = None  # No serializer needed for this view
-    
-    @method_decorator(cache_page(300))  # Cache for 5 minutes
     def get(self, request):
         # Create cache key based on request parameters
         cache_key_params = {
@@ -509,96 +318,71 @@ class StatisticsView(APIView):
         if payment_stats['total_sum'] and total_checks:
             avg_check_sum = float(payment_stats['total_sum']) / float(total_checks)
         
-        # Get top expeditors with counts and sums - optimized approach
-        # Since Check and CheckDetail are linked by check_id (not FK), we need to join manually
-        expeditor_stats = {}
-        for check in checks_qs:
-            expeditor = check.ekispiditor
-            if not expeditor:
-                continue
-                
-            if expeditor not in expeditor_stats:
-                expeditor_stats[expeditor] = {
-                    'name': expeditor,
-                    'check_count': 0,
-                    'success_count': 0,
-                    'total_sum': 0
-                }
+        # Optimized top expeditors query with single aggregation
+        top_expeditors = list(
+            checks_qs.values('ekispiditor')
+            .annotate(
+                check_count=Count('id'),
+                success_count=Count('id', filter=Q(status='delivered'))
+            )
+            .order_by('-check_count')[:5]
+        )
+        
+        # Optimized: Get all expeditor check IDs and sums in one query
+        if top_expeditors:
+            expeditor_names = [exp['ekispiditor'] for exp in top_expeditors]
+            expeditor_sums = dict(
+                checks_qs.filter(ekispiditor__in=expeditor_names)
+                .values('ekispiditor')
+                .annotate(total_sum=Sum('checkdetail__total_sum'))
+                .values_list('ekispiditor', 'total_sum')
+            )
             
-            expeditor_stats[expeditor]['check_count'] += 1
-            if check.status == 'delivered':
-                expeditor_stats[expeditor]['success_count'] += 1
+            # Add total sum to each expeditor
+            for exp_stat in top_expeditors:
+                exp_stat['total_sum'] = expeditor_sums.get(exp_stat['ekispiditor'], 0) or 0
         
-        # Get sums from CheckDetail for each expeditor
-        for expeditor in expeditor_stats:
-            expeditor_checks = checks_qs.filter(ekispiditor=expeditor)
-            expeditor_check_ids = list(expeditor_checks.values_list('check_id', flat=True))
-            if expeditor_check_ids:
-                expeditor_sum = CheckDetail.objects.filter(check_id__in=expeditor_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-                expeditor_stats[expeditor]['total_sum'] = expeditor_sum
+        # Optimized top projects query
+        top_projects = list(
+            checks_qs.values('project')
+            .annotate(check_count=Count('id'))
+            .order_by('-check_count')[:5]
+        )
         
-        # Sort and limit top expeditors
-        top_expeditors = sorted(expeditor_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
-        
-        # Get top projects with counts and sums - optimized approach
-        project_stats = {}
-        for check in checks_qs:
-            project = check.project
-            if not project:
-                continue
-                
-            if project not in project_stats:
-                project_stats[project] = {
-                    'name': project,
-                    'check_count': 0,
-                    'total_sum': 0
-                }
+        # Optimized: Get all project sums in one query
+        if top_projects:
+            project_names = [proj['project'] for proj in top_projects]
+            project_sums = dict(
+                checks_qs.filter(project__in=project_names)
+                .values('project')
+                .annotate(total_sum=Sum('checkdetail__total_sum'))
+                .values_list('project', 'total_sum')
+            )
             
-            project_stats[project]['check_count'] += 1
+            # Add total sum to each project
+            for proj_stat in top_projects:
+                proj_stat['total_sum'] = project_sums.get(proj_stat['project'], 0) or 0
         
-        # Get sums from CheckDetail for each project
-        for project in project_stats:
-            project_checks = checks_qs.filter(project=project)
-            project_check_ids = list(project_checks.values_list('check_id', flat=True))
-            if project_check_ids:
-                project_sum = CheckDetail.objects.filter(check_id__in=project_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-                project_stats[project]['total_sum'] = project_sum
+        # Optimized top cities query
+        top_cities = list(
+            checks_qs.values('city')
+            .annotate(check_count=Count('id'))
+            .order_by('-check_count')[:5]
+        )
         
-        # Sort and limit top projects
-        top_projects = sorted(project_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
-        
-        # Get top cities with counts and sums - optimized approach
-        city_stats = {}
-        for check in checks_qs:
-            city = check.city
-            if not city:
-                continue
-                
-            if city not in city_stats:
-                city_stats[city] = {
-                    'name': city,
-                    'check_count': 0,
-                    'total_sum': 0
-                }
+        # Optimized: Get all city sums in one query
+        if top_cities:
+            city_names = [city['city'] for city in top_cities]
+            city_sums = dict(
+                checks_qs.filter(city__in=city_names)
+                .values('city')
+                .annotate(total_sum=Sum('checkdetail__total_sum'))
+                .values_list('city', 'total_sum')
+            )
             
-            city_stats[city]['check_count'] += 1
-        
-        # Get sums from CheckDetail for each city
-        for city in city_stats:
-            city_checks = checks_qs.filter(city=city)
-            city_check_ids = list(city_checks.values_list('check_id', flat=True))
-            if city_check_ids:
-                city_sum = CheckDetail.objects.filter(check_id__in=city_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-                city_stats[city]['total_sum'] = city_sum
-        
-        # Sort and limit top cities
-        top_cities = sorted(city_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
+            # Add total sum to each city
+            for city_stat in top_cities:
+                city_stat['total_sum'] = city_sums.get(city_stat['city'], 0) or 0
         
         # Daily statistics - optimized for date range
         if date_from and date_to:
@@ -612,34 +396,12 @@ class StatisticsView(APIView):
             start_date = today.replace(day=1)
             end_date = today
         
-        # Top warehouses (sklads) - optimized approach
-        sklad_stats = {}
-        for check in checks_qs:
-            sklad = check.sklad
-            if not sklad:
-                continue
-                
-            if sklad not in sklad_stats:
-                sklad_stats[sklad] = {
-                    'name': sklad,
-                    'check_count': 0,
-                    'total_sum': 0
-                }
-            
-            sklad_stats[sklad]['check_count'] += 1
-        
-        # Get sums from CheckDetail for each sklad
-        for sklad in sklad_stats:
-            sklad_checks = checks_qs.filter(sklad=sklad)
-            sklad_check_ids = list(sklad_checks.values_list('check_id', flat=True))
-            if sklad_check_ids:
-                sklad_sum = CheckDetail.objects.filter(check_id__in=sklad_check_ids).aggregate(
-                    total=Sum('total_sum')
-                )['total'] or 0
-                sklad_stats[sklad]['total_sum'] = sklad_sum
-        
-        # Sort and limit top sklads
-        top_sklads = sorted(sklad_stats.values(), key=lambda x: x['check_count'], reverse=True)[:5]
+        # Top warehouses (sklads)
+        top_sklads = list(
+            checks_qs.values('sklad')
+            .annotate(check_count=Count('id'))
+            .order_by('-check_count')[:5]
+        )
 
         # Hourly distribution
         hourly_data = (
@@ -707,148 +469,7 @@ class StatisticsView(APIView):
         }
 
 
-@extend_schema(
-    summary="Get global statistics",
-    description="""
-    Retrieve comprehensive global statistics across all expeditors.
-    
-    This endpoint provides system-wide statistics including:
-    - Overall delivery performance metrics
-    - Payment method distribution across all checks
-    - Top performing expeditors, projects, cities, and warehouses
-    - System-wide trends and patterns
-    - Daily and hourly activity distribution
-    
-    **Key Differences from Expeditor Statistics:**
-    - Aggregates data across ALL expeditors
-    - Provides system-wide performance insights
-    - Shows overall delivery trends and patterns
-    - Useful for management and system monitoring
-    
-    **Filtering Options:**
-    - Date range filtering for specific time periods
-    - Project, warehouse, city, and status filtering
-    - No expeditor-specific filtering (global view)
-    
-    **Caching:** Results are cached for 5 minutes to improve performance.
-    """,
-    tags=["Statistics"],
-    parameters=[
-        OpenApiParameter(
-            name='date_from',
-            description='Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)',
-            required=False,
-            type=OpenApiTypes.DATETIME,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='date_to',
-            description='End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SS)',
-            required=False,
-            type=OpenApiTypes.DATETIME,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='project',
-            description='Filter by project name',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='sklad',
-            description='Filter by warehouse name',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='city',
-            description='Filter by city name',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-        OpenApiParameter(
-            name='status',
-            description='Filter by check status',
-            required=False,
-            type=OpenApiTypes.STR,
-            location=OpenApiParameter.QUERY
-        ),
-    ],
-    examples=[
-        OpenApiExample(
-            "Example Request",
-            summary="Get global statistics for current month",
-            description="Get system-wide statistics for the current month",
-            value={
-                "date_from": "2024-01-01T00:00:00Z",
-                "date_to": "2024-01-31T23:59:59Z"
-            }
-        ),
-        OpenApiExample(
-            "Example Response",
-            summary="Sample global statistics response",
-            value={
-                "overview": {
-                    "total_checks": 1500,
-                    "delivered_checks": 1200,
-                    "failed_checks": 200,
-                    "pending_checks": 100,
-                    "success_rate": 80.0,
-                    "avg_check_sum": 25000.0,
-                    "today_checks_count": 50
-                },
-                "payment_stats": {
-                    "total_sum": 37500000.0,
-                    "nalichniy": 15000000.0,
-                    "uzcard": 10000000.0,
-                    "humo": 7500000.0,
-                    "click": 5000000.0
-                },
-                "top_expeditors": [
-                    {
-                        "ekispiditor": "John Doe",
-                        "check_count": 150,
-                        "total_sum": 3750000.0
-                    }
-                ],
-                "top_projects": [
-                    {
-                        "project": "Express Delivery",
-                        "check_count": 800,
-                        "total_sum": 20000000.0
-                    }
-                ],
-                "top_cities": [
-                    {
-                        "city": "Tashkent",
-                        "check_count": 600,
-                        "total_sum": 15000000.0
-                    }
-                ],
-                "top_sklads": [
-                    {
-                        "sklad": "Central Warehouse",
-                        "check_count": 400,
-                        "total_sum": 10000000.0
-                    }
-                ]
-            }
-        )
-    ]
-)
 class GlobalStatisticsView(APIView):
-    """
-    API View for retrieving global system statistics.
-    
-    Provides comprehensive analytics and performance metrics across all expeditors
-    and the entire delivery system. Useful for management insights and system monitoring.
-    """
-    serializer_class = None  # No serializer needed for this view
-    
-    @method_decorator(cache_page(300))  # Cache for 5 minutes
     def get(self, request):
         # Reuse StatisticsView logic without ekispiditor filter
         request.GET._mutable = True  # type: ignore

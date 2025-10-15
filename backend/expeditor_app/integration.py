@@ -17,7 +17,6 @@ class UpdateChecksView(APIView):
     # Cache WSDL client to avoid reloading
     _client = None
     _client_lock = None
-    serializer_class = None  # No serializer needed for this view
 
     @classmethod
     def get_client(cls):
