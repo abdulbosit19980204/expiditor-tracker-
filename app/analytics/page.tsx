@@ -58,7 +58,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="font-medium text-gray-900 dark:text-gray-100">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
-            {entry.name}: {entry.value.toLocaleString()}
+            {entry.name}: {typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}
           </p>
         ))}
       </div>
@@ -67,16 +67,70 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-// Chart color palette for consistent theming
+// Enhanced tooltip for expeditor charts
+const ExpeditorTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0]?.payload
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900 dark:text-gray-100">{data?.fullName || label}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Check Count: <span className="font-medium">{data?.checks?.toLocaleString()}</span>
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Total Sum: <span className="font-medium">{formatCurrency(data?.sum || 0)}</span>
+        </p>
+      </div>
+    )
+  }
+  return null
+}
+
+// Enhanced tooltip for payment methods with percentages
+const PaymentTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0]?.payload
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900 dark:text-gray-100">{data?.name}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Amount: <span className="font-medium">{formatCurrency(data?.value || 0)}</span>
+        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Percentage: <span className="font-medium">{data?.percentage}%</span>
+        </p>
+      </div>
+    )
+  }
+  return null
+}
+
+// Chart color palette for consistent theming with better contrast
 const CHART_COLORS = {
-  primary: "#3b82f6",
-  secondary: "#10b981", 
-  accent: "#f59e0b",
-  danger: "#ef4444",
-  purple: "#8b5cf6",
-  pink: "#ec4899",
-  indigo: "#6366f1",
-  teal: "#14b8a6"
+  primary: "#2563eb",      // Blue - better contrast
+  secondary: "#059669",    // Green - better contrast
+  accent: "#d97706",       // Orange - better contrast
+  danger: "#dc2626",       // Red - better contrast
+  purple: "#7c3aed",       // Purple - better contrast
+  pink: "#db2777",         // Pink - better contrast
+  indigo: "#4f46e5",       // Indigo - better contrast
+  teal: "#0d9488",         // Teal - better contrast
+  gray: "#6b7280",         // Gray for neutral data
+  yellow: "#ca8a04"        // Yellow for warnings
+}
+
+// Dark mode compatible colors
+const DARK_MODE_COLORS = {
+  primary: "#3b82f6",      // Lighter blue for dark mode
+  secondary: "#10b981",    // Lighter green for dark mode
+  accent: "#f59e0b",       // Lighter orange for dark mode
+  danger: "#ef4444",       // Lighter red for dark mode
+  purple: "#8b5cf6",       // Lighter purple for dark mode
+  pink: "#ec4899",         // Lighter pink for dark mode
+  indigo: "#6366f1",       // Lighter indigo for dark mode
+  teal: "#14b8a6",         // Lighter teal for dark mode
+  gray: "#9ca3af",         // Lighter gray for dark mode
+  yellow: "#eab308"        // Lighter yellow for dark mode
 }
 
 const COLORS = [
@@ -88,6 +142,17 @@ const COLORS = [
   CHART_COLORS.pink,
   CHART_COLORS.indigo,
   CHART_COLORS.teal
+]
+
+const DARK_COLORS = [
+  DARK_MODE_COLORS.primary,
+  DARK_MODE_COLORS.secondary,
+  DARK_MODE_COLORS.accent,
+  DARK_MODE_COLORS.danger,
+  DARK_MODE_COLORS.purple,
+  DARK_MODE_COLORS.pink,
+  DARK_MODE_COLORS.indigo,
+  DARK_MODE_COLORS.teal
 ]
 
 function getCurrentMonthRange() {
@@ -136,6 +201,20 @@ function AnalyticsPageContent() {
     paymentMethods: true,
     warehouseDistribution: true,
   })
+
+  // Chart display modes (Count vs Sum)
+  const [chartModes, setChartModes] = useState({
+    dailyStats: 'count' as 'count' | 'sum',
+    hourlyStats: 'count' as 'count' | 'sum',
+    topExpeditors: 'sum' as 'count' | 'sum',
+    topProjects: 'count' as 'count' | 'sum',
+    topCities: 'count' as 'count' | 'sum',
+    paymentMethods: 'sum' as 'count' | 'sum',
+    warehouseDistribution: 'count' as 'count' | 'sum',
+  })
+
+  // Daily chart grouping mode
+  const [dailyGroupingMode, setDailyGroupingMode] = useState<'day' | 'week' | 'month'>('day')
 
   // Load initial data
   useEffect(() => {
@@ -227,6 +306,14 @@ function AnalyticsPageContent() {
     }))
   }, [])
 
+  // Toggle chart mode (Count vs Sum)
+  const toggleChartMode = useCallback((chart: keyof typeof chartModes) => {
+    setChartModes(prev => ({
+      ...prev,
+      [chart]: prev[chart] === 'count' ? 'sum' : 'count'
+    }))
+  }, [])
+
   // Export all data
   const handleExportAll = useCallback(() => {
     if (!statistics) return
@@ -283,69 +370,160 @@ function AnalyticsPageContent() {
     }).format(Math.round(n || 0))
   }, [])
 
-  // Memoized chart data
+  // Memoized chart data with dynamic modes
   const dailyChartData = useMemo(() => {
     if (!statistics?.dailyStats) return []
-    return statistics.dailyStats.map(d => ({
+    
+    let processedData = statistics.dailyStats.map(d => ({
       date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      fullDate: new Date(d.date),
       checks: d.checks,
       sum: d.checks * (statistics.avgCheckSum || 0) // Approximate sum
     }))
-  }, [statistics?.dailyStats, statistics?.avgCheckSum])
+
+    // Group by week or month if needed
+    if (dailyGroupingMode === 'week') {
+      const groupedByWeek = new Map()
+      processedData.forEach(d => {
+        const weekStart = new Date(d.fullDate)
+        weekStart.setDate(d.fullDate.getDate() - d.fullDate.getDay())
+        const weekKey = weekStart.toISOString().split('T')[0]
+        
+        if (!groupedByWeek.has(weekKey)) {
+          groupedByWeek.set(weekKey, {
+            date: `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+            checks: 0,
+            sum: 0,
+            fullDate: weekStart
+          })
+        }
+        
+        const weekData = groupedByWeek.get(weekKey)
+        weekData.checks += d.checks
+        weekData.sum += d.sum
+      })
+      processedData = Array.from(groupedByWeek.values())
+    } else if (dailyGroupingMode === 'month') {
+      const groupedByMonth = new Map()
+      processedData.forEach(d => {
+        const monthKey = d.fullDate.toISOString().substring(0, 7) // YYYY-MM
+        
+        if (!groupedByMonth.has(monthKey)) {
+          groupedByMonth.set(monthKey, {
+            date: d.fullDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+            checks: 0,
+            sum: 0,
+            fullDate: new Date(d.fullDate.getFullYear(), d.fullDate.getMonth(), 1)
+          })
+        }
+        
+        const monthData = groupedByMonth.get(monthKey)
+        monthData.checks += d.checks
+        monthData.sum += d.sum
+      })
+      processedData = Array.from(groupedByMonth.values()).sort((a, b) => a.fullDate.getTime() - b.fullDate.getTime())
+    }
+
+    return processedData
+  }, [statistics?.dailyStats, statistics?.avgCheckSum, dailyGroupingMode])
 
   const hourlyChartData = useMemo(() => {
     if (!statistics?.hourlyStats) return []
     return statistics.hourlyStats.map(h => ({
       hour: `${h.hour}:00`,
-      checks: h.checks
+      checks: h.checks,
+      sum: h.checks * (statistics.avgCheckSum || 0) // Approximate sum
     }))
-  }, [statistics?.hourlyStats])
+  }, [statistics?.hourlyStats, statistics?.avgCheckSum])
 
   const paymentChartData = useMemo(() => {
     if (!statistics?.paymentMethods) return []
-    return [
+    
+    const paymentData = [
       { name: t('cash'), value: statistics.paymentMethods.nalichniy, color: COLORS[0] },
       { name: t('uzcard'), value: statistics.paymentMethods.uzcard, color: COLORS[1] },
       { name: t('humo'), value: statistics.paymentMethods.humo, color: COLORS[2] },
       { name: t('click'), value: statistics.paymentMethods.click, color: COLORS[3] },
     ].filter(item => item.value > 0)
+    
+    // Calculate total for percentage calculation
+    const total = paymentData.reduce((sum, item) => sum + item.value, 0)
+    
+    // Add percentage to each item
+    return paymentData.map(item => ({
+      ...item,
+      percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : 0
+    }))
   }, [statistics?.paymentMethods, t])
 
   const expeditorChartData = useMemo(() => {
     if (!statistics?.topExpeditors) return []
-    return statistics.topExpeditors.slice(0, 10).map(exp => ({
-      name: exp.name,
+    
+    // Sort by total sum by default, but allow sorting by count if needed
+    const sortedExpeditors = [...statistics.topExpeditors].sort((a, b) => {
+      return chartModes.topExpeditors === 'sum' 
+        ? (b.totalSum || 0) - (a.totalSum || 0)
+        : (b.checkCount || 0) - (a.checkCount || 0)
+    })
+    
+    return sortedExpeditors.slice(0, 10).map(exp => ({
+      name: exp.name.length > 15 ? exp.name.substring(0, 15) + '...' : exp.name,
+      fullName: exp.name,
       checks: exp.checkCount,
-      sum: exp.totalSum
+      sum: exp.totalSum || 0
     }))
-  }, [statistics?.topExpeditors])
+  }, [statistics?.topExpeditors, chartModes.topExpeditors])
 
   const projectChartData = useMemo(() => {
     if (!statistics?.topProjects) return []
-    return statistics.topProjects.slice(0, 8).map(proj => ({
-      name: proj.name,
+    
+    const sortedProjects = [...statistics.topProjects].sort((a, b) => {
+      return chartModes.topProjects === 'sum' 
+        ? (b.totalSum || 0) - (a.totalSum || 0)
+        : (b.checkCount || 0) - (a.checkCount || 0)
+    })
+    
+    return sortedProjects.slice(0, 8).map(proj => ({
+      name: proj.name.length > 12 ? proj.name.substring(0, 12) + '...' : proj.name,
+      fullName: proj.name,
       checks: proj.checkCount,
-      sum: proj.totalSum
+      sum: proj.totalSum || 0
     }))
-  }, [statistics?.topProjects])
+  }, [statistics?.topProjects, chartModes.topProjects])
 
   const cityChartData = useMemo(() => {
     if (!statistics?.topCities) return []
-    return statistics.topCities.slice(0, 8).map(city => ({
-      name: city.name,
+    
+    const sortedCities = [...statistics.topCities].sort((a, b) => {
+      return chartModes.topCities === 'sum' 
+        ? (b.totalSum || 0) - (a.totalSum || 0)
+        : (b.checkCount || 0) - (a.checkCount || 0)
+    })
+    
+    return sortedCities.slice(0, 8).map(city => ({
+      name: city.name.length > 12 ? city.name.substring(0, 12) + '...' : city.name,
+      fullName: city.name,
       checks: city.checkCount,
-      sum: city.totalSum
+      sum: city.totalSum || 0
     }))
-  }, [statistics?.topCities])
+  }, [statistics?.topCities, chartModes.topCities])
 
   const warehouseChartData = useMemo(() => {
     if (!statistics?.topSklads) return []
-    return statistics.topSklads.slice(0, 8).map(sklad => ({
-      name: sklad.name,
+    
+    const sortedSklads = [...statistics.topSklads].sort((a, b) => {
+      return chartModes.warehouseDistribution === 'sum' 
+        ? (b.totalSum || 0) - (a.totalSum || 0)
+        : (b.checkCount || 0) - (a.checkCount || 0)
+    })
+    
+    return sortedSklads.slice(0, 8).map(sklad => ({
+      name: sklad.name.length > 12 ? sklad.name.substring(0, 12) + '...' : sklad.name,
+      fullName: sklad.name,
       checks: sklad.checkCount,
-      sum: sklad.totalSum
+      sum: sklad.totalSum || 0
     }))
-  }, [statistics?.topSklads])
+  }, [statistics?.topSklads, chartModes.warehouseDistribution])
 
   if (loading) {
     return (
@@ -622,10 +800,35 @@ function AnalyticsPageContent() {
             {visibleCharts.dailyStats && (
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <LineChart className="h-5 w-5" />
-                    {t('dailyCheckDistribution')}
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <LineChart className="h-5 w-5" />
+                      {t('dailyCheckDistribution')}
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      {/* Grouping Mode Toggle */}
+                      <Select value={dailyGroupingMode} onValueChange={(value: 'day' | 'week' | 'month') => setDailyGroupingMode(value)}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="day">By Day</SelectItem>
+                          <SelectItem value="week">By Week</SelectItem>
+                          <SelectItem value="month">By Month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {/* Count/Sum Toggle */}
+                      <Select value={chartModes.dailyStats} onValueChange={(value: 'count' | 'sum') => toggleChartMode('dailyStats')}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="count">Count</SelectItem>
+                          <SelectItem value="sum">Sum</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
@@ -636,7 +839,7 @@ function AnalyticsPageContent() {
                       <Tooltip content={<CustomTooltip />} />
                       <Area 
                         type="monotone" 
-                        dataKey="checks" 
+                        dataKey={chartModes.dailyStats === 'count' ? 'checks' : 'sum'} 
                         stroke={CHART_COLORS.primary} 
                         fill={CHART_COLORS.primary}
                         fillOpacity={0.3}
@@ -652,10 +855,22 @@ function AnalyticsPageContent() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <PieChart className="h-5 w-5" />
-                      {t('paymentMethodsDistribution')}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <PieChart className="h-5 w-5" />
+                        {t('paymentMethodsDistribution')}
+                      </CardTitle>
+                      {/* Count/Sum Toggle */}
+                      <Select value={chartModes.paymentMethods} onValueChange={(value: 'count' | 'sum') => toggleChartMode('paymentMethods')}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="count">Count</SelectItem>
+                          <SelectItem value="sum">Sum</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -674,7 +889,7 @@ function AnalyticsPageContent() {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value) => formatNumber(value as number)} />
+                        <Tooltip content={<PaymentTooltip />} />
                       </RechartsPieChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -684,10 +899,22 @@ function AnalyticsPageContent() {
                 {visibleCharts.hourlyStats && (
                   <Card className="shadow-lg">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Clock className="h-5 w-5" />
-                        {t('hourlyDistribution')}
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          <Clock className="h-5 w-5" />
+                          {t('hourlyDistribution')}
+                        </CardTitle>
+                        {/* Count/Sum Toggle */}
+                        <Select value={chartModes.hourlyStats} onValueChange={(value: 'count' | 'sum') => toggleChartMode('hourlyStats')}>
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="count">Count</SelectItem>
+                            <SelectItem value="sum">Sum</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={300}>
@@ -696,7 +923,7 @@ function AnalyticsPageContent() {
                           <XAxis dataKey="hour" />
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
-                          <Bar dataKey="checks" fill={CHART_COLORS.secondary} />
+                          <Bar dataKey={chartModes.hourlyStats === 'count' ? 'checks' : 'sum'} fill={CHART_COLORS.secondary} />
                         </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
@@ -709,19 +936,31 @@ function AnalyticsPageContent() {
             {visibleCharts.topExpeditors && (
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    {t('topExpeditors')}
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      {t('topExpeditors')}
+                    </CardTitle>
+                    {/* Count/Sum Toggle */}
+                    <Select value={chartModes.topExpeditors} onValueChange={(value: 'count' | 'sum') => toggleChartMode('topExpeditors')}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="count">Count</SelectItem>
+                        <SelectItem value="sum">Sum</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={400}>
-                    <BarChart data={expeditorChartData} layout="horizontal">
+                    <BarChart data={expeditorChartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" />
-                      <YAxis dataKey="name" type="category" width={120} />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="checks" fill={CHART_COLORS.accent} />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                      <YAxis />
+                      <Tooltip content={<ExpeditorTooltip />} />
+                      <Bar dataKey={chartModes.topExpeditors === 'count' ? 'checks' : 'sum'} fill={CHART_COLORS.accent} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -733,10 +972,22 @@ function AnalyticsPageContent() {
               {visibleCharts.topProjects && (
                 <Card className="shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Package className="h-5 w-5" />
-                      {t('topProjects')}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        {t('topProjects')}
+                      </CardTitle>
+                      {/* Count/Sum Toggle */}
+                      <Select value={chartModes.topProjects} onValueChange={(value: 'count' | 'sum') => toggleChartMode('topProjects')}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="count">Count</SelectItem>
+                          <SelectItem value="sum">Sum</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -745,7 +996,7 @@ function AnalyticsPageContent() {
                         <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
                         <YAxis />
                         <Tooltip content={<CustomTooltip />} />
-                        <Bar dataKey="checks" fill={CHART_COLORS.purple} />
+                        <Bar dataKey={chartModes.topProjects === 'count' ? 'checks' : 'sum'} fill={CHART_COLORS.purple} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -755,10 +1006,22 @@ function AnalyticsPageContent() {
               {visibleCharts.topCities && (
                 <Card className="shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5" />
-                      {t('topCities')}
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5" />
+                        {t('topCities')}
+                      </CardTitle>
+                      {/* Count/Sum Toggle */}
+                      <Select value={chartModes.topCities} onValueChange={(value: 'count' | 'sum') => toggleChartMode('topCities')}>
+                        <SelectTrigger className="w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="count">Count</SelectItem>
+                          <SelectItem value="sum">Sum</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={300}>
@@ -767,7 +1030,7 @@ function AnalyticsPageContent() {
                         <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
                         <YAxis />
                         <Tooltip content={<CustomTooltip />} />
-                        <Bar dataKey="checks" fill={CHART_COLORS.pink} />
+                        <Bar dataKey={chartModes.topCities === 'count' ? 'checks' : 'sum'} fill={CHART_COLORS.pink} />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -779,10 +1042,22 @@ function AnalyticsPageContent() {
             {visibleCharts.warehouseDistribution && (
               <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    {t('warehouseDistribution')}
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      {t('warehouseDistribution')}
+                    </CardTitle>
+                    {/* Count/Sum Toggle */}
+                    <Select value={chartModes.warehouseDistribution} onValueChange={(value: 'count' | 'sum') => toggleChartMode('warehouseDistribution')}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="count">Count</SelectItem>
+                        <SelectItem value="sum">Sum</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -791,7 +1066,7 @@ function AnalyticsPageContent() {
                       <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
                       <YAxis />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="checks" fill={CHART_COLORS.indigo} />
+                      <Bar dataKey={chartModes.warehouseDistribution === 'count' ? 'checks' : 'sum'} fill={CHART_COLORS.indigo} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
