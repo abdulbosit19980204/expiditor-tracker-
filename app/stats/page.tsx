@@ -1,4 +1,7 @@
 "use client"
+
+import React, { useState, useCallback, useEffect, useMemo, Suspense } from "react"
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,9 +11,6 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { Home, TrendingUp, Download, Search } from "lucide-react"
 import type { Statistics, Project, Sklad, City } from "@/lib/types"
 import { api } from "@/lib/api"
-import { useState, useCallback, useEffect, useMemo } from "react"
-import Link from "next/link"
-import { Suspense } from "react"
 
 function getCurrentMonthRange() {
   const now = new Date()

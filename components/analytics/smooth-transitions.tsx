@@ -1,7 +1,6 @@
 "use client"
 
 import React, { memo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 
 interface SmoothTransitionProps {
   children: React.ReactNode
@@ -9,80 +8,79 @@ interface SmoothTransitionProps {
   delay?: number
 }
 
-// Smooth fade in transition
+// Smooth fade in transition (CSS-based for React 19 compatibility)
 export const FadeIn = memo<SmoothTransitionProps>(({ children, className, delay = 0 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3, delay }}
-      className={className}
+    <div
+      className={`transition-all duration-300 ease-out opacity-0 animate-fade-in ${className || ''}`}
+      style={{ 
+        animationDelay: `${delay}ms`,
+        animationFillMode: 'forwards'
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   )
 })
 
 FadeIn.displayName = "FadeIn"
 
-// Smooth slide in transition
+// Smooth slide in transition (CSS-based for React 19 compatibility)
 export const SlideIn = memo<SmoothTransitionProps>(({ children, className, delay = 0 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
-      className={className}
+    <div
+      className={`transition-all duration-400 ease-out opacity-0 transform -translate-x-4 animate-slide-in ${className || ''}`}
+      style={{ 
+        animationDelay: `${delay}ms`,
+        animationFillMode: 'forwards'
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   )
 })
 
 SlideIn.displayName = "SlideIn"
 
-// Scale in transition for cards
+// Scale in transition for cards (CSS-based for React 19 compatibility)
 export const ScaleIn = memo<SmoothTransitionProps>(({ children, className, delay = 0 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3, delay, ease: "easeOut" }}
-      className={className}
+    <div
+      className={`transition-all duration-300 ease-out opacity-0 transform scale-95 animate-scale-in ${className || ''}`}
+      style={{ 
+        animationDelay: `${delay}ms`,
+        animationFillMode: 'forwards'
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   )
 })
 
 ScaleIn.displayName = "ScaleIn"
 
-// Staggered animation for lists
+// Staggered animation for lists (CSS-based for React 19 compatibility)
 export const StaggeredList = memo<{
   children: React.ReactNode
   className?: string
   staggerDelay?: number
 }>(({ children, className, staggerDelay = 0.1 }) => {
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: {
-            staggerChildren: staggerDelay
-          }
-        }
-      }}
-      className={className}
-    >
-      {children}
-    </motion.div>
+    <div className={`staggered-list ${className || ''}`}>
+      {React.Children.map(children, (child, index) => (
+        <div
+          key={index}
+          className="staggered-item opacity-0 transform translate-y-4 transition-all duration-300 ease-out"
+          style={{ 
+            animationDelay: `${index * staggerDelay * 1000}ms`,
+            animationFillMode: 'forwards',
+            animationName: 'fadeInUp'
+          }}
+        >
+          {child}
+        </div>
+      ))}
+    </div>
   )
 })
 
@@ -94,39 +92,30 @@ export const StaggeredItem = memo<{
   className?: string
 }>(({ children, className }) => {
   return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
-      }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className={className}
-    >
+    <div className={`transition-all duration-300 ease-out ${className || ''}`}>
       {children}
-    </motion.div>
+    </div>
   )
 })
 
 StaggeredItem.displayName = "StaggeredItem"
 
-// Loading skeleton with animation
+// Loading skeleton with animation (CSS-based for React 19 compatibility)
 export const LoadingSkeleton = memo<{
   className?: string
   lines?: number
 }>(({ className, lines = 3 }) => {
   return (
-    <div className={`animate-pulse ${className}`}>
+    <div className={`animate-pulse ${className || ''}`}>
       {Array.from({ length: lines }).map((_, index) => (
-        <motion.div
+        <div
           key={index}
-          initial={{ opacity: 0.3 }}
-          animate={{ opacity: [0.3, 0.7, 0.3] }}
-          transition={{ 
-            duration: 1.5, 
-            repeat: Infinity, 
-            delay: index * 0.1 
+          className="bg-gray-200 dark:bg-gray-700 h-4 rounded mb-2 animate-skeleton-pulse"
+          style={{ 
+            animationDelay: `${index * 100}ms`,
+            animationDuration: '1.5s',
+            animationIterationCount: 'infinite'
           }}
-          className="bg-gray-200 dark:bg-gray-700 h-4 rounded mb-2"
         />
       ))}
     </div>
@@ -135,64 +124,55 @@ export const LoadingSkeleton = memo<{
 
 LoadingSkeleton.displayName = "LoadingSkeleton"
 
-// Smooth chart transition
+// Smooth chart transition (CSS-based for React 19 compatibility)
 export const ChartTransition = memo<{
   children: React.ReactNode
   className?: string
   dataLength?: number
 }>(({ children, className, dataLength = 0 }) => {
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={dataLength} // Re-animate when data changes
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 1.05 }}
-        transition={{ duration: 0.4, ease: "easeInOut" }}
-        className={className}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      key={dataLength} // Re-animate when data changes
+      className={`transition-all duration-400 ease-in-out opacity-0 transform scale-95 animate-chart-in ${className || ''}`}
+      style={{ animationFillMode: 'forwards' }}
+    >
+      {children}
+    </div>
   )
 })
 
 ChartTransition.displayName = "ChartTransition"
 
-// Hover animations for interactive elements
+// Hover animations for interactive elements (CSS-based for React 19 compatibility)
 export const HoverScale = memo<{
   children: React.ReactNode
   className?: string
   scale?: number
 }>(({ children, className, scale = 1.02 }) => {
   return (
-    <motion.div
-      whileHover={{ scale }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className={className}
+    <div
+      className={`transition-transform duration-200 ease-out hover:scale-105 ${className || ''}`}
+      style={{ '--hover-scale': scale } as React.CSSProperties}
     >
       {children}
-    </motion.div>
+    </div>
   )
 })
 
 HoverScale.displayName = "HoverScale"
 
-// Smooth page transitions
+// Smooth page transitions (CSS-based for React 19 compatibility)
 export const PageTransition = memo<{
   children: React.ReactNode
   className?: string
 }>(({ children, className }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
-      className={className}
+    <div
+      className={`transition-all duration-500 ease-in-out opacity-0 transform translate-y-4 animate-page-in ${className || ''}`}
+      style={{ animationFillMode: 'forwards' }}
     >
       {children}
-    </motion.div>
+    </div>
   )
 })
 

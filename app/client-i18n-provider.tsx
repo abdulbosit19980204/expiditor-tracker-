@@ -8,9 +8,12 @@ import simpleI18n from "../lib/simple-i18n"
 const mockI18n = {
   ...simpleI18n,
   // Add any missing methods that components might expect
-  on: () => () => {}, // Mock event listener
-  off: () => {}, // Mock event remover
+  on: (event: string, callback: () => void) => simpleI18n.on(event, callback),
+  off: (event: string, callback: () => void) => simpleI18n.off(event, callback),
   emit: () => {}, // Mock event emitter
+  isInitialized: true, // Always true for our simple implementation
+  language: simpleI18n.getLanguage(), // Get current language
+  changeLanguage: (lng: string) => simpleI18n.changeLanguage(lng), // Use simpleI18n's changeLanguage
 }
 
 export function ClientI18nProvider({ children }: { children: React.ReactNode }) {

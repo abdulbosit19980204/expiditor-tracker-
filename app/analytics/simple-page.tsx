@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react"
+import React, { useState, useEffect, useCallback, useMemo, Suspense, memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -133,7 +133,7 @@ interface FilterState {
   status: string
 }
 
-function AnalyticsPageContent() {
+function SimpleAnalyticsPageContent() {
   const { t } = useTranslation()
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
@@ -1066,7 +1066,7 @@ function AnalyticsPageContent() {
   )
 }
 
-export default function AnalyticsPage() {
+export default function SimpleAnalyticsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6">
@@ -1078,7 +1078,7 @@ export default function AnalyticsPage() {
         </div>
       </div>
     }>
-      <AnalyticsPageContent />
+      <SimpleAnalyticsPageContent />
     </Suspense>
   )
 }
