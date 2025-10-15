@@ -19,6 +19,15 @@
     return originalForEach.call(this, callback, thisArg);
   };
 
+  // Also override Object.prototype.toString to prevent issues
+  const originalToString = Object.prototype.toString;
+  Object.prototype.toString = function() {
+    if (this == null) {
+      return '[object Null]';
+    }
+    return originalToString.call(this);
+  };
+
   // Override Array.prototype.map
   const originalMap = Array.prototype.map;
   Array.prototype.map = function(callback, thisArg) {

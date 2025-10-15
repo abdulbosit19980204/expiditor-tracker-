@@ -31,6 +31,28 @@ export default function RootLayout({
       <head>
         <meta name="telegram-web-app-capable" content="yes" />
         <meta name="telegram-web-app-status-bar-style" content="default" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Immediate error fix - runs before any other scripts
+              (function() {
+                console.log("[Immediate Fix] Applying array method overrides");
+                const originalForEach = Array.prototype.forEach;
+                Array.prototype.forEach = function(callback, thisArg) {
+                  if (this == null) {
+                    console.warn("[Immediate Fix] forEach called on null/undefined, skipping");
+                    return;
+                  }
+                  if (typeof callback !== 'function') {
+                    throw new TypeError('forEach callback must be a function');
+                  }
+                  return originalForEach.call(this, callback, thisArg);
+                };
+                console.log("[Immediate Fix] Array method overrides applied");
+              })();
+            `,
+          }}
+        />
         <script src="/global-error-fix.js" defer></script>
       </head>
       <body className={inter.className}>

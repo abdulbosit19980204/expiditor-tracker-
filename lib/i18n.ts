@@ -338,14 +338,27 @@ const resources = {
   },
 }
 
-// Initialize i18n with comprehensive error handling
+// Initialize i18n with NO automatic detection to prevent forEach errors
 try {
+  // Get saved language from localStorage manually (safe way)
+  let initialLanguage = "en"
+  if (typeof window !== "undefined") {
+    try {
+      const savedLang = localStorage.getItem("i18nextLng")
+      if (savedLang && ["en", "uz", "ru"].includes(savedLang)) {
+        initialLanguage = savedLang
+      }
+    } catch (error) {
+      console.warn("[i18n] Failed to read saved language:", error)
+    }
+  }
+
   i18n
     .use(initReactI18next)
     .init({
       resources,
       fallbackLng: "en",
-      lng: "en", // Explicitly set initial language
+      lng: initialLanguage, // Use manually loaded language
       debug: false,
       load: "languageOnly", // Only use language codes like 'en', not 'en-US'
 
@@ -353,19 +366,8 @@ try {
         escapeValue: false,
       },
 
-      detection: {
-        // Disable automatic detection to prevent forEach errors
-        order: ["localStorage"],
-        lookupLocalStorage: "i18nextLng",
-        caches: ["localStorage"],
-        cookieMinutes: 10080, // 7 days
-
-        // Simplified language detection that never calls problematic methods
-        convertDetectedLanguage: (lng) => {
-          // Always return English to prevent any detection issues
-          return "en"
-        },
-      },
+      // COMPLETELY DISABLE detection to prevent forEach errors
+      detection: false,
 
       saveMissing: false,
 
@@ -393,6 +395,9 @@ export const changeLanguage = (lng: string) => {
       // Validate language code
       const validLanguages = ["en", "uz", "ru"]
       const safeLanguage = validLanguages.includes(lng) ? lng : "en"
+
+      // Manually save to localStorage since detection is disabled
+      localStorage.setItem("i18nextLng", safeLanguage)
 
       return i18n.changeLanguage(safeLanguage).catch((error) => {
         console.warn("[i18n] Language change failed:", error)
