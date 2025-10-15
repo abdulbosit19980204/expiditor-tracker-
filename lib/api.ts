@@ -11,15 +11,8 @@ const REQUEST_CONFIG = {
   cache: "no-store" as RequestCache,
 }
 
-// Enhanced error handling with user-friendly messages
-interface ApiError {
-  message: string
-  status?: number
-  isNetworkError: boolean
-}
-
 // Safe request helper with better error handling and retry logic
-async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<{ data: T | null; error: ApiError | null }> {
+async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | null> {
   const url = `${API_BASE_URL}${endpoint}`
 
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -27,39 +20,22 @@ async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<{ data:
       const res = await fetch(url, REQUEST_CONFIG)
 
       if (!res.ok) {
-        const errorMessage = res.status === 500 
-          ? "Server xatoligi yuz berdi. Iltimos, keyinroq urinib ko'ring."
-          : res.status === 404
-          ? "Ma'lumot topilmadi."
-          : res.status === 403
-          ? "Ruxsat yo'q."
-          : `HTTP ${res.status}: ${res.statusText}`
-        
-        throw new Error(errorMessage)
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`)
       }
 
       const data = await res.json()
-      return { data: data as T, error: null }
+      return data as T
     } catch (err) {
-      const isLastAttempt = attempt === retries
-      
-      if (isLastAttempt) {
-        const error: ApiError = {
-          message: err instanceof Error ? err.message : "Noma'lum xatolik yuz berdi",
-          status: err instanceof Error && 'status' in err ? (err as any).status : undefined,
-          isNetworkError: err instanceof TypeError && err.message.includes('fetch')
-        }
-        
+      if (attempt === retries) {
         console.error(`API request failed for ${endpoint} after ${retries + 1} attempts:`, err)
-        return { data: null, error }
+        return null
       }
-      
       // Wait before retry
       await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
     }
   }
 
-  return { data: null, error: { message: "Maksimal urinishlar soniga yetildi", isNetworkError: false } }
+  return null
 }
 
 // Transform backend data to frontend format
@@ -105,53 +81,33 @@ function transformCheck(item: any): Check {
   }
 }
 
-// Projects API with error handling
-export async function getProjects(): Promise<{ data: Project[]; error: ApiError | null }> {
-  const { data, error } = await apiRequestSafe<Project[] | { results: any[] }>("/projects/")
+// Projects API
+export async function getProjects(): Promise<Project[]> {
+  const data = await apiRequestSafe<Project[] | { results: any[] }>("/projects/")
 
-  if (error) {
-    return { data: [], error }
-  }
-
-  if (!data) {
-    return { 
-      data: [], 
-      error: { message: "Ma'lumotlar yuklanmadi", isNetworkError: false } 
-    }
-  }
+  if (!data) return []
 
   // Handle both paginated and non-paginated responses
   const results = Array.isArray(data) ? data : data.results || []
 
-  const projects = results.map((item) => ({
+  return results.map((item) => ({
     id: item.id?.toString() || "",
     project_name: item.project_name || "",
     project_description: item.project_description || "",
     created_at: item.created_at || new Date().toISOString(),
     updated_at: item.updated_at || new Date().toISOString(),
   }))
-
-  return { data: projects, error: null }
 }
 
-// Sklads API with error handling
-export async function getSklads(): Promise<{ data: Sklad[]; error: ApiError | null }> {
-  const { data, error } = await apiRequestSafe<Sklad[] | { results: any[] }>("/sklad/")
+// Sklads API
+export async function getSklads(): Promise<Sklad[]> {
+  const data = await apiRequestSafe<Sklad[] | { results: any[] }>("/sklad/")
 
-  if (error) {
-    return { data: [], error }
-  }
-
-  if (!data) {
-    return { 
-      data: [], 
-      error: { message: "Sklad ma'lumotlari yuklanmadi", isNetworkError: false } 
-    }
-  }
+  if (!data) return []
 
   const results = Array.isArray(data) ? data : data.results || []
 
-  const sklads = results.map((item) => ({
+  return results.map((item) => ({
     id: item.id?.toString() || "",
     sklad_name: item.sklad_name || "",
     sklad_code: item.sklad_code || "",
@@ -159,28 +115,17 @@ export async function getSklads(): Promise<{ data: Sklad[]; error: ApiError | nu
     created_at: item.created_at || new Date().toISOString(),
     updated_at: item.updated_at || new Date().toISOString(),
   }))
-
-  return { data: sklads, error: null }
 }
 
-// Cities API with error handling
-export async function getCities(): Promise<{ data: City[]; error: ApiError | null }> {
-  const { data, error } = await apiRequestSafe<City[] | { results: any[] }>("/city/")
+// Cities API
+export async function getCities(): Promise<City[]> {
+  const data = await apiRequestSafe<City[] | { results: any[] }>("/city/")
 
-  if (error) {
-    return { data: [], error }
-  }
-
-  if (!data) {
-    return { 
-      data: [], 
-      error: { message: "Shahar ma'lumotlari yuklanmadi", isNetworkError: false } 
-    }
-  }
+  if (!data) return []
 
   const results = Array.isArray(data) ? data : data.results || []
 
-  const cities = results.map((item) => ({
+  return results.map((item) => ({
     id: item.id?.toString() || "",
     city_name: item.city_name || "",
     city_code: item.city_code || "",
@@ -188,34 +133,21 @@ export async function getCities(): Promise<{ data: City[]; error: ApiError | nul
     created_at: item.created_at || new Date().toISOString(),
     updated_at: item.updated_at || new Date().toISOString(),
   }))
-
-  return { data: cities, error: null }
 }
 
-// Filials API with error handling
-export async function getFilials(): Promise<{ data: Filial[]; error: ApiError | null }> {
-  const { data, error } = await apiRequestSafe<Filial[] | { results: any[] }>("/filial/")
+// Filials API
+export async function getFilials(): Promise<Filial[]> {
+  const data = await apiRequestSafe<Filial[] | { results: any[] }>("/filial/")
 
-  if (error) {
-    return { data: [], error }
-  }
-
-  if (!data) {
-    return { 
-      data: [], 
-      error: { message: "Filial ma'lumotlari yuklanmadi", isNetworkError: false } 
-    }
-  }
+  if (!data) return []
 
   const results = Array.isArray(data) ? data : data.results || []
 
-  const filials = results.map((item) => ({
+  return results.map((item) => ({
     id: item.id?.toString() || "",
     filial_name: item.filial_name || "",
     filial_code: item.filial_code || "",
   }))
-
-  return { data: filials, error: null }
 }
 
 // Expeditors API with optimized filtering

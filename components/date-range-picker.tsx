@@ -89,7 +89,6 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTranslation } from "react-i18next"
 
 interface DatePickerWithRangeProps {
   dateRange: { from: Date | undefined; to: Date | undefined }
@@ -98,7 +97,6 @@ interface DatePickerWithRangeProps {
 }
 
 export function DatePickerWithRange({ dateRange, onDateRangeChange, className }: DatePickerWithRangeProps) {
-  const { t } = useTranslation()
   const [startDate, setStartDate] = React.useState<Date | null>(dateRange.from || null)
   const [endDate, setEndDate] = React.useState<Date | null>(dateRange.to || null)
 
@@ -123,7 +121,7 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
         endDate={endDate}
         onChange={handleChange}
         isClearable
-        placeholderText={t("pickDateRange")}
+        placeholderText="Pick a date range"
         className="pl-10 w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
         dateFormat="MMM dd, yyyy"
       />

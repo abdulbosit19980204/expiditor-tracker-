@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,7 @@ import { fetchGlobalStatistics, fetchProjects, fetchSklads, fetchCities } from "
 import type { GlobalStatistics } from "@/lib/types"
 
 function StatsContentInner() {
+  const searchParams = useSearchParams()
   const [stats, setStats] = useState<GlobalStatistics | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -184,14 +186,14 @@ function StatsContentInner() {
             {/* Project Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Project</label>
-              <Select value={selectedProject || "all"} onValueChange={(value) => setSelectedProject(value === "all" ? "" : value)}>
+              <Select value={selectedProject} onValueChange={setSelectedProject}>
                 <SelectTrigger>
                   <SelectValue placeholder="All projects" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All projects</SelectItem>
                   {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id?.toString() || `project-${project.id}`}>
+                    <SelectItem key={project.id} value={project.id.toString()}>
                       {project.name}
                     </SelectItem>
                   ))}
@@ -202,14 +204,14 @@ function StatsContentInner() {
             {/* Warehouse Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Warehouse</label>
-              <Select value={selectedSklad || "all"} onValueChange={(value) => setSelectedSklad(value === "all" ? "" : value)}>
+              <Select value={selectedSklad} onValueChange={setSelectedSklad}>
                 <SelectTrigger>
                   <SelectValue placeholder="All warehouses" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All warehouses</SelectItem>
                   {sklads.map((sklad) => (
-                    <SelectItem key={sklad.id} value={sklad.id?.toString() || `sklad-${sklad.id}`}>
+                    <SelectItem key={sklad.id} value={sklad.id.toString()}>
                       {sklad.name}
                     </SelectItem>
                   ))}
@@ -220,14 +222,14 @@ function StatsContentInner() {
             {/* City Filter */}
             <div className="space-y-2">
               <label className="text-sm font-medium">City</label>
-              <Select value={selectedCity || "all"} onValueChange={(value) => setSelectedCity(value === "all" ? "" : value)}>
+              <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger>
                   <SelectValue placeholder="All cities" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All cities</SelectItem>
                   {cities.map((city) => (
-                    <SelectItem key={city.id} value={city.id?.toString() || `city-${city.id}`}>
+                    <SelectItem key={city.id} value={city.id.toString()}>
                       {city.name}
                     </SelectItem>
                   ))}

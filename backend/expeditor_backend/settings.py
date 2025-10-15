@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_filters',
-    'drf_spectacular',  # API documentation
     'expeditor_app',
 ]
 
@@ -121,7 +120,6 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
-    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',  # API documentation
 }
 
 # CORS settings
@@ -151,38 +149,3 @@ CORS_ALLOWED_HEADERS = [
 # settings.py
 LAST_UPDATE_DATE_PATH = BASE_DIR / 'last_update.txt'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 7000
-
-# DRF Spectacular Configuration for API Documentation
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'Expeditor Tracker API',
-    'DESCRIPTION': '''
-    # Expeditor Tracker API Documentation
-    
-    This API provides comprehensive functionality for managing expeditors, checks, and delivery tracking.
-    
-    ## Key Features
-    - **Expeditor Management**: Track expeditor information and performance
-    - **Check Processing**: Manage delivery checks and payment details
-    - **Statistics & Analytics**: Get detailed statistics and reports
-    - **Real-time Updates**: Live data synchronization
-    
-    ## Authentication
-    Currently, this API operates without authentication for development purposes.
-    
-    ## Rate Limiting
-    No rate limiting is currently implemented.
-    
-    ## Support
-    For technical support, contact the development team.
-    ''',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'SCHEMA_PATH_PREFIX': '/api/',
-    'COMPONENT_SPLIT_REQUEST': True,
-    'SORT_OPERATIONS': False,
-    'ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE': False,
-    # 'POSTPROCESSING_HOOKS': [
-    #     'drf_spectacular.contrib.djangorestframework_camel_case.camelize_serializer_fields'
-    # ],
-    # 'CAMELIZE_NAMES': True,
-}

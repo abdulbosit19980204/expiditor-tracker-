@@ -7,14 +7,12 @@ import { TrendingUp, Users, MapPin, CreditCard, Calendar, DollarSign } from "luc
 import type { Statistics } from "@/lib/types"
 import { useState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useTranslation } from "../lib/simple-i18n"
 
 interface StatisticsPanelProps {
   statistics: Statistics | null
 }
 
 export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
-  const { t } = useTranslation()
   const [selectedMonth, setSelectedMonth] = useState("6") // July (0-based)
 
   if (!statistics) {
@@ -173,10 +171,10 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
             {Object.entries(statistics.paymentMethods).map(([method, amount]) => {
               const percentage = totalPayments > 0 ? (amount / totalPayments) * 100 : 0
               const methodLabels: Record<string, string> = {
-                nalichniy: t("cash"),
-                uzcard: t("uzcard"),
-                humo: t("humo"),
-                click: t("click"),
+                nalichniy: "Cash",
+                uzcard: "UzCard",
+                humo: "Humo",
+                click: "Click",
               }
 
               return (
@@ -286,7 +284,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
             </CardTitle>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-40 mt-2">
-                <SelectValue placeholder={t("selectMonth")} />
+                <SelectValue placeholder="Oy tanlang" />
               </SelectTrigger>
               <SelectContent>
                 {/* {Array.from({ length: 12 }, (_, i) => {
@@ -313,7 +311,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           <CardContent>
             <div className="grid grid-cols-7 gap-1 text-xs text-center">
               {/* Weekday headers */}
-              {[t("monday"), t("tuesday"), t("wednesday"), t("thursday"), t("friday"), t("saturday"), t("sunday")].map((day) => (
+              {["Du", "Se", "Ch", "Pa", "Ju", "Sh", "Ya"].map((day) => (
                 <div key={day} className="font-medium text-gray-600">
                   {day}
                 </div>

@@ -7,7 +7,6 @@ import { Navigation, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LoadingSpinner } from "@/components/loading-spinner";
-import { useTranslation } from "react-i18next";
 import type { Check, Expeditor } from "@/lib/types";
 
 interface MapComponentProps {
@@ -44,7 +43,6 @@ export function MapComponent({
   onCheckClick,
   focusLocation,
 }: MapComponentProps) {
-  const { t } = useTranslation();
   const hasChecks = Array.isArray(checks) && checks.length > 0;
 
   return (
@@ -96,7 +94,7 @@ export function MapComponent({
         <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
           <LoadingSpinner size="lg" />
           <span className="ml-2 text-gray-600">
-            {loading ? t("loadingChecksEllipsis") : t("noData")}
+            {loading ? "Loading checks…" : "No data"}
           </span>
         </div>
       )}

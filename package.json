@@ -9,7 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
@@ -46,9 +45,6 @@
     "console": "latest",
     "date-fns": "latest",
     "embla-carousel-react": "latest",
-    "framer-motion": "latest",
-    "i18next": "latest",
-    "i18next-browser-languagedetector": "latest",
     "input-otp": "latest",
     "leaflet": "latest",
     "lucide-react": "^0.454.0",
@@ -60,7 +56,6 @@
     "react-day-picker": "latest",
     "react-dom": "^19",
     "react-hook-form": "latest",
-    "react-i18next": "latest",
     "react-leaflet": "latest",
     "react-resizable-panels": "latest",
     "recharts": "latest",

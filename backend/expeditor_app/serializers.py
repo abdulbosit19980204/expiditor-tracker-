@@ -56,9 +56,9 @@ class CheckSerializer(serializers.ModelSerializer):
     check_detail = serializers.SerializerMethodField()
     
     def get_check_detail(self, obj):
-        # Optimized: Get check detail efficiently
-        # This will be optimized further in the viewset using bulk operations
+        # Optimized: Use select_related if available, otherwise fetch efficiently
         try:
+            # Try to get check detail if it exists
             check_detail = CheckDetail.objects.get(check_id=obj.check_id)
             return CheckDetailSerializer(check_detail).data
         except CheckDetail.DoesNotExist:

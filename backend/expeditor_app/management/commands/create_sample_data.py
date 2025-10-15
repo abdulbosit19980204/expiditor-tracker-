@@ -29,7 +29,7 @@ class Command(BaseCommand):
             {'sklad_name': 'Markaziy Sklad', 'sklad_code': 'MS001'},
             {'sklad_name': 'ANDIJON Sklad', 'sklad_code': 'SS002'},
             {'sklad_name': 'NAMANGAN Sklad', 'sklad_code': 'SS003'},
-            {'sklad_name': 'TOSHKENT Sklad', 'sklad_code': 'SS004'},
+            {'sklad_name': 'ANDIJON Sklad', 'sklad_code': 'SS004'},
             {'sklad_name': 'Janubiy Sklad', 'sklad_code': 'JS005'},
             {'sklad_name': 'FARG\'ONA Sklad', 'sklad_code': 'SS006'},
             {'sklad_name': 'BUXORO Sklad', 'sklad_code': 'SS007'},
@@ -75,12 +75,9 @@ class Command(BaseCommand):
         statuses = ['delivered', 'failed', 'pending']
         
         for i in range(200):  # Create 200 sample checks
-            # Random date in last 30 days - timezone aware
+            # Random date in last 30 days
             days_ago = random.randint(0, 30)
             check_date = timezone.now() - timedelta(days=days_ago)
-            # Ensure timezone awareness
-            if not check_date.tzinfo:
-                check_date = timezone.make_aware(check_date)
             
             check_id = f"CHK{str(i+1).zfill(6)}"
             

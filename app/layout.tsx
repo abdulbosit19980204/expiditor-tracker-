@@ -4,17 +4,20 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import ErrorBoundary from "../components/error-boundary"
-import simpleI18n from "@/lib/simple-i18n"
 
 const inter = Inter({ subsets: ["latin"] })
 
-const { I18nProvider } = simpleI18n
-
 export const metadata: Metadata = {
-  title: "Expeditor Tracker",
-  description: "Track and manage expeditor deliveries",
-    generator: 'v0.app'
+  title: "Expeditor Tracker - Modern Delivery Management",
+  description: "Track delivery expeditors and their locations with real-time updates",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  themeColor: "#ffffff",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Expeditor Tracker",
+  },
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -24,13 +27,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="telegram-web-app-capable" content="yes" />
+        <meta name="telegram-web-app-status-bar-style" content="default" />
+      </head>
       <body className={inter.className}>
-        <ErrorBoundary>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <I18nProvider initialLocale="uz">{children}</I18nProvider>
-            <Toaster />
-          </ThemeProvider>
-        </ErrorBoundary>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

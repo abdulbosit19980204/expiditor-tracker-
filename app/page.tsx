@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
 import Link from "next/link"
-import { useTranslation } from "../lib/simple-i18n"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -17,13 +16,7 @@ import { MapComponent } from "@/components/map-component"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
-import { LanguageSwitcher } from "@/components/language-switcher"
-import { SettingsPanel } from "@/components/settings-panel"
-import { HelpModal } from "@/components/help-modal"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { useUserPreferences } from "@/hooks/use-user-preferences"
-import { useNetworkStatus } from "@/hooks/use-network-status"
-import { ErrorToast } from "@/components/error-toast"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -45,21 +38,10 @@ function getCurrentMonthRange() {
 }
 
 const ExpeditorTracker = memo(function ExpeditorTracker() {
-  const { t } = useTranslation()
   const isMobile = useIsMobile()
-  const { preferences, isLoaded } = useUserPreferences()
-  const { isOnline, isSlowConnection } = useNetworkStatus()
-
-  // Error state management
-  const [apiError, setApiError] = useState<{
-    message: string
-    status?: number
-    isNetworkError: boolean
-  } | null>(null)
 
   // State management
   const [checks, setChecks] = useState<Check[]>([])
-  const [mapKey, setMapKey] = useState(0) // Key to force map re-mount
   const [expeditors, setExpeditors] = useState<Expeditor[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
@@ -88,87 +70,30 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     status: "",
   }))
 
-  // Load initial data (only once) with error handling
+  // Load initial data (only once)
   useEffect(() => {
     const loadInitialData = async () => {
-      if (!isOnline) {
-        setApiError({
-          message: "Internet aloqasi yo'q. Ma'lumotlar yuklanmadi.",
-          isNetworkError: true
-        })
-        setIsLoadingInitial(false)
-        return
-      }
-
       setIsLoadingInitial(true)
-      setApiError(null)
-      
       try {
-        const [projectsResult, skladsResult, citiesResult, filialsResult] = await Promise.all([
+        const [projectsData, skladsData, citiesData, filialsData] = await Promise.all([
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
           api.getFilials(),
         ])
 
-        // Check for errors in each API call
-        if (projectsResult.error) {
-          setApiError(projectsResult.error)
-          return
-        }
-        if (skladsResult.error) {
-          setApiError(skladsResult.error)
-          return
-        }
-        if (citiesResult.error) {
-          setApiError(citiesResult.error)
-          return
-        }
-        if (filialsResult.error) {
-          setApiError(filialsResult.error)
-          return
-        }
-
-        setProjects(projectsResult.data || [])
-        setSklads(skladsResult.data || [])
-        setCities(citiesResult.data || [])
-        setFilials(filialsResult.data || [])
+        setProjects(projectsData)
+        setSklads(skladsData)
+        setCities(citiesData)
+        setFilials(filialsData)
       } catch (error) {
         console.error("Error loading initial data:", error)
-        setApiError({
-          message: "Ma'lumotlarni yuklashda xatolik yuz berdi",
-          isNetworkError: false
-        })
       } finally {
         setIsLoadingInitial(false)
       }
     }
 
     loadInitialData()
-  }, [isOnline])
-
-  // Handle visibility change to refresh map when returning from other pages
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Page became visible, refresh map
-        setMapKey(prev => prev + 1)
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    
-    // Also handle focus events
-    const handleFocus = () => {
-      setMapKey(prev => prev + 1)
-    }
-    
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
-    }
   }, [])
 
   // Load expeditors when filial filter changes
@@ -327,17 +252,11 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
           <h1 className="text-lg font-semibold flex items-center gap-2">
             <Users className="h-5 w-5" />
-            {t("expeditorTracker")}
+            Expeditor Tracker
           </h1>
           <div className="flex items-center gap-2">
-            <LanguageSwitcher variant="button" className="hidden sm:flex" />
-            <SettingsPanel className="hidden sm:flex" />
-            <HelpModal className="hidden sm:flex" />
-            <Link
-              href="/statistics"
-              className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
-            >
-              <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
+            <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+              <BarChart3 className="h-4 w-4" /> Stats
             </Link>
           </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -353,18 +272,15 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                     <Users className="h-5 w-5" />
                     Expeditor Tracker
                   </h1>
-                  <div className="mb-3 flex flex-col gap-2">
-                    <Link
-                      href="/analytics"
-                      className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
-                    >
-                      <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
+                  <div className="mb-3">
+                    <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+                      <BarChart3 className="h-4 w-4" /> Open Stats
                     </Link>
                   </div>
 
                   {/* Date Range Filter */}
                   <div className="mb-4">
-                    <label className="text-sm font-medium text-gray-700 mb-2 block">{t("dateRange")}</label>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
                     <DatePickerWithRange
                       dateRange={filters.dateRange}
                       onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
@@ -380,7 +296,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                     >
                       <div className="flex items-center gap-2">
                         <Filter className="h-4 w-4" />
-{t("advancedFilters")}
+                        Advanced Filters
                         {activeFiltersCount > 0 && (
                           <Badge variant="secondary" className="ml-2">
                             {activeFiltersCount}
@@ -394,16 +310,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                       <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
                         {/* Filial Filter */}
                         <div>
-                          <label className="text-xs font-medium text-gray-600 mb-1 block">{t("filial")}</label>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
                           <Select
                             value={filters.filial || "all"}
                             onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder={t("allFilials")} />
+                              <SelectValue placeholder="All Filials" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">{t("allFilials")}</SelectItem>
+                              <SelectItem value="all">All Filials</SelectItem>
                               {filials.map((filial) => (
                                 <SelectItem key={filial.id} value={String(filial.id)}>
                                   {filial.filial_name}
@@ -415,16 +331,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                         {/* Project Filter */}
                         <div>
-                          <label className="text-xs font-medium text-gray-600 mb-1 block">{t("project")}</label>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
                           <Select
                             value={filters.project || "all"}
                             onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder={t("allProjects")} />
+                              <SelectValue placeholder="All Projects" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">{t("allProjects")}</SelectItem>
+                              <SelectItem value="all">All Projects</SelectItem>
                               {projects.map((project) => (
                                 <SelectItem key={project.id} value={project.project_name}>
                                   {project.project_name}
@@ -436,16 +352,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                         {/* Sklad Filter */}
                         <div>
-                          <label className="text-xs font-medium text-gray-600 mb-1 block">{t("warehouse")}</label>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
                           <Select
                             value={filters.sklad || "all"}
                             onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder={t("allWarehouses")} />
+                              <SelectValue placeholder="All Warehouses" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">{t("allWarehouses")}</SelectItem>
+                              <SelectItem value="all">All Warehouses</SelectItem>
                               {sklads.map((sklad) => (
                                 <SelectItem key={sklad.id} value={sklad.sklad_name}>
                                   {sklad.sklad_name}
@@ -457,16 +373,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                         {/* City Filter */}
                         <div>
-                          <label className="text-xs font-medium text-gray-600 mb-1 block">{t("city")}</label>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
                           <Select
                             value={filters.city || "all"}
                             onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder={t("allCities")} />
+                              <SelectValue placeholder="All Cities" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">{t("allCities")}</SelectItem>
+                              <SelectItem value="all">All Cities</SelectItem>
                               {cities.map((city) => (
                                 <SelectItem key={city.id} value={city.city_name}>
                                   {city.city_name}
@@ -478,19 +394,19 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                         {/* Status Filter */}
                         <div>
-                          <label className="text-xs font-medium text-gray-600 mb-1 block">{t("status")}</label>
+                          <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
                           <Select
                             value={filters.status || "all"}
                             onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                           >
                             <SelectTrigger className="h-8">
-                              <SelectValue placeholder={t("allStatuses")} />
+                              <SelectValue placeholder="All Statuses" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">{t("allStatuses")}</SelectItem>
-                              <SelectItem value="delivered">{t("delivered")}</SelectItem>
-                              <SelectItem value="pending">{t("pending")}</SelectItem>
-                              <SelectItem value="failed">{t("failed")}</SelectItem>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              <SelectItem value="delivered">Delivered</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="failed">Failed</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -503,7 +419,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <X className="h-3 w-3 mr-1" />
-{t("clearAllFilters")}
+                            Clear All Filters
                           </Button>
                         )}
                       </div>
@@ -516,7 +432,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                     <Input
-                      placeholder={t("searchExpeditors")}
+                      placeholder="Search expeditors..."
                       value={expeditorSearchQuery}
                       onChange={(e) => setExpeditorSearchQuery(e.target.value)}
                       className="pl-10"
@@ -529,13 +445,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   {isLoadingExpeditors ? (
                     <div className="text-center py-8">
                       <LoadingSpinner size="sm" />
-                      <p className="text-sm text-gray-500 mt-2">{t("loadingExpeditors")}</p>
+                      <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
                     </div>
                   ) : filteredExpeditors.length === 0 ? (
                     <div className="text-center text-gray-500 mt-8">
                       <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p>{t("noExpeditorsFound")}</p>
-                      {filters.filial && <p className="text-xs mt-2">{t("tryChangingFilial")}</p>}
+                      <p>No expeditors with checks found</p>
+                      {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
                     </div>
                   ) : (
                     filteredExpeditors.map((expeditor) => (
@@ -563,7 +479,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                               <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
                               {expeditor.filial && (
                                 <p className="text-xs text-gray-500 mt-1">
-                                  <strong>{t("filial")}:</strong> {expeditor.filial}
+                                  <strong>Filial:</strong> {expeditor.filial}
                                 </p>
                               )}
                             </div>
@@ -585,23 +501,17 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             <div className="p-4 border-b border-gray-200">
               <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                {t("expeditorTracker")}
+                Expeditor Tracker
               </h1>
-              <div className="mb-4 space-y-3">
-                <LanguageSwitcher variant="select" />
-                <SettingsPanel />
-                <HelpModal />
-                <Link
-                  href="/statistics"
-                  className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
-                >
-                  <BarChart3 className="h-4 w-4" /> {t("analyticsDashboard")}
+              <div className="mb-4">
+                <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
+                  <BarChart3 className="h-4 w-4" /> Open Stats
                 </Link>
               </div>
 
               {/* Date Range Filter */}
               <div className="mb-4">
-                <label className="text-sm font-medium text-gray-700 mb-2 block">{t("dateRange")}</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
                 <DatePickerWithRange
                   dateRange={filters.dateRange}
                   onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
@@ -617,7 +527,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 >
                   <div className="flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    {t("advancedFilters")}
+                    Advanced Filters
                     {activeFiltersCount > 0 && (
                       <Badge variant="secondary" className="ml-2">
                         {activeFiltersCount}
@@ -631,16 +541,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
                     {/* Filial Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("filial")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
                       <Select
                         value={filters.filial || "all"}
                         onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                            <SelectValue placeholder={t("allFilials")} />
+                          <SelectValue placeholder="All Filials" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("allFilials")}</SelectItem>
+                          <SelectItem value="all">All Filials</SelectItem>
                           {filials.map((filial) => (
                             <SelectItem key={filial.id} value={String(filial.id)}>
                               {filial.filial_name}
@@ -652,16 +562,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* Project Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("project")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
                       <Select
                         value={filters.project || "all"}
                         onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                            <SelectValue placeholder={t("allProjects")} />
+                          <SelectValue placeholder="All Projects" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("allProjects")}</SelectItem>
+                          <SelectItem value="all">All Projects</SelectItem>
                           {projects.map((project) => (
                             <SelectItem key={project.id} value={project.project_name}>
                               {project.project_name}
@@ -673,16 +583,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* Sklad Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("warehouse")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
                       <Select
                         value={filters.sklad || "all"}
                         onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder={t("allWarehouses")} />
+                          <SelectValue placeholder="All Warehouses" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("allWarehouses")}</SelectItem>
+                          <SelectItem value="all">All Warehouses</SelectItem>
                           {sklads.map((sklad) => (
                             <SelectItem key={sklad.id} value={sklad.sklad_name}>
                               {sklad.sklad_name}
@@ -694,16 +604,16 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* City Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("city")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
                       <Select
                         value={filters.city || "all"}
                         onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder={t("allCities")} />
+                          <SelectValue placeholder="All Cities" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("allCities")}</SelectItem>
+                          <SelectItem value="all">All Cities</SelectItem>
                           {cities.map((city) => (
                             <SelectItem key={city.id} value={city.city_name}>
                               {city.city_name}
@@ -715,19 +625,19 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                     {/* Status Filter */}
                     <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">{t("status")}</label>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
                       <Select
                         value={filters.status || "all"}
                         onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                       >
                         <SelectTrigger className="h-8">
-                          <SelectValue placeholder={t("allStatuses")} />
+                          <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("allStatuses")}</SelectItem>
-                          <SelectItem value="delivered">{t("delivered")}</SelectItem>
-                          <SelectItem value="pending">{t("pending")}</SelectItem>
-                          <SelectItem value="failed">{t("failed")}</SelectItem>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="failed">Failed</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -740,7 +650,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                         className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-3 w-3 mr-1" />
-{t("clearAllFilters")}
+                        Clear All Filters
                       </Button>
                     )}
                   </div>
@@ -753,7 +663,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                 <Input
-                  placeholder={t("searchExpeditors")}
+                  placeholder="Search expeditors..."
                   value={expeditorSearchQuery}
                   onChange={(e) => setExpeditorSearchQuery(e.target.value)}
                   className="pl-10"
@@ -766,13 +676,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               {isLoadingExpeditors ? (
                 <div className="text-center py-8">
                   <LoadingSpinner size="sm" />
-                  <p className="text-sm text-gray-500 mt-2">{t("loadingExpeditors")}</p>
+                  <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
                 </div>
               ) : filteredExpeditors.length === 0 ? (
                 <div className="text-center text-gray-500 mt-8">
                   <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>{t("noExpeditorsFound")}</p>
-                  {filters.filial && <p className="text-xs mt-2">{t("tryChangingFilial")}</p>}
+                  <p>No expeditors with checks found</p>
+                  {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
                 </div>
               ) : (
                 filteredExpeditors.map((expeditor) => (
@@ -800,7 +710,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                           <p className="text-xs text-gray-400">{expeditor.transport_number}</p>
                           {expeditor.filial && (
                             <p className="text-xs text-gray-500 mt-1">
-                              <strong>{t("filial")}:</strong> {expeditor.filial}
+                              <strong>Filial:</strong> {expeditor.filial}
                             </p>
                           )}
                         </div>
@@ -816,7 +726,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         <div className={`flex-1 ${isMobile ? "flex flex-col" : "flex"}`}>
           <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
             <MapComponent
-              key={mapKey}
               checks={checks}
               selectedExpeditor={selectedExpeditor}
               loading={isLoadingChecks}
@@ -834,7 +743,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  {t("checks")}
+                  Checks
                   {selectedExpeditor && <Badge variant="outline">{checks.length}</Badge>}
                 </h2>
 
@@ -842,7 +751,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                      placeholder={t("searchChecks")}
+                      placeholder="Search checks..."
                       value={checkSearchQuery}
                       onChange={(e) => setCheckSearchQuery(e.target.value)}
                       className="pl-10"
@@ -855,17 +764,17 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 {!selectedExpeditor ? (
                   <div className="text-center text-gray-500 mt-8">
                     <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>{t("selectExpeditor")}</p>
+                    <p>Select an expeditor to view checks</p>
                   </div>
                 ) : isLoadingChecks ? (
                   <div className="text-center py-8">
                     <LoadingSpinner size="sm" />
-                    <p className="text-sm text-gray-500 mt-2">{t("loadingChecks")}</p>
+                    <p className="text-sm text-gray-500 mt-2">Loading checks...</p>
                   </div>
                 ) : checks.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
-                    <p>{t("noChecksFound")}</p>
-                    <p className="text-xs mt-2">{t("tryAdjustingFilters")}</p>
+                    <p>No checks found</p>
+                    <p className="text-xs mt-2">Try adjusting the date range or filters</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -888,13 +797,13 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
 
                             <div className="text-xs text-gray-600 space-y-1">
                               <p>
-                                <strong>{t("project")}:</strong> {check.project}
+                                <strong>Project:</strong> {check.project}
                               </p>
                               <p>
-                                <strong>{t("city")}:</strong> {check.city}
+                                <strong>City:</strong> {check.city}
                               </p>
                               <p>
-                                <strong>{t("kkm")}:</strong> {check.kkm_number}
+                                <strong>KKM:</strong> {check.kkm_number}
                               </p>
                             </div>
 
@@ -910,7 +819,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                                   onClick={() => handleShowLocation(check)}
                                 >
                                   <MapPin className="h-3 w-3 mr-1" />
-                                  {t("show")}
+                                  Show
                                 </Button>
                               )}
                             </div>
@@ -918,25 +827,25 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                             <div className="text-xs text-gray-500 space-y-1">
                               {(check.nalichniy || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>{t("cash")}:</span>
+                                  <span>Cash:</span>
                                   <span>{formatCurrency(check.nalichniy || 0)}</span>
                                 </div>
                               )}
                               {(check.uzcard || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>{t("uzcard")}:</span>
+                                  <span>UzCard:</span>
                                   <span>{formatCurrency(check.uzcard || 0)}</span>
                                 </div>
                               )}
                               {(check.humo || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>{t("humo")}:</span>
+                                  <span>Humo:</span>
                                   <span>{formatCurrency(check.humo || 0)}</span>
                                 </div>
                               )}
                               {(check.click || 0) > 0 && (
                                 <div className="flex justify-between">
-                                  <span>{t("click")}:</span>
+                                  <span>Click:</span>
                                   <span>{formatCurrency(check.click || 0)}</span>
                                 </div>
                               )}
@@ -961,17 +870,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
           setSelectedCheck(null)
         }}
         onShowLocation={handleShowLocation}
-      />
-
-      {/* Error Toast */}
-      <ErrorToast
-        error={apiError}
-        onRetry={() => {
-          setApiError(null)
-          // Retry loading data
-          window.location.reload()
-        }}
-        onDismiss={() => setApiError(null)}
       />
     </div>
   )
