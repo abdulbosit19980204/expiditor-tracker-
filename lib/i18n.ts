@@ -6,7 +6,7 @@ import LanguageDetector from "i18next-browser-languagedetector"
 if (typeof window !== "undefined") {
   // Override Array.prototype.forEach to handle null/undefined cases
   const originalForEach = Array.prototype.forEach
-  Array.prototype.forEach = function(callback, thisArg) {
+  Array.prototype.forEach = function (callback, thisArg) {
     if (this == null) {
       console.warn("[Global] forEach called on null/undefined, skipping")
       return
@@ -18,17 +18,40 @@ if (typeof window !== "undefined") {
   }
 }
 
+// Additional safety for language detection
+const createSafeDetector = () => {
+  const detector = new LanguageDetector()
+
+  // Wrap the detect method with additional safety
+  const originalDetect = detector.detect.bind(detector)
+  detector.detect = (...args) => {
+    try {
+      const result = originalDetect(...args)
+      // Ensure result is always a valid language code or array
+      if (!result) return "en"
+      if (typeof result === "string") return result
+      if (Array.isArray(result) && result.length > 0) return result[0]
+      return "en"
+    } catch (error) {
+      console.warn("[i18n] Detection error:", error)
+      return "en"
+    }
+  }
+
+  return detector
+}
+
 // Safe language detector that handles errors gracefully
 const safeLanguageDetector = {
   ...LanguageDetector,
-  detect: function() {
+  detect: function () {
     try {
       return LanguageDetector.detect.apply(this, arguments)
     } catch (error) {
       console.warn("[i18n] Language detection failed, falling back to English:", error)
       return "en"
     }
-  }
+  },
 }
 
 // Translation resources
@@ -291,36 +314,41 @@ const resources = {
 }
 
 i18n
-  .use(safeLanguageDetector)
+  .use(createSafeDetector())
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: "en",
+    lng: "en", // Explicitly set initial language
     debug: false,
+    load: "languageOnly", // Only use language codes like 'en', not 'en-US'
 
     interpolation: {
-      escapeValue: false, // React already does escaping
+      escapeValue: false,
     },
 
     detection: {
-      order: ["localStorage", "navigator", "htmlTag"],
-      caches: ["localStorage"],
-      // Add safer detection options
+      order: ["localStorage", "navigator"],
       lookupLocalStorage: "i18nextLng",
-      lookupSessionStorage: "i18nextLng",
-      lookupFromPathIndex: 0,
-      lookupFromSubdomainIndex: 0,
-      // Prevent errors with browser language detection
+      caches: ["localStorage"],
+      cookieMinutes: 10080, // 7 days
+
+      // Simplify language detection to prevent errors
       convertDetectedLanguage: (lng) => {
-        if (typeof lng === "string" && lng.length > 0) {
-          return lng.split("-")[0] // Use only the primary language code
-        }
-        return "en"
-      }
+        if (!lng || typeof lng !== "string") return "en"
+        // Only return the base language code
+        const baseLng = lng.split("-")[0].split("_")[0].toLowerCase()
+        // Validate against available languages
+        return ["en", "uz", "ru"].includes(baseLng) ? baseLng : "en"
+      },
     },
 
-    // Save language preference
     saveMissing: false,
+
+    // Add these options for better error handling
+    returnEmptyString: false,
+    returnNull: false,
+    returnObjects: false,
   })
 
 export default i18n
@@ -331,7 +359,7 @@ export const changeLanguage = (lng: string) => {
       // Validate language code
       const validLanguages = ["en", "uz", "ru"]
       const safeLanguage = validLanguages.includes(lng) ? lng : "en"
-      
+
       return i18n.changeLanguage(safeLanguage).catch((error) => {
         console.warn("[i18n] Language change failed:", error)
         return Promise.resolve()

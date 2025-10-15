@@ -1,12 +1,6 @@
 import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from "./types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
-
-// Debug logging for API URL
-if (typeof window !== 'undefined') {
-  console.log("[API] Using base URL:", API_BASE_URL)
-  console.log("[API] Environment:", process.env.NODE_ENV)
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 // Request configuration
 const REQUEST_CONFIG = {
