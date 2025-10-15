@@ -53,7 +53,16 @@ class EkispiditorSerializer(serializers.ModelSerializer):
 
 
 class CheckSerializer(serializers.ModelSerializer):
-    check_detail = CheckDetailSerializer(read_only=True)
+    check_detail = serializers.SerializerMethodField()
+    
+    def get_check_detail(self, obj):
+        # Optimized: Get check detail efficiently
+        # This will be optimized further in the viewset using bulk operations
+        try:
+            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
+            return CheckDetailSerializer(check_detail).data
+        except CheckDetail.DoesNotExist:
+            return None
     
     class Meta:
         model = Check

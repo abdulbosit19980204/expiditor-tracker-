@@ -30,6 +30,13 @@ class CheckDetail(models.Model):
     
     class Meta:
         verbose_name_plural = "Check Details"
+        indexes = [
+            # Index for join operations with Check model
+            models.Index(fields=['check_id']),
+            # Index for payment method aggregations
+            models.Index(fields=['total_sum']),
+            models.Index(fields=['check_date']),
+        ]
     
     def __str__(self):
         return self.check_id
@@ -111,6 +118,16 @@ class Check(models.Model):
     class Meta:
         verbose_name_plural = "Checklar"
         ordering = ['-yetkazilgan_vaqti']
+        indexes = [
+            # Performance indexes for frequently queried fields
+            models.Index(fields=['ekispiditor', 'status']),  # For expeditor filtering
+            models.Index(fields=['yetkazilgan_vaqti']),      # For date range queries
+            models.Index(fields=['project']),                # For project filtering
+            models.Index(fields=['city']),                   # For city filtering
+            models.Index(fields=['sklad']),                  # For warehouse filtering
+            models.Index(fields=['status', 'yetkazilgan_vaqti']),  # Compound index for stats
+            models.Index(fields=['check_lat', 'check_lon']), # For location queries
+        ]
     
     def __str__(self):
         return f"Check {self.check_id} by {self.ekispiditor} on {self.kkm_number}"
