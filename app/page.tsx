@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -59,16 +59,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [expeditorSearchQuery, setExpeditorSearchQuery] = useState("")
   const [checkSearchQuery, setCheckSearchQuery] = useState("")
-
-  // Update state management
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [updateProgress, setUpdateProgress] = useState<{
-    current: number
-    total: number
-    message: string
-  } | null>(null)
-  const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const [mapVisible, setMapVisible] = useState(true)
 
   // Initialize filters with current month as default
   const [filters, setFilters] = useState<FilterState>(() => ({
@@ -248,57 +238,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }, [])
 
-  // Handle update checks
-  const handleUpdateChecks = useCallback(async () => {
-    setIsUpdating(true)
-    setShowUpdateModal(true)
-    setUpdateProgress({ current: 0, total: 100, message: "Starting update..." })
-    
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/update-checks/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-      
-      const data = await response.json()
-      
-      // Simulate progress updates
-      for (let i = 0; i <= 100; i += 10) {
-        setUpdateProgress({
-          current: i,
-          total: 100,
-          message: i < 50 ? "Updating checks..." : i < 80 ? "Processing data..." : "Finalizing..."
-        })
-        await new Promise(resolve => setTimeout(resolve, 200))
-      }
-      
-      // Hide map after update
-      setMapVisible(false)
-      
-      // Close modal after 2 seconds
-      setTimeout(() => {
-        setShowUpdateModal(false)
-        setUpdateProgress(null)
-      }, 2000)
-      
-    } catch (error) {
-      console.error('Update failed:', error)
-      setUpdateProgress({
-        current: 0,
-        total: 100,
-        message: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-      })
-    } finally {
-      setIsUpdating(false)
-    }
-  }, [])
-
   if (isLoadingInitial) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -346,18 +285,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                       dateRange={filters.dateRange}
                       onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
                     />
-                  </div>
-
-                  {/* Update Checks Button */}
-                  <div className="mb-4">
-                    <Button
-                      onClick={handleUpdateChecks}
-                      disabled={isUpdating}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      <RefreshCw className={`h-4 w-4 mr-2 ${isUpdating ? 'animate-spin' : ''}`} />
-                      {isUpdating ? 'Updating...' : 'Update Checks'}
-                    </Button>
                   </div>
 
                   {/* Advanced Filters Toggle */}
@@ -797,17 +724,15 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         )}
 
         <div className={`flex-1 ${isMobile ? "flex flex-col" : "flex"}`}>
-          {mapVisible && (
-            <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
-              <MapComponent
-                checks={checks}
-                selectedExpeditor={selectedExpeditor}
-                loading={isLoadingChecks}
-                onCheckClick={handleCheckClick}
-                focusLocation={focusLocation}
-              />
-            </div>
-          )}
+          <div className={`${isMobile ? "h-96" : "flex-1"} relative`}>
+            <MapComponent
+              checks={checks}
+              selectedExpeditor={selectedExpeditor}
+              loading={isLoadingChecks}
+              onCheckClick={handleCheckClick}
+              focusLocation={focusLocation}
+            />
+          </div>
 
           <div className={`${isMobile ? "flex-1" : "w-96"} bg-white border-l border-gray-200 flex flex-col`}>
             <div className={`${isMobile ? "border-b" : "h-1/2 border-b"} border-gray-200`}>
@@ -946,44 +871,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         }}
         onShowLocation={handleShowLocation}
       />
-
-      {/* Update Progress Modal */}
-      {showUpdateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Updating Checks</h3>
-              <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
-            </div>
-            
-            {updateProgress && (
-              <div className="space-y-4">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${updateProgress.current}%` }}
-                  />
-                </div>
-                
-                <div className="text-center">
-                  <p className="text-sm text-gray-600 mb-1">
-                    {updateProgress.current}% Complete
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {updateProgress.message}
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Please wait while we update the check information...
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 })

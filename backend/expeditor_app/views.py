@@ -14,7 +14,6 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 import django_filters
 import hashlib
-import json
 
 from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial
 from .serializers import (
@@ -109,10 +108,6 @@ class ProjectsViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['project_name', 'created_at']
     ordering = ['project_name']
 
-    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
 class CheckDetailViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CheckDetail.objects.all()
     serializer_class = CheckDetailSerializer
@@ -131,10 +126,6 @@ class SkladViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['sklad_name', 'created_at']
     ordering = ['sklad_name']
 
-    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
 class CityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = City.objects.all()
     serializer_class = CitySerializer
@@ -143,10 +134,6 @@ class CityViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['city_name', 'city_code']
     ordering_fields = ['city_name', 'created_at']
     ordering = ['city_name']
-
-    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
 
 class FilialViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Filial.objects.all()
@@ -157,10 +144,6 @@ class FilialViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['filial_name']
     ordering = ['filial_name']
 
-    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
 class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EkispiditorSerializer
     pagination_class = None  # No pagination for dropdown data
@@ -169,10 +152,6 @@ class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['ekispiditor_name', 'transport_number', 'phone_number']
     ordering_fields = ['ekispiditor_name', 'created_at']
     ordering = ['ekispiditor_name']
-
-    @method_decorator(cache_page(60 * 10))  # Cache for 10 minutes
-    def list(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
     
     def get_queryset(self):
         # Optimized queryset with proper select_related and efficient subquery

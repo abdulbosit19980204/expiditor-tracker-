@@ -146,23 +146,6 @@ CORS_ALLOWED_HEADERS = [
     'x-requested-with',
 ]
 
-# Cache Configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5 minutes default timeout
-        'OPTIONS': {
-            'MAX_ENTRIES': 1000,
-            'CULL_FREQUENCY': 3,
-        }
-    }
-}
-
-# Cache settings for better performance
-CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
-CACHE_MIDDLEWARE_KEY_PREFIX = 'expeditor_tracker'
-
 # settings.py
 LAST_UPDATE_DATE_PATH = BASE_DIR / 'last_update.txt'
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 7000

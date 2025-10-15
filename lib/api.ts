@@ -1,6 +1,6 @@
 import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from "./types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 // Request configuration
 const REQUEST_CONFIG = {
