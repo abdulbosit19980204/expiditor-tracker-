@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import { useMemo } from "react"
 import type { Statistics } from "@/lib/types"
 import { useTranslation } from "../lib/simple-i18n"
 

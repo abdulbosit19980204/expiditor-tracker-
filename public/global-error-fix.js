@@ -28,7 +28,18 @@
     return originalToString.call(this);
   };
 
-  // Removed map override as it interferes with React's internal operations
+  // Override Array.prototype.map
+  const originalMap = Array.prototype.map;
+  Array.prototype.map = function(callback, thisArg) {
+    if (this == null) {
+      console.warn("[Global Error Fix] map called on null/undefined, returning empty array");
+      return [];
+    }
+    if (typeof callback !== 'function') {
+      throw new TypeError('map callback must be a function');
+    }
+    return originalMap.call(this, callback, thisArg);
+  };
 
   // Override Array.prototype.filter
   const originalFilter = Array.prototype.filter;

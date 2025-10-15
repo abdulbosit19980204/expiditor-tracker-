@@ -29,7 +29,6 @@ export function LanguageSwitcher({ variant = "select" }: LanguageSwitcherProps) 
   // Sync with user preferences when loaded
   useEffect(() => {
     if (isLoaded && preferences.language && preferences.language !== language) {
-      console.log("[LanguageSwitcher] Syncing with preferences:", preferences.language, "current:", language)
       changeLanguage(preferences.language)
     }
   }, [isLoaded, preferences.language, language, changeLanguage])
