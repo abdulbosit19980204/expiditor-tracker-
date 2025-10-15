@@ -116,10 +116,12 @@ export function useUserPreferences() {
 
   // Sync language preference with i18n when preferences change
   useEffect(() => {
-    if (isLoaded && typeof window !== "undefined") {
+    if (isLoaded && typeof window !== "undefined" && preferences.language) {
       // Import simple-i18n dynamically to avoid SSR issues
       import("../lib/simple-i18n").then(({ default: simpleI18n }) => {
-        if (preferences.language && preferences.language !== simpleI18n.getLanguage()) {
+        const currentLang = simpleI18n.getLanguage()
+        if (preferences.language !== currentLang) {
+          console.log("[UserPreferences] Syncing language:", preferences.language, "current:", currentLang)
           simpleI18n.changeLanguage(preferences.language)
         }
       })

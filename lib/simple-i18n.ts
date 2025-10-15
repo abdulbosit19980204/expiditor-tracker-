@@ -305,7 +305,7 @@ class SimpleI18n {
   changeLanguage(lng: string): Promise<void> {
     return new Promise((resolve) => {
       try {
-        if (["en", "uz", "ru"].includes(lng)) {
+        if (["en", "uz", "ru"].includes(lng) && lng !== this.currentLanguage) {
           this.currentLanguage = lng
           
           // Save to localStorage
@@ -314,10 +314,18 @@ class SimpleI18n {
             localStorage.setItem("language", lng)
           }
           
-          // Notify listeners
-          this.listeners.forEach(listener => listener())
+          // Notify listeners safely
+          try {
+            for (const listener of this.listeners) {
+              listener()
+            }
+          } catch (error) {
+            console.warn("[SimpleI18n] Error notifying listeners:", error)
+          }
           
           console.log("[SimpleI18n] Language changed to:", lng)
+        } else if (lng === this.currentLanguage) {
+          console.log("[SimpleI18n] Language already set to:", lng)
         }
       } catch (error) {
         console.warn("[SimpleI18n] Language change failed:", error)
@@ -364,11 +372,11 @@ export const getCurrentLanguage = () => {
 
 // Hook for React components
 export const useTranslation = () => {
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0)
+  const [language, setLanguage] = React.useState(simpleI18n.getLanguage())
   
   React.useEffect(() => {
     const unsubscribe = simpleI18n.onLanguageChanged(() => {
-      forceUpdate()
+      setLanguage(simpleI18n.getLanguage())
     })
     return unsubscribe
   }, [])
@@ -376,6 +384,7 @@ export const useTranslation = () => {
   return {
     t: simpleI18n.t.bind(simpleI18n),
     i18n: simpleI18n,
+    language,
     changeLanguage: simpleI18n.changeLanguage.bind(simpleI18n),
   }
 }
