@@ -22,6 +22,8 @@ import { SettingsPanel } from "@/components/settings-panel"
 import { HelpModal } from "@/components/help-modal"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useUserPreferences } from "@/hooks/use-user-preferences"
+import { useNetworkStatus } from "@/hooks/use-network-status"
+import { ErrorToast } from "@/components/error-toast"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -46,6 +48,14 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
   const { preferences, isLoaded } = useUserPreferences()
+  const { isOnline, isSlowConnection } = useNetworkStatus()
+
+  // Error state management
+  const [apiError, setApiError] = useState<{
+    message: string
+    status?: number
+    isNetworkError: boolean
+  } | null>(null)
 
   // State management
   const [checks, setChecks] = useState<Check[]>([])
@@ -78,31 +88,64 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     status: "",
   }))
 
-  // Load initial data (only once)
+  // Load initial data (only once) with error handling
   useEffect(() => {
     const loadInitialData = async () => {
+      if (!isOnline) {
+        setApiError({
+          message: "Internet aloqasi yo'q. Ma'lumotlar yuklanmadi.",
+          isNetworkError: true
+        })
+        setIsLoadingInitial(false)
+        return
+      }
+
       setIsLoadingInitial(true)
+      setApiError(null)
+      
       try {
-        const [projectsData, skladsData, citiesData, filialsData] = await Promise.all([
+        const [projectsResult, skladsResult, citiesResult, filialsResult] = await Promise.all([
           api.getProjects(),
           api.getSklads(),
           api.getCities(),
           api.getFilials(),
         ])
 
-        setProjects(projectsData)
-        setSklads(skladsData)
-        setCities(citiesData)
-        setFilials(filialsData)
+        // Check for errors in each API call
+        if (projectsResult.error) {
+          setApiError(projectsResult.error)
+          return
+        }
+        if (skladsResult.error) {
+          setApiError(skladsResult.error)
+          return
+        }
+        if (citiesResult.error) {
+          setApiError(citiesResult.error)
+          return
+        }
+        if (filialsResult.error) {
+          setApiError(filialsResult.error)
+          return
+        }
+
+        setProjects(projectsResult.data || [])
+        setSklads(skladsResult.data || [])
+        setCities(citiesResult.data || [])
+        setFilials(filialsResult.data || [])
       } catch (error) {
         console.error("Error loading initial data:", error)
+        setApiError({
+          message: "Ma'lumotlarni yuklashda xatolik yuz berdi",
+          isNetworkError: false
+        })
       } finally {
         setIsLoadingInitial(false)
       }
     }
 
     loadInitialData()
-  }, [])
+  }, [isOnline])
 
   // Handle visibility change to refresh map when returning from other pages
   useEffect(() => {
@@ -918,6 +961,17 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
           setSelectedCheck(null)
         }}
         onShowLocation={handleShowLocation}
+      />
+
+      {/* Error Toast */}
+      <ErrorToast
+        error={apiError}
+        onRetry={() => {
+          setApiError(null)
+          // Retry loading data
+          window.location.reload()
+        }}
+        onDismiss={() => setApiError(null)}
       />
     </div>
   )
