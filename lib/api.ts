@@ -150,8 +150,8 @@ export async function getFilials(): Promise<Filial[]> {
   }))
 }
 
-// Expeditors API with optimized filtering
-export async function getExpeditors(filialId?: string, hasChecks = false): Promise<Expeditor[]> {
+// Expeditors API with optimized filtering and location support
+export async function getExpeditors(filialId?: string, hasChecks = false, userLocation?: string, city?: string, sklad?: string): Promise<Expeditor[]> {
   let endpoint = "/ekispiditor/"
   const params = new URLSearchParams()
 
@@ -161,6 +161,18 @@ export async function getExpeditors(filialId?: string, hasChecks = false): Promi
 
   if (hasChecks) {
     params.append("has_checks", "true")
+  }
+
+  if (userLocation) {
+    params.append("user_location", userLocation)
+  }
+
+  if (city) {
+    params.append("city", city)
+  }
+
+  if (sklad) {
+    params.append("sklad", sklad)
   }
 
   if (params.toString()) {

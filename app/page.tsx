@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo, memo } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,7 @@ import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { useLocationDetection } from "@/hooks/use-location"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -37,7 +38,7 @@ function getCurrentMonthRange() {
   return { from: firstDay, to: lastDay }
 }
 
-const ExpeditorTracker = memo(function ExpeditorTracker() {
+export default function ExpeditorTracker() {
   const isMobile = useIsMobile()
 
   // State management
@@ -165,11 +166,11 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     loadChecksAndStats()
   }, [selectedExpeditor, filters, checkSearchQuery])
 
-  // Optimized filter expeditors by search query with better memoization
+  // Filter expeditors by search query (client-side only for search)
   const filteredExpeditors = useMemo(() => {
-    if (!expeditorSearchQuery.trim()) return expeditors
+    if (!expeditorSearchQuery) return expeditors
 
-    const searchLower = expeditorSearchQuery.toLowerCase().trim()
+    const searchLower = expeditorSearchQuery.toLowerCase()
     return expeditors.filter(
       (expeditor) =>
         expeditor.name?.toLowerCase().includes(searchLower) ||
@@ -873,6 +874,4 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
       />
     </div>
   )
-})
-
-export default ExpeditorTracker
+}
