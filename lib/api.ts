@@ -8,7 +8,8 @@ const REQUEST_CONFIG = {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  cache: "no-store" as RequestCache,
+  cache: "default" as RequestCache,
+  next: { revalidate: 60 } // Cache for 60 seconds
 }
 
 // Safe request helper with better error handling and retry logic
@@ -20,7 +21,11 @@ async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | nul
       const res = await fetch(url, REQUEST_CONFIG)
 
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`)
+        console.warn(`API request failed for ${endpoint}: ${res.status} ${res.statusText}`)
+        if (res.status >= 500) {
+          throw new Error(`Server error: ${res.status}`)
+        }
+        return null
       }
 
       const data = await res.json()
@@ -229,7 +234,7 @@ export async function getChecks(filters?: {
   return results.map(transformCheck)
 }
 
-// Statistics API with optimized queries
+// Statistics API with optimized queries and fallback
 export async function getStatistics(filters?: any): Promise<Statistics> {
   let endpoint = "/statistics/"
   const queryParams = new URLSearchParams()
@@ -256,57 +261,61 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     endpoint += `?${queryParams.toString()}`
   }
 
-  const data = await apiRequestSafe<any>(endpoint)
+  try {
+    const data = await apiRequestSafe<any>(endpoint)
 
-  if (data) {
-    return {
-      totalChecks: data.overview?.total_checks || 0,
-      deliveredChecks: data.overview?.delivered_checks || 0,
-      failedChecks: data.overview?.failed_checks || 0,
-      pendingChecks: data.overview?.pending_checks || 0,
-      totalSum: data.payment_stats?.total_sum || 0,
-      todayChecks: data.overview?.today_checks_count || 0,
-      successRate: data.overview?.success_rate || 0,
-      avgCheckSum: data.overview?.avg_check_sum || 0,
-      paymentMethods: {
-        nalichniy: data.payment_stats?.nalichniy || 0,
-        uzcard: data.payment_stats?.uzcard || 0,
-        humo: data.payment_stats?.humo || 0,
-        click: data.payment_stats?.click || 0,
-      },
-      topExpeditors: (data.top_expeditors || []).map((item: any) => ({
-        name: item.ekispiditor || "",
-        checkCount: item.check_count || 0,
-        totalSum: item.total_sum || 0,
-      })),
-      topProjects: (data.top_projects || []).map((item: any) => ({
-        name: item.project || "",
-        checkCount: item.check_count || 0,
-        totalSum: item.total_sum || 0,
-      })),
-      topCities: (data.top_cities || []).map((item: any) => ({
-        name: item.city || "",
-        checkCount: item.check_count || 0,
-        totalSum: item.total_sum || 0,
-      })),
-      dailyStats: (data.daily_stats || []).map((item: any) => ({
-        date: item.date || "",
-        checks: item.checks || 0,
-      })),
-      topSklads: (data.top_sklads || []).map((item: any) => ({
-        name: item.sklad || "",
-        checkCount: item.check_count || 0,
-        totalSum: item.total_sum || 0,
-      })),
-      hourlyStats: (data.hourly_stats || []).map((item: any) => ({
-        hour: item.hour || "",
-        checks: item.checks || 0,
-      })),
-      dowStats: (data.dow_stats || []).map((item: any) => ({
-        dow: item.dow || 0,
-        checks: item.checks || 0,
-      })),
+    if (data) {
+      return {
+        totalChecks: data.overview?.total_checks || 0,
+        deliveredChecks: data.overview?.delivered_checks || 0,
+        failedChecks: data.overview?.failed_checks || 0,
+        pendingChecks: data.overview?.pending_checks || 0,
+        totalSum: data.payment_stats?.total_sum || 0,
+        todayChecks: data.overview?.today_checks_count || 0,
+        successRate: data.overview?.success_rate || 0,
+        avgCheckSum: data.overview?.avg_check_sum || 0,
+        paymentMethods: {
+          nalichniy: data.payment_stats?.nalichniy || 0,
+          uzcard: data.payment_stats?.uzcard || 0,
+          humo: data.payment_stats?.humo || 0,
+          click: data.payment_stats?.click || 0,
+        },
+        topExpeditors: (data.top_expeditors || []).map((item: any) => ({
+          name: item.ekispiditor || "",
+          checkCount: item.check_count || 0,
+          totalSum: item.total_sum || 0,
+        })),
+        topProjects: (data.top_projects || []).map((item: any) => ({
+          name: item.project || "",
+          checkCount: item.check_count || 0,
+          totalSum: item.total_sum || 0,
+        })),
+        topCities: (data.top_cities || []).map((item: any) => ({
+          name: item.city || "",
+          checkCount: item.check_count || 0,
+          totalSum: item.total_sum || 0,
+        })),
+        dailyStats: (data.daily_stats || []).map((item: any) => ({
+          date: item.date || "",
+          checks: item.checks || 0,
+        })),
+        topSklads: (data.top_sklads || []).map((item: any) => ({
+          name: item.sklad || "",
+          checkCount: item.check_count || 0,
+          totalSum: item.total_sum || 0,
+        })),
+        hourlyStats: (data.hourly_stats || []).map((item: any) => ({
+          hour: item.hour || "",
+          checks: item.checks || 0,
+        })),
+        dowStats: (data.dow_stats || []).map((item: any) => ({
+          dow: item.dow || 0,
+          checks: item.checks || 0,
+        })),
+      }
     }
+  } catch (error) {
+    console.warn('Statistics API failed, returning empty data:', error)
   }
 
   return {

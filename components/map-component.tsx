@@ -72,7 +72,9 @@ export const MapComponent = memo(function MapComponent({
   const [errMsg, setErrMsg] = useState("")
 
   useEffect(() => {
-    if (typeof window === "undefined" || window.ymaps) {
+    if (typeof window === "undefined") return
+    
+    if (window.ymaps) {
       setStatus("ready")
       return
     }
@@ -186,7 +188,7 @@ export const MapComponent = memo(function MapComponent({
       const found = checks.find((c) => c.check_id === id)
       found && onCheckClick?.(found)
     }
-  }, [status, checks, onCheckClick, selectedExpeditor])
+  }, [status, checks, selectedExpeditor])
 
   useEffect(() => {
     if (status !== "ready" || !focusLocation || !mapRef.current) return

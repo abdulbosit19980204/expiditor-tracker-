@@ -1,0 +1,18 @@
+[Unit]
+Description=Expeditor Tracker Backend
+After=network.target
+
+[Service]
+Type=forking
+User=administrator
+Group=administrator
+WorkingDirectory=/home/administrator/Documents/expiditor-tracker-
+Environment=PATH=/home/administrator/Documents/expiditor-tracker-/backend/venv/bin
+ExecStart=/home/administrator/Documents/expiditor-tracker-/start-production.sh
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

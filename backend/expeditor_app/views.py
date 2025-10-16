@@ -226,8 +226,8 @@ class StatisticsView(APIView):
         # If not in cache, calculate statistics
         result = self._calculate_statistics(request)
         
-        # Cache the result for 5 minutes
-        cache.set(cache_key, result, 300)
+        # Cache the result for 10 minutes
+        cache.set(cache_key, result, 600)
         
         return Response(result)
     
@@ -328,15 +328,29 @@ class StatisticsView(APIView):
             .order_by('-check_count')[:5]
         )
         
-        # Optimized: Get all expeditor check IDs and sums in one query
+        # Optimized: Get all expeditor sums using bulk queries
         if top_expeditors:
             expeditor_names = [exp['ekispiditor'] for exp in top_expeditors]
-            expeditor_sums = dict(
+            expeditor_sums = {}
+            
+            # Get all check IDs for these expeditors
+            expeditor_check_ids = list(
                 checks_qs.filter(ekispiditor__in=expeditor_names)
-                .values('ekispiditor')
-                .annotate(total_sum=Sum('checkdetail__total_sum'))
-                .values_list('ekispiditor', 'total_sum')
+                .values_list('check_id', 'ekispiditor')
             )
+            
+            # Get all check details in one query
+            check_ids = [check_id for check_id, _ in expeditor_check_ids]
+            check_details = {
+                detail.check_id: detail.total_sum or 0 
+                for detail in CheckDetail.objects.filter(check_id__in=check_ids)
+            }
+            
+            # Calculate sums by expeditor
+            for check_id, expeditor_name in expeditor_check_ids:
+                if expeditor_name not in expeditor_sums:
+                    expeditor_sums[expeditor_name] = 0
+                expeditor_sums[expeditor_name] += check_details.get(check_id, 0)
             
             # Add total sum to each expeditor
             for exp_stat in top_expeditors:
@@ -349,15 +363,29 @@ class StatisticsView(APIView):
             .order_by('-check_count')[:5]
         )
         
-        # Optimized: Get all project sums in one query
+        # Optimized: Get all project sums using bulk queries
         if top_projects:
             project_names = [proj['project'] for proj in top_projects]
-            project_sums = dict(
+            project_sums = {}
+            
+            # Get all check IDs for these projects
+            project_check_ids = list(
                 checks_qs.filter(project__in=project_names)
-                .values('project')
-                .annotate(total_sum=Sum('checkdetail__total_sum'))
-                .values_list('project', 'total_sum')
+                .values_list('check_id', 'project')
             )
+            
+            # Get all check details in one query
+            check_ids = [check_id for check_id, _ in project_check_ids]
+            check_details = {
+                detail.check_id: detail.total_sum or 0 
+                for detail in CheckDetail.objects.filter(check_id__in=check_ids)
+            }
+            
+            # Calculate sums by project
+            for check_id, project_name in project_check_ids:
+                if project_name not in project_sums:
+                    project_sums[project_name] = 0
+                project_sums[project_name] += check_details.get(check_id, 0)
             
             # Add total sum to each project
             for proj_stat in top_projects:
@@ -370,15 +398,29 @@ class StatisticsView(APIView):
             .order_by('-check_count')[:5]
         )
         
-        # Optimized: Get all city sums in one query
+        # Optimized: Get all city sums using bulk queries
         if top_cities:
             city_names = [city['city'] for city in top_cities]
-            city_sums = dict(
+            city_sums = {}
+            
+            # Get all check IDs for these cities
+            city_check_ids = list(
                 checks_qs.filter(city__in=city_names)
-                .values('city')
-                .annotate(total_sum=Sum('checkdetail__total_sum'))
-                .values_list('city', 'total_sum')
+                .values_list('check_id', 'city')
             )
+            
+            # Get all check details in one query
+            check_ids = [check_id for check_id, _ in city_check_ids]
+            check_details = {
+                detail.check_id: detail.total_sum or 0 
+                for detail in CheckDetail.objects.filter(check_id__in=check_ids)
+            }
+            
+            # Calculate sums by city
+            for check_id, city_name in city_check_ids:
+                if city_name not in city_sums:
+                    city_sums[city_name] = 0
+                city_sums[city_name] += check_details.get(check_id, 0)
             
             # Add total sum to each city
             for city_stat in top_cities:

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3 } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -59,6 +59,9 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [expeditorSearchQuery, setExpeditorSearchQuery] = useState("")
   const [checkSearchQuery, setCheckSearchQuery] = useState("")
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [updateProgress, setUpdateProgress] = useState(0)
+  const [updateMessage, setUpdateMessage] = useState("")
 
   // Initialize filters with current month as default
   const [filters, setFilters] = useState<FilterState>(() => ({
@@ -217,6 +220,80 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     }
   }, [])
 
+  // Trigger backend update with visual progress
+  const handleUpdate = useCallback(async () => {
+    if (isUpdating) return
+    setIsUpdating(true)
+    setUpdateProgress(0)
+    setUpdateMessage("Starting update…")
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
+    const steps: { key: string; label: string }[] = [
+      { key: "checks", label: "Checks" },
+      { key: "details", label: "Check details" },
+      { key: "expeditors", label: "Expeditors" },
+    ]
+
+    try {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i]
+        setUpdateMessage(`Updating ${step.label}…`)
+
+        // Backend accepts GET; we pass a hinting param if ignored it's still safe
+        await fetch(`${API_BASE_URL}/update-checks/${i === 0 ? "" : ""}?part=${step.key}`, {
+          method: "GET",
+          headers: { "Accept": "application/json" },
+        }).catch(() => {})
+
+        setUpdateProgress(Math.round(((i + 1) / steps.length) * 100))
+      }
+
+      // Refresh visible data after update completes
+      try {
+        const backendFilters = selectedExpeditor
+          ? {
+              expeditor_id: selectedExpeditor.id,
+              dateRange: filters.dateRange,
+              project: filters.project,
+              sklad: filters.sklad,
+              city: filters.city,
+              status: filters.status,
+              search: checkSearchQuery,
+            }
+          : null
+
+        // Reload reference datasets in the background
+        const reloadBasics = Promise.all([
+          api.getProjects().then(setProjects).catch(() => {}),
+          api.getSklads().then(setSklads).catch(() => {}),
+          api.getCities().then(setCities).catch(() => {}),
+          api.getFilials().then(setFilials).catch(() => {}),
+        ])
+
+        if (backendFilters) {
+          const [checksData, statisticsData] = await Promise.all([
+            api.getChecks(backendFilters),
+            api.getStatistics(backendFilters),
+          ])
+          setChecks(checksData)
+          setStatistics(statisticsData)
+        }
+
+        await reloadBasics
+      } catch (_) {
+        // ignore refresh errors
+      }
+
+      setUpdateMessage("Completed")
+    } finally {
+      setTimeout(() => {
+        setIsUpdating(false)
+        setUpdateMessage("")
+        setUpdateProgress(0)
+      }, 600)
+    }
+  }, [isUpdating, selectedExpeditor, filters, checkSearchQuery])
+
   // Format currency
   const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat("uz-UZ", { style: "decimal", minimumFractionDigits: 0 }).format(amount) + " UZS"
@@ -255,9 +332,9 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             Expeditor Tracker
           </h1>
           <div className="flex items-center gap-2">
-            <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-              <BarChart3 className="h-4 w-4" /> Stats
-            </Link>
+            <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
+              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            </Button>
           </div>
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger asChild>
@@ -273,9 +350,9 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                     Expeditor Tracker
                   </h1>
                   <div className="mb-3">
-                    <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-                      <BarChart3 className="h-4 w-4" /> Open Stats
-                    </Link>
+                    <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
+                      {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    </Button>
                   </div>
 
                   {/* Date Range Filter */}
@@ -504,9 +581,9 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 Expeditor Tracker
               </h1>
               <div className="mb-4">
-                <Link href="/stats" className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50">
-                  <BarChart3 className="h-4 w-4" /> Open Stats
-                </Link>
+                <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
+                  {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                </Button>
               </div>
 
               {/* Date Range Filter */}
@@ -871,6 +948,18 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         }}
         onShowLocation={handleShowLocation}
       />
+      {/* Lightweight progress overlay */}
+      {isUpdating && (
+        <div className="fixed top-3 left-3 z-50 w-64 rounded-lg border bg-white shadow">
+          <div className="px-3 pt-2 text-xs text-gray-600">{updateMessage || "Updating…"}</div>
+          <div className="h-2 m-3 rounded bg-gray-200 overflow-hidden">
+            <div
+              className="h-full bg-blue-600 transition-all"
+              style={{ width: `${Math.max(5, updateProgress)}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 })

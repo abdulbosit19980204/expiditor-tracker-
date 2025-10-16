@@ -14,13 +14,13 @@ class Projects(models.Model):
         return self.project_name
 
 class CheckDetail(models.Model):
-    check_id = models.CharField(max_length=100, unique=True)
+    check_id = models.CharField(max_length=100, unique=True, db_index=True)
     checkURL = models.URLField(max_length=200, unique=True)
-    check_date = models.DateTimeField(blank=True, null=True)
+    check_date = models.DateTimeField(blank=True, null=True, db_index=True)
     receiptIdDate = models.DateTimeField(blank=True, null=True)
     check_lat = models.FloatField(blank=True, null=True)
     check_lon = models.FloatField(blank=True, null=True)
-    total_sum = models.FloatField(blank=True, null=True)
+    total_sum = models.FloatField(blank=True, null=True, db_index=True)
     nalichniy = models.FloatField(blank=True, null=True)
     uzcard = models.FloatField(blank=True, null=True)
     humo = models.FloatField(blank=True, null=True)
@@ -85,14 +85,14 @@ class Ekispiditor(models.Model):
         ).count()
 
 class Check(models.Model):
-    check_id = models.CharField(max_length=100, unique=True)
-    project = models.CharField(max_length=100, blank=True, null=True)
-    sklad = models.CharField(max_length=100, blank=True, null=True)
-    city = models.CharField(max_length=100, blank=True, null=True)
+    check_id = models.CharField(max_length=100, unique=True, db_index=True)
+    project = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    sklad = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    city = models.CharField(max_length=100, blank=True, null=True, db_index=True)
     sborshik = models.CharField(max_length=100, blank=True, null=True)
     agent = models.CharField(max_length=100, blank=True, null=True)
-    ekispiditor = models.CharField(max_length=100, blank=True, null=True)
-    yetkazilgan_vaqti = models.DateTimeField(blank=True, null=True)
+    ekispiditor = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    yetkazilgan_vaqti = models.DateTimeField(blank=True, null=True, db_index=True)
     receiptIdDate = models.DateTimeField(blank=True, null=True)
     transport_number = models.CharField(max_length=50, blank=True, null=True)
     kkm_number = models.CharField(max_length=50, blank=True, null=True)
@@ -104,7 +104,8 @@ class Check(models.Model):
         ('delivered', 'Yetkazilgan'),
         ('failed', 'Muvaffaqiyatsiz'),
         ('pending', 'Kutilmoqda')
-    ], default='pending')
+    ], default='pending', db_index=True)
+    check_detail = models.ForeignKey('CheckDetail', on_delete=models.CASCADE, related_name='checks', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

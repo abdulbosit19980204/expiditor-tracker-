@@ -45,6 +45,7 @@
     "console": "latest",
     "date-fns": "latest",
     "embla-carousel-react": "latest",
+    "http-proxy-middleware": "^3.0.5",
     "input-otp": "latest",
     "leaflet": "latest",
     "lucide-react": "^0.454.0",
