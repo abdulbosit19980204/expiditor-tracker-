@@ -103,9 +103,11 @@ cd $FRONTEND_DIR
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# Start Next.js in background
-echo -e "${GREEN}🚀 Starting Next.js on port 4563...${NC}"
-nohup npm run dev -- -p 4563 > nextjs.log 2>&1 &
+# Build and start Next.js in production to ensure chunk hashes stay consistent
+echo -e "${YELLOW}🧱 Building Next.js...${NC}"
+npm run build > nextjs.log 2>&1 || (echo -e "${RED}❌ Next.js build failed${NC}" && exit 1)
+echo -e "${GREEN}🚀 Starting Next.js on port 4563 (production)...${NC}"
+nohup npm run start -- -p 4563 >> nextjs.log 2>&1 &
 
 FRONTEND_PID=$!
 echo -e "${GREEN}✅ Frontend started with PID: $FRONTEND_PID${NC}"

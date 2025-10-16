@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const lang = searchParams.get("lang") || "en_US"
   const version = searchParams.get("v") || "2.1"
 
-  const apiKey = process.env.YANDEX_MAPS_API_KEY ||"5080fe14-e264-4e2a-9e31-164d4b96da6e"
+  const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || process.env.YANDEX_MAPS_API_KEY || ""
 
   try {
     if (!apiKey) {

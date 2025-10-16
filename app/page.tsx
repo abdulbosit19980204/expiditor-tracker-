@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
 import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2 } from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -240,10 +242,27 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         setUpdateMessage(`Updating ${step.label}…`)
 
         // Backend accepts GET; we pass a hinting param if ignored it's still safe
-        await fetch(`${API_BASE_URL}/update-checks/${i === 0 ? "" : ""}?part=${step.key}`, {
+        const res = await fetch(`${API_BASE_URL}/update-checks/${i === 0 ? "" : ""}?part=${step.key}`, {
           method: "GET",
           headers: { "Accept": "application/json" },
         }).catch(() => {})
+
+        // If server returns JSON with counts, show as toast update line-by-line
+        try {
+          if (res && res.ok) {
+            const ct = res.headers.get("content-type") || ""
+            if (ct.includes("application/json")) {
+              const body = await res.json().catch(() => null)
+              if (body && (body.created || body.updated)) {
+                toast({
+                  title: `${step.label} updated`,
+                  description: `Created: ${body.created || 0}, Updated: ${body.updated || 0}`,
+                  variant: "success" as any,
+                })
+              }
+            }
+          }
+        } catch (_) {}
 
         setUpdateProgress(Math.round(((i + 1) / steps.length) * 100))
       }
@@ -285,6 +304,15 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
       }
 
       setUpdateMessage("Completed")
+      toast({ title: "Success", description: "Checks, details, expeditors updated", variant: "success" as any })
+      // Force-refresh data without user interaction so the page shows fresh info
+      // Soft refresh: re-run initial loaders
+      try {
+        if (typeof window !== "undefined") {
+          // Hard reload ensures client and server states align after updates
+          window.location.reload()
+        }
+      } catch {}
     } finally {
       setTimeout(() => {
         setIsUpdating(false)
@@ -331,7 +359,14 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             <Users className="h-5 w-5" />
             Expeditor Tracker
           </h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Inline small progress with message */}
+            {isUpdating && (
+              <div className="hidden sm:flex items-center gap-2 min-w-[200px]">
+                <span className="text-xs text-gray-600 truncate max-w-[120px]">{updateMessage}</span>
+                <div className="w-24"><Progress value={updateProgress} className="h-2" /></div>
+              </div>
+            )}
             <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
               {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
@@ -349,10 +384,11 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                     <Users className="h-5 w-5" />
                     Expeditor Tracker
                   </h1>
-                  <div className="mb-3">
+                  <div className="mb-3 flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
                       {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
+                    {isUpdating && <div className="flex items-center gap-2"><span className="text-xs text-gray-600">{updateMessage}</span><div className="w-20"><Progress value={updateProgress} className="h-1.5" /></div></div>}
                   </div>
 
                   {/* Date Range Filter */}
@@ -580,10 +616,11 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 <Users className="h-5 w-5" />
                 Expeditor Tracker
               </h1>
-              <div className="mb-4">
+              <div className="mb-4 flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
                   {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                 </Button>
+                {isUpdating && <div className="flex items-center gap-2"><span className="text-xs text-gray-600">{updateMessage}</span><div className="w-24"><Progress value={updateProgress} className="h-1.5" /></div></div>}
               </div>
 
               {/* Date Range Filter */}

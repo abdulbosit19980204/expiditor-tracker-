@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production'
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
@@ -8,6 +9,29 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+  },
+  async headers() {
+    if (isProd) {
+      return [
+        {
+          source: '/_next/static/:path*',
+          headers: [
+            { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          ],
+        },
+        {
+          // Prevent caching of HTML/doc responses so clients always get the latest build
+          source: '/:path*',
+          headers: [
+            { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          ],
+        },
+      ]
+    }
+    // In dev, completely disable caching to avoid stale chunks during restarts
+    return [
+      { source: '/:path*', headers: [{ key: 'Cache-Control', value: 'no-store' }] },
+    ]
   },
 }
 
