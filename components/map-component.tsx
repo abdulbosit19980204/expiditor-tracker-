@@ -128,8 +128,28 @@ export const MapComponent = memo(function MapComponent({
     const map = mapRef.current
     map.geoObjects.removeAll()
 
+    // Build date -> color map so markers match day colors
+    const dayKeyOf = (d: Date) =>
+      `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
+        .getDate()
+        .toString()
+        .padStart(2, "0")}`
+
+    const dayKeys = Array.from(
+      new Set(
+        checks
+          .filter((c) => c.check_lat && c.check_lon)
+          .map((c) => dayKeyOf(new Date(c.check_date))),
+      ),
+    ).sort()
+    const dayToColor = new Map<string, string>()
+    dayKeys.forEach((k, idx) => dayToColor.set(k, getPathColor(idx)))
+
     checks.forEach((c) => {
       if (!c.check_lat || !c.check_lon) return
+
+      const dKey = dayKeyOf(new Date(c.check_date))
+      const iconColor = dayToColor.get(dKey) || "#22c55e"
 
       const placemark = new window.ymaps.Placemark(
         [c.check_lat, c.check_lon],
@@ -149,7 +169,9 @@ export const MapComponent = memo(function MapComponent({
           balloonContentFooter: `KKM ${c.kkm_number ?? "-"}`,
         },
         {
-          preset: c.total_sum ? "islands#greenDotIcon" : "islands#redDotIcon",
+          // Use a neutral preset and set iconColor to match the day's polyline color
+          preset: "islands#dotIcon",
+          iconColor,
         },
       )
 

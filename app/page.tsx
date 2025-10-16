@@ -64,6 +64,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
   const [isUpdating, setIsUpdating] = useState(false)
   const [updateProgress, setUpdateProgress] = useState(0)
   const [updateMessage, setUpdateMessage] = useState("")
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null)
 
   // Initialize filters with current month as default
   const [filters, setFilters] = useState<FilterState>(() => ({
@@ -74,6 +75,37 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     filial: "",
     status: "",
   }))
+
+  // Persist and show last update time
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const v = window.localStorage.getItem("exp_last_updated_at")
+      if (v) setLastUpdatedAt(v)
+    } catch {}
+    // Also fetch from server-side persisted file in case localStorage is empty
+    fetch("/api/last-updated")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && j.timestamp && !lastUpdatedAt) setLastUpdatedAt(j.timestamp)
+      })
+      .catch(() => {})
+  }, [])
+
+  const formatDateTime = useCallback((iso: string) => {
+    try {
+      const d = new Date(iso)
+      return d.toLocaleString("uz-UZ", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    } catch {
+      return iso
+    }
+  }, [])
 
   // Load initial data (only once)
   useEffect(() => {
@@ -304,13 +336,24 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
       }
 
       setUpdateMessage("Completed")
+      const ts = new Date().toISOString()
+      try {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("exp_last_updated_at", ts)
+        }
+      } catch {}
+      setLastUpdatedAt(ts)
+      // Persist to a txt file via a lightweight API route
+      try {
+        fetch("/api/last-updated", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timestamp: ts }) })
+      } catch {}
       toast({ title: "Success", description: "Checks, details, expeditors updated", variant: "success" as any })
       // Force-refresh data without user interaction so the page shows fresh info
       // Soft refresh: re-run initial loaders
       try {
         if (typeof window !== "undefined") {
-          // Hard reload ensures client and server states align after updates
-          window.location.reload()
+          // Give users time to read the toast before reload
+          setTimeout(() => window.location.reload(), 3000)
         }
       } catch {}
     } finally {
@@ -318,7 +361,7 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
         setIsUpdating(false)
         setUpdateMessage("")
         setUpdateProgress(0)
-      }, 600)
+      }, 3000)
     }
   }, [isUpdating, selectedExpeditor, filters, checkSearchQuery])
 
@@ -371,6 +414,11 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
               {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
           </div>
+          {lastUpdatedAt && (
+            <div className="text-[11px] text-gray-500 mt-1">
+              Last update: <span className="font-medium">{formatDateTime(lastUpdatedAt)}</span>
+            </div>
+          )}
           <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm">
@@ -616,12 +664,17 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 <Users className="h-5 w-5" />
                 Expeditor Tracker
               </h1>
-              <div className="mb-4 flex items-center gap-2">
+              <div className="mb-2 flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
                   {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                 </Button>
                 {isUpdating && <div className="flex items-center gap-2"><span className="text-xs text-gray-600">{updateMessage}</span><div className="w-24"><Progress value={updateProgress} className="h-1.5" /></div></div>}
               </div>
+              {lastUpdatedAt && (
+                <div className="mb-4 text-xs text-gray-500">
+                  Last update: <span className="font-medium">{formatDateTime(lastUpdatedAt)}</span>
+                </div>
+              )}
 
               {/* Date Range Filter */}
               <div className="mb-4">
