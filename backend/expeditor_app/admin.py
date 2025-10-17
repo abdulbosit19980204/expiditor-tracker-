@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint, ScheduledTask, EmailRecipient, TaskRun
+from .models import (
+    Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
+    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig,
+    SettingsEmailRecipient, SettingsEmailConfig, SettingsScheduledTask, SettingsTaskList, SettingsTaskRun,
+)
 
 @admin.register(Projects)
 class ProjectsAdmin(admin.ModelAdmin):
@@ -67,6 +71,7 @@ class ScheduledTaskAdmin(admin.ModelAdmin):
     list_display = ['name', 'task_type', 'is_enabled', 'interval_minutes', 'next_run_at', 'last_run_at']
     list_filter = ['task_type', 'is_enabled']
     search_fields = ['name']
+    autocomplete_fields = ['task']
 
 @admin.register(EmailRecipient)
 class EmailRecipientAdmin(admin.ModelAdmin):
@@ -79,3 +84,35 @@ class TaskRunAdmin(admin.ModelAdmin):
     list_display = ['task_type', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at']
     list_filter = ['task_type', 'is_running']
     readonly_fields = ['task_type', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at']
+
+@admin.register(TaskList)
+class TaskListAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['code', 'name', 'description']
+
+@admin.register(EmailConfig)
+class EmailConfigAdmin(admin.ModelAdmin):
+# Optionally register proxies to appear under a separate app/group label in the left menu
+@admin.register(SettingsEmailRecipient)
+class SettingsEmailRecipientAdmin(EmailRecipientAdmin):
+    pass
+
+@admin.register(SettingsEmailConfig)
+class SettingsEmailConfigAdmin(EmailConfigAdmin):
+    pass
+
+@admin.register(SettingsScheduledTask)
+class SettingsScheduledTaskAdmin(ScheduledTaskAdmin):
+    pass
+
+@admin.register(SettingsTaskList)
+class SettingsTaskListAdmin(TaskListAdmin):
+    pass
+
+@admin.register(SettingsTaskRun)
+class SettingsTaskRunAdmin(TaskRunAdmin):
+    pass
+    list_display = ['host', 'port', 'use_tls', 'use_ssl', 'is_active', 'updated_at']
+    list_filter = ['use_tls', 'use_ssl', 'is_active']
+    search_fields = ['host', 'username', 'from_email']

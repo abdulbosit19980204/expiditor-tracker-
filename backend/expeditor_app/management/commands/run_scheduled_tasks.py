@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
-from expeditor_app.models import ScheduledTask, ProblemCheck, Check, CheckDetail, IntegrationEndpoint, EmailRecipient, TaskRun
+from expeditor_app.models import ScheduledTask, ProblemCheck, Check, CheckDetail, IntegrationEndpoint, EmailRecipient, TaskRun, EmailConfig
 from expeditor_app.integration import UpdateChecksView
 from django.db.models import Q
 
@@ -65,7 +65,9 @@ class Command(BaseCommand):
                 total_details = CheckDetail.objects.count()
                 unresolved = ProblemCheck.objects.filter(resolved=False).count()
                 # Email sending integration can be added here; for now we no-op
-                _ = (total_checks, total_details, unresolved, list(EmailRecipient.objects.filter(is_active=True)))
+                recipients = [r.email for r in EmailRecipient.objects.filter(is_active=True)]
+                cfg = EmailConfig.objects.filter(is_active=True).first()
+                _ = (total_checks, total_details, unresolved, recipients, cfg)
 
             # Update scheduling metadata
             task.last_run_at = now

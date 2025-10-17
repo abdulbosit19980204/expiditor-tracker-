@@ -200,8 +200,10 @@ class ScheduledTask(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    task = models.ForeignKey('TaskList', on_delete=models.SET_NULL, null=True, blank=True, related_name='scheduled_uses')
+
     class Meta:
-        verbose_name_plural = "Scheduled Tasks"
+        verbose_name_plural = "Settings — Scheduled Tasks"
         indexes = [
             models.Index(fields=["is_enabled", "next_run_at", "task_type"]),
         ]
@@ -217,7 +219,7 @@ class EmailRecipient(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name_plural = "Email Recipients"
+        verbose_name_plural = "Settings — Email Recipients"
 
     def __str__(self):
         return self.email
@@ -234,10 +236,83 @@ class TaskRun(models.Model):
     finished_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        verbose_name_plural = "Task Runs"
+        verbose_name_plural = "Tasks — Runs"
         indexes = [
             models.Index(fields=["task_type", "is_running", "started_at"]),
         ]
 
     def __str__(self):
         return f"{self.task_type} run at {self.started_at:%Y-%m-%d %H:%M}"
+
+
+class TaskList(models.Model):
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    name = models.CharField(max_length=120)
+    description = models.TextField()
+    default_params = models.JSONField(blank=True, null=True)
+    sample_result = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Settings — Task List"
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class EmailConfig(models.Model):
+    backend = models.CharField(max_length=200, default='django.core.mail.backends.smtp.EmailBackend')
+    host = models.CharField(max_length=200, default='smtp.gmail.com')
+    port = models.PositiveIntegerField(default=587)
+    use_tls = models.BooleanField(default=True)
+    use_ssl = models.BooleanField(default=False)
+    username = models.CharField(max_length=200, blank=True, null=True)
+    password = models.CharField(max_length=200, blank=True, null=True)
+    from_email = models.EmailField(blank=True, null=True)
+    is_active = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Settings — Email Config"
+
+    def __str__(self):
+        return f"SMTP {self.host}:{self.port} (TLS={self.use_tls}, SSL={self.use_ssl})"
+
+
+# Proxy models for grouping in Django Admin without DB changes
+class SettingsEmailRecipient(EmailRecipient):
+    class Meta:
+        proxy = True
+        app_label = 'Settings'
+        verbose_name_plural = 'Email Recipients'
+
+
+class SettingsEmailConfig(EmailConfig):
+    class Meta:
+        proxy = True
+        app_label = 'Settings'
+        verbose_name_plural = 'Email Config'
+
+
+class SettingsScheduledTask(ScheduledTask):
+    class Meta:
+        proxy = True
+        app_label = 'Settings'
+        verbose_name_plural = 'Scheduled Tasks'
+
+
+class SettingsTaskList(TaskList):
+    class Meta:
+        proxy = True
+        app_label = 'Settings'
+        verbose_name_plural = 'Task List'
+
+
+class SettingsTaskRun(TaskRun):
+    class Meta:
+        proxy = True
+        app_label = 'Settings'
+        verbose_name_plural = 'Task Runs'
