@@ -177,3 +177,47 @@ class IntegrationEndpoint(models.Model):
 
     def __str__(self):
         return f"{self.project_name} -> {self.wsdl_url}"
+
+
+class ScheduledTask(models.Model):
+    TASK_UPDATE_CHECKS = 'UPDATE_CHECKS'
+    TASK_SCAN_PROBLEM_CHECKS = 'SCAN_PROBLEMS'
+    TASK_SEND_ANALYTICS = 'SEND_ANALYTICS'
+
+    TASK_CHOICES = [
+        (TASK_UPDATE_CHECKS, 'Update Checks from Integrations'),
+        (TASK_SCAN_PROBLEM_CHECKS, 'Scan Problem Checks'),
+        (TASK_SEND_ANALYTICS, 'Send Analytics Report'),
+    ]
+
+    name = models.CharField(max_length=120)
+    task_type = models.CharField(max_length=50, choices=TASK_CHOICES, db_index=True)
+    is_enabled = models.BooleanField(default=False, db_index=True)
+    interval_minutes = models.PositiveIntegerField(default=60)
+    last_run_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    next_run_at = models.DateTimeField(blank=True, null=True, db_index=True)
+    params = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Scheduled Tasks"
+        indexes = [
+            models.Index(fields=["is_enabled", "next_run_at", "task_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.task_type})"
+
+
+class EmailRecipient(models.Model):
+    email = models.EmailField(unique=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Email Recipients"
+
+    def __str__(self):
+        return self.email
