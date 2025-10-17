@@ -87,8 +87,9 @@
 import * as React from "react"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 interface DatePickerWithRangeProps {
   dateRange: { from: Date | undefined; to: Date | undefined }
@@ -112,19 +113,116 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
     onDateRangeChange(start || end ? { from: start || undefined, to: end || undefined } : undefined)
   }
 
+  const handleTodayClick = () => {
+    const today = new Date()
+    setStartDate(today)
+    setEndDate(today)
+    onDateRangeChange({ from: today, to: today })
+  }
+
+  const formatDateRange = () => {
+    if (!startDate) return "Pick a date range"
+    
+    if (endDate && startDate.getTime() !== endDate.getTime()) {
+      return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+    }
+    
+    return startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
   return (
-    <div className={cn("relative", className)}>
-      <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-      <DatePicker
-        selectsRange
-        startDate={startDate}
-        endDate={endDate}
-        onChange={handleChange}
-        isClearable
-        placeholderText="Pick a date range"
-        className="pl-10 w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        dateFormat="MMM dd, yyyy"
-      />
+    <div className={cn("space-y-2", className)}>
+      {/* Modern styled date picker container */}
+      <div className="relative group">
+        <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none z-10" />
+        <DatePicker
+          selectsRange
+          startDate={startDate}
+          endDate={endDate}
+          onChange={handleChange}
+          isClearable
+          placeholderText="Pick a date range"
+          className="pl-10 w-full border border-gray-200 rounded-lg py-2.5 px-3 text-sm bg-white hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
+          dateFormat="MMM dd, yyyy"
+          popperClassName="modern-datepicker-popper"
+          wrapperClassName="w-full"
+        />
+        {/* Custom overlay for better styling */}
+        <div className="absolute inset-0 pointer-events-none rounded-lg ring-1 ring-transparent group-hover:ring-gray-200 transition-all duration-200" />
+      </div>
+
+      {/* Today button */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleTodayClick}
+        className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200"
+      >
+        <Clock className="h-3.5 w-3.5 mr-2" />
+        Today
+      </Button>
+
+      {/* Display selected range */}
+      {(startDate || endDate) && (
+        <div className="text-xs text-gray-600 bg-gray-50 rounded-md py-1.5 px-2 border">
+          <span className="font-medium">Selected:</span> {formatDateRange()}
+        </div>
+      )}
+
+      <style jsx global>{`
+        .modern-datepicker-popper {
+          z-index: 9999 !important;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+          border-radius: 12px !important;
+          border: 1px solid #e5e7eb !important;
+        }
+        
+        .react-datepicker {
+          border: none !important;
+          border-radius: 12px !important;
+          font-family: inherit !important;
+        }
+        
+        .react-datepicker__header {
+          background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+          border-bottom: none !important;
+          border-radius: 12px 12px 0 0 !important;
+          color: white !important;
+        }
+        
+        .react-datepicker__current-month,
+        .react-datepicker__day-name {
+          color: white !important;
+          font-weight: 600 !important;
+        }
+        
+        .react-datepicker__day {
+          border-radius: 6px !important;
+          transition: all 0.2s ease !important;
+        }
+        
+        .react-datepicker__day:hover {
+          background-color: #dbeafe !important;
+          color: #1d4ed8 !important;
+        }
+        
+        .react-datepicker__day--selected {
+          background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+          color: white !important;
+        }
+        
+        .react-datepicker__day--in-range {
+          background-color: #dbeafe !important;
+          color: #1d4ed8 !important;
+        }
+        
+        .react-datepicker__day--range-start,
+        .react-datepicker__day--range-end {
+          background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%) !important;
+          color: white !important;
+        }
+      `}</style>
     </div>
   )
 }

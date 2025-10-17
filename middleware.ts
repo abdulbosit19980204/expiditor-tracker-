@@ -5,16 +5,20 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const response = NextResponse.next()
 
-  // Set cache headers based on path type
-  if (pathname.startsWith("/_next/static/")) {
-    // Static assets should be cached for a long time
-    response.headers.set("Cache-Control", "public, max-age=31536000, immutable")
-  } else if (pathname.startsWith("/_next/") || pathname.startsWith("/api/")) {
-    // Other Next.js assets and API routes - no caching
+  // Force no caching for all assets to prevent chunk errors
+  if (pathname.startsWith("/_next/")) {
+    // All Next.js assets - no caching to prevent stale references
+    response.headers.set("Cache-Control", "no-store, must-revalidate, no-cache")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+  } else if (pathname.startsWith("/api/")) {
+    // API routes - no caching
     response.headers.set("Cache-Control", "no-store, must-revalidate")
   } else {
     // HTML pages - no caching to prevent stale chunk references
-    response.headers.set("Cache-Control", "no-store, must-revalidate")
+    response.headers.set("Cache-Control", "no-store, must-revalidate, no-cache")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
   }
 
   return response
