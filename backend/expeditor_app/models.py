@@ -135,3 +135,45 @@ class Filial(models.Model):
     
     def __str__(self):
         return self.filial_name
+
+
+class ProblemCheck(models.Model):
+    """Lightweight table to track checks with data quality issues.
+
+    This does NOT change existing flows. It is populated by periodic scans
+    and during imports, and is fully decoupled from normal reads.
+    """
+    check_id = models.CharField(max_length=100, db_index=True)
+    issue_code = models.CharField(max_length=50, db_index=True)
+    issue_message = models.TextField()
+    detected_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    resolved = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        verbose_name_plural = "Problem Checks"
+        indexes = [
+            models.Index(fields=["issue_code", "resolved"]),
+            models.Index(fields=["detected_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.check_id} - {self.issue_code}"
+
+
+class IntegrationEndpoint(models.Model):
+    """Config for external integration endpoints per project.
+
+    Stores WSDL/HTTP URL for a given project. Decoupled from runtime logic; 
+    updated in Admin without code changes.
+    """
+    project_name = models.CharField(max_length=100, unique=True, db_index=True)
+    wsdl_url = models.URLField(max_length=500)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Integration Endpoints"
+
+    def __str__(self):
+        return f"{self.project_name} -> {self.wsdl_url}"

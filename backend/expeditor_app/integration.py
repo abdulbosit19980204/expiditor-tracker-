@@ -9,7 +9,7 @@ from zeep import Client
 from zeep.cache import InMemoryCache
 from zeep.transports import Transport
 from expeditor_app.utils import get_last_update_date, save_last_update_date
-from expeditor_app.models import Check, CheckDetail, Sklad, City, Ekispiditor, Projects
+from expeditor_app.models import Check, CheckDetail, Sklad, City, Ekispiditor, Projects, ProblemCheck, IntegrationEndpoint
 
 logger = logging.getLogger(__name__)
 
@@ -19,16 +19,21 @@ class UpdateChecksView(APIView):
     _client_lock = None
 
     @classmethod
-    def get_client(cls):
+    def get_client(cls, project_name: str = "AVON"):
+        """Get cached zeep client for a given project.
+
+        Resolves WSDL URL from IntegrationEndpoint, falling back to the
+        previous default if not configured. Keeps a single cached client
+        instance per process for simplicity.
+        """
         if cls._client is None:
             import threading
             if cls._client_lock is None:
                 cls._client_lock = threading.Lock()
-            
             with cls._client_lock:
-                if cls._client is None:  # Double-check locking
-                    url = "http://192.168.1.241:5443/AVON_UT/AVON_UT.1cws?wsdl"
-                    # Use persistent cache and connection pooling
+                if cls._client is None:
+                    endpoint = IntegrationEndpoint.objects.filter(project_name=project_name, is_active=True).first()
+                    url = endpoint.wsdl_url if endpoint else "http://192.168.1.241:5443/AVON_UT/AVON_UT.1cws?wsdl"
                     transport = Transport(
                         cache=InMemoryCache(),
                         timeout=30,
@@ -120,7 +125,7 @@ class UpdateChecksView(APIView):
                     defaults={k: v for k, v in check_data.items() if k != 'check_id'}
                 )
 
-                CheckDetail.objects.update_or_create(
+                detail_obj, created_detail = CheckDetail.objects.update_or_create(
                     check_id=check_id,
                     defaults={
                         'checkURL': getattr(row, 'receiptURL', ''),
@@ -135,6 +140,27 @@ class UpdateChecksView(APIView):
                         'updated_at': timezone.now()
                     }
                 )
+
+                # Lightweight problem detection without slowing imports
+                issue_codes = []
+                if not detail_obj or detail_obj.total_sum is None:
+                    issue_codes.append('NO_TOTAL_SUM')
+                if not detail_obj:
+                    issue_codes.append('DETAIL_MISSING')
+                if not check_data.get('ekispiditor'):
+                    issue_codes.append('NO_EXPEDITOR')
+                if (check_data.get('check_lat') is None) or (check_data.get('check_lon') is None):
+                    issue_codes.append('NO_COORDS')
+
+                for code in issue_codes:
+                    ProblemCheck.objects.update_or_create(
+                        check_id=check_id,
+                        issue_code=code,
+                        defaults={
+                            'issue_message': f'{code} detected during import',
+                            'resolved': False,
+                        }
+                    )
 
             except Exception as inner_e:
                 logger.error(f"[ROW ERROR] Check ID: {getattr(row, 'receiptID', 'unknown')}, Error: {inner_e}")
@@ -153,7 +179,7 @@ class UpdateChecksView(APIView):
     def get(self, request):
         try:
             # Get SOAP client
-            client = self.get_client()
+            client = self.get_client(project_name="AVON")
 
             # Get last update date
             last_update = get_last_update_date()
