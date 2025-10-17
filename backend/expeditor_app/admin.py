@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint, ScheduledTask, EmailRecipient
+from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint, ScheduledTask, EmailRecipient, TaskRun
 
 @admin.register(Projects)
 class ProjectsAdmin(admin.ModelAdmin):
@@ -73,3 +73,9 @@ class EmailRecipientAdmin(admin.ModelAdmin):
     list_display = ['email', 'is_active', 'updated_at']
     list_filter = ['is_active']
     search_fields = ['email']
+
+@admin.register(TaskRun)
+class TaskRunAdmin(admin.ModelAdmin):
+    list_display = ['task_type', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at']
+    list_filter = ['task_type', 'is_running']
+    readonly_fields = ['task_type', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at']

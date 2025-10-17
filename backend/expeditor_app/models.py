@@ -221,3 +221,23 @@ class EmailRecipient(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class TaskRun(models.Model):
+    TASK_CHOICES = ScheduledTask.TASK_CHOICES
+    task_type = models.CharField(max_length=50, choices=TASK_CHOICES, db_index=True)
+    is_running = models.BooleanField(default=True, db_index=True)
+    status_message = models.CharField(max_length=255, blank=True, null=True)
+    total = models.IntegerField(default=0)
+    processed = models.IntegerField(default=0)
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Task Runs"
+        indexes = [
+            models.Index(fields=["task_type", "is_running", "started_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.task_type} run at {self.started_at:%Y-%m-%d %H:%M}"
