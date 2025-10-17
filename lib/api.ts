@@ -458,3 +458,32 @@ export const api = {
   fetchSklads,
   fetchCities,
 }
+
+// --- New Analytics & Telegram endpoints ---
+
+export async function getAnalyticsSummary(params: {
+  group_by: 'project' | 'sklad' | 'city' | 'ekispiditor' | 'date'
+  dateRange?: { from?: Date; to?: Date }
+  project?: string
+  sklad?: string
+  city?: string
+  status?: string
+}) {
+  const search = new URLSearchParams()
+  search.set('group_by', params.group_by)
+  if (params.dateRange?.from) search.set('date_from', params.dateRange.from.toISOString())
+  if (params.dateRange?.to) search.set('date_to', params.dateRange.to.toISOString())
+  if (params.project) search.set('project', params.project)
+  if (params.sklad) search.set('sklad', params.sklad)
+  if (params.city) search.set('city', params.city)
+  if (params.status) search.set('status', params.status)
+
+  const endpoint = `/analytics/summary/?${search.toString()}`
+  return apiRequestSafe<any>(endpoint)
+}
+
+export async function getTelegramTarget(): Promise<{ url: string | null; display_name?: string; username?: string; phone_number?: string } | null> {
+  return apiRequestSafe(`/telegram/target/`)
+}
+
+export const analytics = { getAnalyticsSummary, getTelegramTarget }

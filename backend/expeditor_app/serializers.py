@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check
+from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -70,3 +70,9 @@ class CheckSerializer(serializers.ModelSerializer):
                  'ekispiditor', 'yetkazilgan_vaqti', 'receiptIdDate', 'transport_number', 'kkm_number',
                  'client_name', 'client_address', 'check_lat', 'check_lon', 'status',
                  'check_detail', 'created_at', 'updated_at']
+
+
+class TelegramAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelegramAccount
+        fields = ['id', 'display_name', 'username', 'phone_number', 'is_active', 'created_at', 'updated_at']

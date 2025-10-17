@@ -15,10 +15,10 @@ from django.views.decorators.cache import cache_page
 import django_filters
 import hashlib
 
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial
+from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, TelegramAccount
 from .serializers import (
     ProjectsSerializer, CheckDetailSerializer, SkladSerializer, 
-    CitySerializer, EkispiditorSerializer, CheckSerializer, FilialSerializer
+    CitySerializer, EkispiditorSerializer, CheckSerializer, FilialSerializer, TelegramAccountSerializer
 )
 
 
@@ -519,3 +519,119 @@ class GlobalStatisticsView(APIView):
             request.GET.pop('ekispiditor_id')
         request.GET._mutable = False  # type: ignore
         return StatisticsView().get(request)
+
+
+class AnalyticsSummaryView(APIView):
+    """Dimension-based aggregates for analytics page.
+
+    Supports grouping by project/sklad/city/ekispiditor/date with
+    sums and counts. Date range and filters mirror StatisticsView.
+    """
+    def get(self, request):
+        group_by = request.GET.get('group_by', 'project')
+
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        project = request.GET.get('project')
+        sklad = request.GET.get('sklad')
+        city = request.GET.get('city')
+        status = request.GET.get('status')
+
+        checks_qs = Check.objects.all()
+        if date_from:
+            try:
+                df = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                df = df.replace(hour=0, minute=0, second=0, microsecond=0)
+                checks_qs = checks_qs.filter(yetkazilgan_vaqti__gte=df)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                dt = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                dt = dt.replace(hour=23, minute=59, second=59, microsecond=999999)
+                checks_qs = checks_qs.filter(yetkazilgan_vaqti__lte=dt)
+            except ValueError:
+                pass
+        if project:
+            checks_qs = checks_qs.filter(project__icontains=project)
+        if sklad:
+            checks_qs = checks_qs.filter(sklad__icontains=sklad)
+        if city:
+            checks_qs = checks_qs.filter(city__icontains=city)
+        if status:
+            checks_qs = checks_qs.filter(status=status)
+
+        # Join details when needed for sums
+        check_ids = list(checks_qs.values_list('check_id', flat=True))
+        details_map = {}
+        if check_ids:
+            details_map = {
+                d.check_id: {
+                    'total_sum': d.total_sum or 0,
+                    'nalichniy': d.nalichniy or 0,
+                    'uzcard': d.uzcard or 0,
+                    'humo': d.humo or 0,
+                    'click': d.click or 0,
+                }
+                for d in CheckDetail.objects.filter(check_id__in=check_ids)
+            }
+
+        # Determine key extractor
+        def key_for(c: Check):
+            if group_by == 'sklad':
+                return c.sklad or '—'
+            if group_by == 'city':
+                return c.city or '—'
+            if group_by == 'ekispiditor':
+                return c.ekispiditor or '—'
+            if group_by == 'date':
+                return (c.yetkazilgan_vaqti.date().isoformat() if c.yetkazilgan_vaqti else '—')
+            return c.project or '—'
+
+        # Aggregate in Python for flexibility
+        buckets = {}
+        for c in checks_qs:
+            k = key_for(c)
+            b = buckets.setdefault(k, {
+                'dimension': k,
+                'checks': 0,
+                'delivered': 0,
+                'failed': 0,
+                'pending': 0,
+                'total_sum': 0.0,
+                'nalichniy': 0.0,
+                'uzcard': 0.0,
+                'humo': 0.0,
+                'click': 0.0,
+            })
+            b['checks'] += 1
+            b[c.status or 'pending'] = b.get(c.status or 'pending', 0) + 1
+            d = details_map.get(c.check_id)
+            if d:
+                b['total_sum'] += d['total_sum']
+                b['nalichniy'] += d['nalichniy']
+                b['uzcard'] += d['uzcard']
+                b['humo'] += d['humo']
+                b['click'] += d['click']
+
+        # Sort by checks desc
+        items = sorted(buckets.values(), key=lambda x: (-x['checks'], x['dimension']))
+        return Response({'group_by': group_by, 'items': items})
+
+
+class TelegramTargetView(APIView):
+    """Returns preferred Telegram deep-link based on active TelegramAccount."""
+    def get(self, request):
+        account = TelegramAccount.objects.filter(is_active=True).order_by('-updated_at', '-id').first()
+        if not account:
+            return Response({ 'url': None }, status=200)
+
+        url = None
+        if account.username:
+            url = f"https://t.me/{account.username}"
+        elif account.phone_number:
+            # tg://resolve?phone=... works in some clients; https form is more universal via share
+            phone = account.phone_number.lstrip('+')
+            url = f"https://t.me/+{phone}"
+
+        return Response({'url': url, 'display_name': account.display_name, 'username': account.username, 'phone_number': account.phone_number})

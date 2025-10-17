@@ -282,6 +282,27 @@ class EmailConfig(models.Model):
         return f"SMTP {self.host}:{self.port} (TLS={self.use_tls}, SSL={self.use_ssl})"
 
 
+class TelegramAccount(models.Model):
+    """Stores Telegram contact information for quick redirects from the UI.
+
+    If multiple rows exist, the latest active one will be used. Either
+    username or phone_number can be provided; both are optional but at
+    least one should be set for a working link.
+    """
+    display_name = models.CharField(max_length=120, blank=True, null=True)
+    username = models.CharField(max_length=120, blank=True, null=True, help_text="Telegram @username without @")
+    phone_number = models.CharField(max_length=32, blank=True, null=True, help_text="International format like +99890...")
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Settings — Telegram Accounts"
+
+    def __str__(self):
+        who = self.username or self.phone_number or "unknown"
+        return f"TelegramAccount({who})"
+
 # Proxy models for grouping in Django Admin without DB changes
 class SettingsEmailRecipient(EmailRecipient):
     class Meta:

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
-    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig,
+    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount,
 )
 
 @admin.register(Projects)
@@ -95,3 +95,10 @@ class EmailConfigAdmin(admin.ModelAdmin):
     list_display = ['host', 'port', 'use_tls', 'use_ssl', 'is_active', 'updated_at']
     list_filter = ['use_tls', 'use_ssl', 'is_active']
     search_fields = ['host', 'username', 'from_email']
+
+
+@admin.register(TelegramAccount)
+class TelegramAccountAdmin(admin.ModelAdmin):
+    list_display = ['display_name', 'username', 'phone_number', 'is_active', 'updated_at']
+    list_filter = ['is_active']
+    search_fields = ['display_name', 'username', 'phone_number']

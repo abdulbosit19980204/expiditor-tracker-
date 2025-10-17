@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     StatisticsView, GlobalStatisticsView, ProjectsViewSet, CheckDetailViewSet, 
     SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet, FilialViewSet,
+    AnalyticsSummaryView, TelegramTargetView,
 )
 from .integration import UpdateChecksView
 
@@ -21,5 +22,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('statistics/', StatisticsView.as_view(), name='statistics'),
     path('statistics/global/', GlobalStatisticsView.as_view(), name='statistics-global'),
+    path('analytics/summary/', AnalyticsSummaryView.as_view(), name='analytics-summary'),
+    path('telegram/target/', TelegramTargetView.as_view(), name='telegram-target'),
     path('update-checks/', UpdateChecksView.as_view(), name='update-checks'),
 ]

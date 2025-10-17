@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2 } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -20,7 +20,7 @@ import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
 import { useIsMobile } from "@/hooks/use-mobile"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
-import { api } from "@/lib/api"
+import { api, analytics } from "@/lib/api"
 
 interface FilterState {
   dateRange: { from: Date | undefined; to: Date | undefined }
@@ -39,7 +39,7 @@ function getCurrentMonthRange() {
   return { from: firstDay, to: lastDay }
 }
 
-const ExpeditorTracker = memo(function ExpeditorTracker() {
+export default function ExpeditorTracker() {
   const isMobile = useIsMobile()
 
   // State management
@@ -75,6 +75,19 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
     filial: "",
     status: "",
   }))
+
+  const handleOpenTelegram = useCallback(async () => {
+    try {
+      const info = await analytics.getTelegramTarget()
+      if (info && info.url) {
+        window.open(info.url, "_blank")
+      } else {
+        window.open("https://t.me/", "_blank")
+      }
+    } catch {
+      window.open("https://t.me/", "_blank")
+    }
+  }, [])
 
   // Persist and show last update time
   useEffect(() => {
@@ -413,6 +426,14 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
             <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
               {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
+            <Link href="/enhanced-stats" className="inline-flex">
+              <Button variant="outline" size="sm" title="Analytics">
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={handleOpenTelegram} title="Telegram">
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
           {lastUpdatedAt && (
             <div className="text-[11px] text-gray-500 mt-1">
@@ -685,24 +706,32 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                 />
               </div>
 
-              {/* Advanced Filters Toggle */}
-              <div className="mb-4">
+              {/* Advanced Filters Header with actions */}
+              <div className="mb-2 flex items-center justify-between">
                 <Button
                   variant="outline"
                   onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                  className="w-full justify-between"
+                  className="flex-1 justify-start mr-2"
                 >
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Advanced Filters
-                    {activeFiltersCount > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {activeFiltersCount}
-                      </Badge>
-                    )}
-                  </div>
-                  {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  <Filter className="h-4 w-4 mr-2" />
+                  <span className="text-xs font-medium">Advanced Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="ml-2">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                  <div className="ml-auto" />
+                  {isFiltersOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                 </Button>
+                <Link href="/enhanced-stats" className="inline-flex">
+                  <Button variant="outline" size="icon" title="Analytics">
+                    <BarChart3 className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Button variant="outline" size="icon" onClick={handleOpenTelegram} title="Contact via Telegram" className="ml-2">
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
 
                 {isFiltersOpen && (
                   <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
@@ -822,7 +851,6 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
                     )}
                   </div>
                 )}
-              </div>
 
               <Separator className="my-4" />
 
@@ -1052,6 +1080,4 @@ const ExpeditorTracker = memo(function ExpeditorTracker() {
       )}
     </div>
   )
-})
-
-export default ExpeditorTracker
+}
