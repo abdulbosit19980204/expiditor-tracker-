@@ -39,14 +39,14 @@ class FilialAdmin(admin.ModelAdmin):
 @admin.register(Ekispiditor)
 class EkispiditorAdmin(admin.ModelAdmin):
     list_display = ['ekispiditor_name','filial', 'transport_number', 'phone_number', 'is_active', 'today_checks_count']
-    search_fields = ['ekispiditor_name','filial', 'transport_number', 'phone_number']
+    search_fields = ['ekispiditor_name', 'transport_number', 'phone_number']
     list_filter = ['filial','is_active', 'created_at']
     readonly_fields = ['today_checks_count']
 
 @admin.register(Check)
 class CheckAdmin(admin.ModelAdmin):
     list_display = ['check_id', 'ekispiditor', 'project', 'city', 'status', 'yetkazilgan_vaqti']
-    search_fields = ['check_id', 'ekispiditor', 'client_name']
+    search_fields = ['check_id', 'client_name']
     list_filter = ['status', 'project', 'city', 'yetkazilgan_vaqti']
     readonly_fields = ['created_at', 'updated_at']
     
