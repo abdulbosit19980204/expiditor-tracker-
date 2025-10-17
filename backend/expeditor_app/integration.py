@@ -43,7 +43,8 @@ class UpdateChecksView(APIView):
         return cls._client
 
     def _process_batch(self, batch, existing_check_ids, existing_projects, 
-                      existing_cities, existing_expeditors, existing_sklads):
+                      existing_cities, existing_expeditors, existing_sklads,
+                      counters: dict):
         """Process a batch of rows efficiently"""
         checks_to_create = []
         check_details_to_create = []
@@ -120,10 +121,14 @@ class UpdateChecksView(APIView):
                     ))
 
                 # Use update_or_create for checks (more complex logic needed)
-                Check.objects.update_or_create(
+                check_obj, check_created = Check.objects.update_or_create(
                     check_id=check_id,
                     defaults={k: v for k, v in check_data.items() if k != 'check_id'}
                 )
+                if check_created:
+                    counters['checks_created'] += 1
+                else:
+                    counters['checks_updated'] += 1
 
                 detail_obj, created_detail = CheckDetail.objects.update_or_create(
                     check_id=check_id,
@@ -140,6 +145,10 @@ class UpdateChecksView(APIView):
                         'updated_at': timezone.now()
                     }
                 )
+                if created_detail:
+                    counters['details_created'] += 1
+                else:
+                    counters['details_updated'] += 1
 
                 # Lightweight problem detection without slowing imports
                 issue_codes = []
@@ -169,12 +178,24 @@ class UpdateChecksView(APIView):
         # Bulk create new records
         if projects_to_create:
             Projects.objects.bulk_create(projects_to_create, ignore_conflicts=True)
+            counters['projects_created'] += len(projects_to_create)
+            for p in projects_to_create:
+                existing_projects[p.project_name] = p
         if cities_to_create:
             City.objects.bulk_create(cities_to_create, ignore_conflicts=True)
+            counters['cities_created'] += len(cities_to_create)
+            for c in cities_to_create:
+                existing_cities[c.city_name] = c
         if expeditors_to_create:
             Ekispiditor.objects.bulk_create(expeditors_to_create, ignore_conflicts=True)
+            counters['expeditors_created'] += len(expeditors_to_create)
+            for e in expeditors_to_create:
+                existing_expeditors[e.ekispiditor_name] = e
         if sklads_to_create:
             Sklad.objects.bulk_create(sklads_to_create, ignore_conflicts=True)
+            counters['sklads_created'] += len(sklads_to_create)
+            for s in sklads_to_create:
+                existing_sklads[s.sklad_name] = s
 
     def get(self, request):
         try:
@@ -190,6 +211,16 @@ class UpdateChecksView(APIView):
                 return Response({'detail': 'No data received'}, status=status.HTTP_204_NO_CONTENT)
 
             updated_count = 0
+            counters = {
+                'checks_created': 0,
+                'checks_updated': 0,
+                'details_created': 0,
+                'details_updated': 0,
+                'projects_created': 0,
+                'cities_created': 0,
+                'expeditors_created': 0,
+                'sklads_created': 0,
+            }
             batch_size = 100  # Process in smaller batches for better memory management
             rows = list(response.Rows)
             
@@ -205,7 +236,8 @@ class UpdateChecksView(APIView):
                     batch = rows[i:i + batch_size]
                     self._process_batch(
                         batch, existing_check_ids, existing_projects, 
-                        existing_cities, existing_expeditors, existing_sklads
+                        existing_cities, existing_expeditors, existing_sklads,
+                        counters
                     )
                     updated_count += len(batch)
 
@@ -216,6 +248,8 @@ class UpdateChecksView(APIView):
 
             return Response({
                 'updated': updated_count,
+                'created': counters['checks_created'] + counters['details_created'] + counters['projects_created'] + counters['cities_created'] + counters['expeditors_created'] + counters['sklads_created'],
+                'counts': counters,
                 'last_update': str(last_update_date) if last_update_date else None
             }, status=status.HTTP_200_OK)
 

@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import (
     Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
     ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig,
-    SettingsEmailRecipient, SettingsEmailConfig, SettingsScheduledTask, SettingsTaskList, SettingsTaskRun,
 )
 
 @admin.register(Projects)
@@ -93,26 +92,6 @@ class TaskListAdmin(admin.ModelAdmin):
 
 @admin.register(EmailConfig)
 class EmailConfigAdmin(admin.ModelAdmin):
-# Optionally register proxies to appear under a separate app/group label in the left menu
-@admin.register(SettingsEmailRecipient)
-class SettingsEmailRecipientAdmin(EmailRecipientAdmin):
-    pass
-
-@admin.register(SettingsEmailConfig)
-class SettingsEmailConfigAdmin(EmailConfigAdmin):
-    pass
-
-@admin.register(SettingsScheduledTask)
-class SettingsScheduledTaskAdmin(ScheduledTaskAdmin):
-    pass
-
-@admin.register(SettingsTaskList)
-class SettingsTaskListAdmin(TaskListAdmin):
-    pass
-
-@admin.register(SettingsTaskRun)
-class SettingsTaskRunAdmin(TaskRunAdmin):
-    pass
     list_display = ['host', 'port', 'use_tls', 'use_ssl', 'is_active', 'updated_at']
     list_filter = ['use_tls', 'use_ssl', 'is_active']
     search_fields = ['host', 'username', 'from_email']
