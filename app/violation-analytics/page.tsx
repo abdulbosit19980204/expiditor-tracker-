@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { YandexMap } from '@/components/yandex-map';
 
 interface CheckLocation {
   id: number;
@@ -59,6 +60,10 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedAnalytics, setSelectedAnalytics] = useState<AnalyticsData | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [showTableMap, setShowTableMap] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [filters, setFilters] = useState<FilterState>({
     dateFrom: '',
     dateTo: '',
@@ -84,10 +89,16 @@ export default function AnalyticsPage() {
       if (filters.radius) params.append('radius_meters', filters.radius);
       if (filters.windowDuration) params.append('window_duration_minutes', filters.windowDuration);
       if (filters.search) params.append('search', filters.search);
+      
+      // Add pagination parameters
+      params.append('page', currentPage.toString());
+      params.append('page_size', '20');
 
       const response = await fetch(`/api/analytics/?${params.toString()}`);
       const data = await response.json();
       setAnalyticsData(data.results || []);
+      setTotalPages(data.total_pages || 1);
+      setTotalRecords(data.count || 0);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
     } finally {
@@ -97,10 +108,11 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [filters]);
+  }, [filters, currentPage]);
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const clearFilters = () => {
@@ -336,6 +348,16 @@ export default function AnalyticsPage() {
               <table className="w-full table-auto">
                 <thead>
                   <tr className="border-b">
+                    <th className="text-left p-3 font-medium">
+                      <button
+                        onClick={() => setShowTableMap(!showTableMap)}
+                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                        title={showTableMap ? "Hide Map" : "Show Map"}
+                      >
+                        <MapPin className="h-4 w-4" />
+                        {showTableMap ? "Hide Map" : "Show Map"}
+                      </button>
+                    </th>
                     <th className="text-left p-3 font-medium">Date & Time</th>
                     <th className="text-left p-3 font-medium">Time Window</th>
                     <th className="text-left p-3 font-medium">Location</th>
@@ -350,6 +372,9 @@ export default function AnalyticsPage() {
                 <tbody>
                   {analyticsData.map((item) => (
                     <tr key={item.id} className="border-b hover:bg-gray-50">
+                      <td className="p-3">
+                        {/* Empty cell for map toggle column */}
+                      </td>
                       <td className="p-3">
                         <div>
                           <div className="font-medium">{formatDate(item.window_start)}</div>
@@ -421,10 +446,65 @@ export default function AnalyticsPage() {
                   No analytics data found with the current filters.
                 </div>
               )}
+              
+              {/* Pagination Controls */}
+              {analyticsData.length > 0 && (
+                <div className="flex items-center justify-between p-4 border-t">
+                  <div className="text-sm text-gray-700">
+                    Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalRecords)} of {totalRecords} records
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-700">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Table Map Section */}
+      {showTableMap && analyticsData.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Analytics Locations Map
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <YandexMap
+              locations={analyticsData.map(item => ({
+                id: item.id,
+                lat: item.center_lat,
+                lng: item.center_lon,
+                expeditor: item.most_active_expiditor,
+                time: item.window_start,
+                status: `Total: ${item.total_checks} checks`
+              }))}
+              height="400px"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Map Modal */}
       {showMap && selectedAnalytics && (
@@ -476,28 +556,20 @@ export default function AnalyticsPage() {
                 </Card>
               </div>
               
-              {/* Map Placeholder */}
+              {/* Yandex Map */}
               <Card className="h-96">
-                <CardContent className="p-0 h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h4 className="text-lg font-semibold mb-2">Map Visualization</h4>
-                    <p className="text-gray-600 mb-4">
-                      Check locations for this analytics record
-                    </p>
-                    <div className="space-y-2">
-                      {selectedAnalytics.check_locations.map((check, index) => (
-                        <div key={check.id} className="text-sm">
-                          <Badge variant="outline">
-                            {index + 1}. {check.expeditor} - {check.lat.toFixed(4)}, {check.lng.toFixed(4)}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-4">
-                      Map integration can be added here using Google Maps or similar service
-                    </p>
-                  </div>
+                <CardContent className="p-0 h-full">
+                  <YandexMap
+                    locations={selectedAnalytics.check_locations.map(check => ({
+                      id: check.id,
+                      lat: check.lat,
+                      lng: check.lng,
+                      expeditor: check.expeditor,
+                      time: check.time,
+                      status: check.status
+                    }))}
+                    height="100%"
+                  />
                 </CardContent>
               </Card>
             </div>

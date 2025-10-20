@@ -121,6 +121,11 @@ class CheckAnalyticsAdmin(admin.ModelAdmin):
         ('Statistics', {
             'fields': ('total_checks', 'unique_expiditors', 'most_active_expiditor', 'most_active_count', 'avg_checks_per_expiditor')
         }),
+        ('Check Data', {
+            'fields': ('check_ids', 'check_details'),
+            'classes': ('collapse',),
+            'description': 'Raw check IDs and details stored during analysis'
+        }),
         ('Metadata', {
             'fields': ('analysis_date', 'created_at', 'updated_at'),
             'classes': ('collapse',)

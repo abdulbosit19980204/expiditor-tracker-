@@ -284,6 +284,12 @@ function EnhancedStatsPageContent() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              href="/violation-analytics"
+              className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-700 border-blue-200"
+            >
+              <BarChart3 className="h-4 w-4" /> Violation Analytics
+            </Link>
+            <Link
               href="/"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
             >
