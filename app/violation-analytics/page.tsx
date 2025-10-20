@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye, ChevronUp, ChevronDown, ArrowUpDown, Home, ArrowLeft, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { YandexMap } from '@/components/yandex-map';
+import Link from 'next/link';
 
 interface CheckLocation {
   id: number;
@@ -195,9 +196,14 @@ export default function AnalyticsPage() {
             <Filter className="h-4 w-4" />
             Filters
           </Button>
-          <Button onClick={fetchAnalyticsData} variant="outline">
-            Refresh
+          <Button onClick={fetchAnalyticsData} variant="outline" title="Refresh">
+            <RefreshCw className="h-4 w-4" />
           </Button>
+          <Link href="/">
+            <Button variant="outline" title="Home">
+              <Home className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </div>
 

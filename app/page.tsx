@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send, Clock } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send, Clock, Home, ArrowLeft, Key } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -436,6 +436,11 @@ export default function ExpeditorTracker() {
                 <Clock className="h-4 w-4" />
               </Button>
             </Link>
+            <Link href="/yandex-tokens" className="inline-flex">
+              <Button variant="outline" size="sm" title="Yandex Tokens">
+                <Key className="h-4 w-4" />
+              </Button>
+            </Link>
             <Button variant="outline" size="sm" onClick={handleOpenTelegram} title="Telegram">
               <Send className="h-4 w-4" />
             </Button>
@@ -736,6 +741,11 @@ export default function ExpeditorTracker() {
                 <Link href="/tasks" className="inline-flex">
                   <Button variant="outline" size="icon" title="Task Management">
                     <Clock className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/yandex-tokens" className="inline-flex">
+                  <Button variant="outline" size="icon" title="Yandex Tokens">
+                    <Key className="h-4 w-4" />
                   </Button>
                 </Link>
                 <Button variant="outline" size="icon" onClick={handleOpenTelegram} title="Contact via Telegram" className="ml-2">

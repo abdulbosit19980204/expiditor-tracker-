@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from .models import (
     Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
-    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount, CheckAnalytics,
+    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount, CheckAnalytics, YandexToken,
 )
 
 @admin.register(Projects)
@@ -175,6 +175,58 @@ class TelegramAccountAdmin(admin.ModelAdmin):
     list_display = ['display_name', 'username', 'phone_number', 'is_active', 'updated_at']
     list_filter = ['is_active']
     search_fields = ['display_name', 'username', 'phone_number']
+
+@admin.register(YandexToken)
+class YandexTokenAdmin(admin.ModelAdmin):
+    list_display = ['name', 'status', 'api_key_preview', 'created_at', 'updated_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['name', 'api_key', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+    actions = ['activate_token', 'deactivate_token', 'block_token']
+    
+    fieldsets = (
+        ('Token Information', {
+            'fields': ('name', 'api_key', 'description')
+        }),
+        ('Status', {
+            'fields': ('status',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def api_key_preview(self, obj):
+        """Show masked API key for security."""
+        if obj.api_key:
+            return f"{obj.api_key[:8]}...{obj.api_key[-4:]}"
+        return "No key"
+    api_key_preview.short_description = 'API Key Preview'
+    
+    def activate_token(self, request, queryset):
+        """Activate selected tokens (only one can be active)."""
+        count = 0
+        for token in queryset:
+            if token.status != YandexToken.STATUS_BLOCKED:
+                token.status = YandexToken.STATUS_ACTIVE
+                token.save()
+                count += 1
+        messages.success(request, f'{count} token(s) activated')
+    activate_token.short_description = "Activate selected tokens"
+    
+    def deactivate_token(self, request, queryset):
+        """Deactivate selected tokens."""
+        count = queryset.update(status=YandexToken.STATUS_INACTIVE)
+        messages.success(request, f'{count} token(s) deactivated')
+    deactivate_token.short_description = "Deactivate selected tokens"
+    
+    def block_token(self, request, queryset):
+        """Block selected tokens."""
+        count = queryset.update(status=YandexToken.STATUS_BLOCKED)
+        messages.success(request, f'{count} token(s) blocked')
+    block_token.short_description = "Block selected tokens"
+
 
 @admin.register(CheckAnalytics)
 class CheckAnalyticsAdmin(admin.ModelAdmin):

@@ -6,6 +6,7 @@ from .views import (
     AnalyticsSummaryView, TelegramTargetView, CheckAnalyticsViewSet, CheckAnalyticsAPIView,
 )
 from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView
+from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
 from .integration import UpdateChecksView
 
 # Create a router and register our viewsets with it.
@@ -20,6 +21,7 @@ router.register(r'check', CheckViewSet, basename='check')
 router.register(r'analytics', CheckAnalyticsViewSet, basename='analytics')
 router.register(r'tasks', ScheduledTaskViewSet, basename='tasks')
 router.register(r'task-runs', TaskRunViewSet, basename='task-runs')
+router.register(r'yandex-tokens', YandexTokenViewSet, basename='yandex-tokens')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
@@ -31,4 +33,5 @@ urlpatterns = [
     path('telegram/target/', TelegramTargetView.as_view(), name='telegram-target'),
     path('update-checks/', UpdateChecksView.as_view(), name='update-checks'),
     path('task-status/', TaskStatusView.as_view(), name='task-status'),
+    path('yandex-token-status/', YandexTokenStatusView.as_view(), name='yandex-token-status'),
 ]

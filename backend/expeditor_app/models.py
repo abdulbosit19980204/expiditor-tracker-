@@ -342,6 +342,85 @@ class SettingsTaskRun(TaskRun):
         verbose_name_plural = 'Task Runs'
 
 
+class YandexToken(models.Model):
+    """Yandex Maps API token management.
+    
+    This model stores Yandex Maps API tokens with status management.
+    Only one token can be active at a time, and the active token
+    is automatically written to env.local file.
+    """
+    STATUS_ACTIVE = 'active'
+    STATUS_INACTIVE = 'inactive'
+    STATUS_BLOCKED = 'blocked'
+    
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_INACTIVE, 'Inactive'),
+        (STATUS_BLOCKED, 'Blocked'),
+    ]
+    
+    name = models.CharField(max_length=100, help_text="Token name for identification")
+    api_key = models.CharField(max_length=200, unique=True, help_text="Yandex Maps API key")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_INACTIVE, db_index=True, help_text="Token status")
+    description = models.TextField(blank=True, null=True, help_text="Token description")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Settings — Yandex Tokens"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.name} ({self.status})"
+    
+    def save(self, *args, **kwargs):
+        """Override save to handle active token logic."""
+        # If this token is being set to active, deactivate all others
+        if self.status == self.STATUS_ACTIVE:
+            YandexToken.objects.exclude(id=self.id).update(status=self.STATUS_INACTIVE)
+            # Update env.local file
+            self._update_env_file()
+        
+        super().save(*args, **kwargs)
+    
+    def _update_env_file(self):
+        """Update env.local file with active token."""
+        try:
+            import os
+            env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'env.local')
+            
+            # Read current env file
+            env_content = ""
+            if os.path.exists(env_path):
+                with open(env_path, 'r') as f:
+                    env_content = f.read()
+            
+            # Update or add NEXT_PUBLIC_YANDEX_MAPS_API_KEY
+            lines = env_content.split('\n')
+            updated = False
+            
+            for i, line in enumerate(lines):
+                if line.startswith('NEXT_PUBLIC_YANDEX_MAPS_API_KEY='):
+                    lines[i] = f'NEXT_PUBLIC_YANDEX_MAPS_API_KEY={self.api_key}'
+                    updated = True
+                    break
+            
+            if not updated:
+                lines.append(f'NEXT_PUBLIC_YANDEX_MAPS_API_KEY={self.api_key}')
+            
+            # Write back to file
+            with open(env_path, 'w') as f:
+                f.write('\n'.join(lines))
+                
+        except Exception as e:
+            print(f"Error updating env.local: {e}")
+    
+    @classmethod
+    def get_active_token(cls):
+        """Get the currently active token."""
+        return cls.objects.filter(status=cls.STATUS_ACTIVE).first()
+
+
 class CheckAnalytics(models.Model):
     """Analytics data for check-ins within specific time and distance ranges.
     

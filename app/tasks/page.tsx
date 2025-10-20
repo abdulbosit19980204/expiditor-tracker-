@@ -21,9 +21,12 @@ import {
   Settings,
   Activity,
   Timer,
-  Calendar
+  Calendar,
+  Home,
+  ArrowLeft
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
+import Link from "next/link"
 
 interface ScheduledTask {
   id: number
@@ -285,10 +288,16 @@ export default function TaskManagement() {
             Manage scheduled tasks and monitor their execution
           </p>
         </div>
-        <Button onClick={() => { loadTasks(); loadTaskRuns(); }} variant="outline">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => { loadTasks(); loadTaskRuns(); }} variant="outline" title="Refresh">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Link href="/">
+            <Button variant="outline" title="Home">
+              <Home className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -400,21 +409,21 @@ export default function TaskManagement() {
                           variant="outline"
                           size="sm"
                           onClick={() => toggleTask(task.id, !task.is_enabled)}
+                          title={task.is_enabled ? "Disable" : "Enable"}
                         >
                           {task.is_enabled ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                          {task.is_enabled ? "Disable" : "Enable"}
                         </Button>
                         <Button
                           size="sm"
                           onClick={() => runTaskNow(task.id)}
                           disabled={runningTasks.has(task.id) || !task.is_enabled}
+                          title="Run Now"
                         >
                           {runningTasks.has(task.id) ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
                             <RotateCcw className="h-4 w-4" />
                           )}
-                          Run Now
                         </Button>
                       </div>
                     </TableCell>
