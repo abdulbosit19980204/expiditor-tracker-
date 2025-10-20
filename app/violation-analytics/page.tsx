@@ -15,6 +15,8 @@ import { YandexMap } from '@/components/yandex-map';
 
 interface CheckLocation {
   id: number;
+  check_id: string;
+  client_name: string;
   lat: number;
   lng: number;
   time: string;
@@ -349,14 +351,7 @@ export default function AnalyticsPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-3 font-medium">
-                      <button
-                        onClick={() => setShowTableMap(!showTableMap)}
-                        className="flex items-center gap-2 hover:text-blue-600 transition-colors"
-                        title={showTableMap ? "Hide Map" : "Show Map"}
-                      >
-                        <MapPin className="h-4 w-4" />
-                        {showTableMap ? "Hide Map" : "Show Map"}
-                      </button>
+                      {/* Map column removed */}
                     </th>
                     <th className="text-left p-3 font-medium">Date & Time</th>
                     <th className="text-left p-3 font-medium">Time Window</th>
@@ -373,7 +368,7 @@ export default function AnalyticsPage() {
                   {analyticsData.map((item) => (
                     <tr key={item.id} className="border-b hover:bg-gray-50">
                       <td className="p-3">
-                        {/* Empty cell for map toggle column */}
+                        {/* Map column removed */}
                       </td>
                       <td className="p-3">
                         <div>
@@ -545,7 +540,8 @@ export default function AnalyticsPage() {
                     <div className="space-y-2">
                       {selectedAnalytics.check_locations.map((check) => (
                         <div key={check.id} className="text-sm border-b pb-2">
-                          <div><strong>ID:</strong> {check.id}</div>
+                          <div><strong>Check ID:</strong> {check.check_id}</div>
+                          <div><strong>Client Name:</strong> {check.client_name}</div>
                           <div><strong>Time:</strong> {new Date(check.time).toLocaleString()}</div>
                           <div><strong>Expeditor:</strong> {check.expeditor}</div>
                           <div><strong>Location:</strong> {check.lat.toFixed(4)}, {check.lng.toFixed(4)}</div>

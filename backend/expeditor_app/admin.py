@@ -108,8 +108,9 @@ class CheckAnalyticsAdmin(admin.ModelAdmin):
     list_display = ['time_window_display', 'total_checks', 'unique_expiditors', 'most_active_expiditor', 'most_active_count', 'analysis_date']
     list_filter = ['analysis_date', 'window_duration_minutes', 'radius_meters']
     search_fields = ['most_active_expiditor']
-    readonly_fields = ['created_at', 'updated_at', 'time_window_display', 'area_display']
+    readonly_fields = ['created_at', 'updated_at', 'time_window_display', 'area_display', 'analysis_date']
     ordering = ['-analysis_date', '-window_start']
+    exclude = ['analysis_date']  # Exclude from form since it's auto-generated
     
     fieldsets = (
         ('Time Window', {
@@ -127,7 +128,7 @@ class CheckAnalyticsAdmin(admin.ModelAdmin):
             'description': 'Raw check IDs and details stored during analysis'
         }),
         ('Metadata', {
-            'fields': ('analysis_date', 'created_at', 'updated_at'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

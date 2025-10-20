@@ -426,7 +426,7 @@ export default function ExpeditorTracker() {
             <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
               {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
-            <Link href="/violation-analytics" className="inline-flex">
+            <Link href="/analytics" className="inline-flex">
               <Button variant="outline" size="sm" title="Analytics">
                 <BarChart3 className="h-4 w-4" />
               </Button>
@@ -723,7 +723,7 @@ export default function ExpeditorTracker() {
                   <div className="ml-auto" />
                   {isFiltersOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                 </Button>
-                <Link href="/violation-analytics" className="inline-flex">
+                <Link href="/analytics" className="inline-flex">
                   <Button variant="outline" size="icon" title="Analytics">
                     <BarChart3 className="h-4 w-4" />
                   </Button>

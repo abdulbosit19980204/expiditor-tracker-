@@ -405,7 +405,7 @@ class CheckAnalytics(models.Model):
         """Get the actual Check objects that were part of this analysis."""
         if not self.check_ids:
             return Check.objects.none()
-        return Check.objects.filter(id__in=self.check_ids).order_by('yetkazilgan_vaqti')
+        return Check.objects.filter(check_id__in=self.check_ids).order_by('yetkazilgan_vaqti')
     
     def get_check_locations(self):
         """Get check locations for map visualization."""
@@ -415,6 +415,8 @@ class CheckAnalytics(models.Model):
             if check.check_lat and check.check_lon:
                 locations.append({
                     'id': check.id,
+                    'check_id': check.check_id,
+                    'client_name': check.client_name or 'Unknown',
                     'lat': float(check.check_lat),
                     'lng': float(check.check_lon),
                     'time': check.yetkazilgan_vaqti.isoformat(),
