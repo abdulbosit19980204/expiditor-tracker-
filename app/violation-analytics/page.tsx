@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye } from 'lucide-react';
+import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { YandexMap } from '@/components/yandex-map';
@@ -57,6 +57,9 @@ interface FilterState {
   search: string;
 }
 
+type SortField = 'window_start' | 'total_checks' | 'most_active_count' | 'unique_expiditors' | 'analysis_date';
+type SortDirection = 'asc' | 'desc';
+
 export default function AnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,10 @@ export default function AnalyticsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [sortField, setSortField] = useState<SortField>('window_start');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     dateFrom: '',
     dateTo: '',
@@ -94,7 +101,10 @@ export default function AnalyticsPage() {
       
       // Add pagination parameters
       params.append('page', currentPage.toString());
-      params.append('page_size', '20');
+      params.append('page_size', pageSize.toString());
+      
+      // Add sorting parameters
+      params.append('ordering', sortDirection === 'desc' ? `-${sortField}` : sortField);
 
       const response = await fetch(`/api/analytics/?${params.toString()}`);
       const data = await response.json();
@@ -110,7 +120,35 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [filters, currentPage]);
+  }, [filters, currentPage, pageSize, sortField, sortDirection]);
+
+  // Scroll to top functionality
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return sortDirection === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />;
+  };
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -338,7 +376,56 @@ export default function AnalyticsPage() {
       {/* Analytics Data Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Analytics Data</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Analytics Data</CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Per page:</span>
+              <Select value={pageSize.toString()} onValueChange={(value) => {
+                setPageSize(Number(value));
+                setCurrentPage(1);
+              }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          {/* Pagination Controls - Top */}
+          {analyticsData.length > 0 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-gray-700">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalRecords)} of {totalRecords} records
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -353,13 +440,45 @@ export default function AnalyticsPage() {
                     <th className="text-left p-3 font-medium">
                       {/* Map column removed */}
                     </th>
-                    <th className="text-left p-3 font-medium">Date & Time</th>
+                    <th className="text-left p-3 font-medium">
+                      <button 
+                        onClick={() => handleSort('window_start')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Date & Time
+                        {getSortIcon('window_start')}
+                      </button>
+                    </th>
                     <th className="text-left p-3 font-medium">Time Window</th>
                     <th className="text-left p-3 font-medium">Location</th>
                     <th className="text-left p-3 font-medium">Most Active Expiditor</th>
-                    <th className="text-left p-3 font-medium">Checks</th>
-                    <th className="text-left p-3 font-medium">Total Checks</th>
-                    <th className="text-left p-3 font-medium">Unique Expiditors</th>
+                    <th className="text-left p-3 font-medium">
+                      <button 
+                        onClick={() => handleSort('most_active_count')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Checks
+                        {getSortIcon('most_active_count')}
+                      </button>
+                    </th>
+                    <th className="text-left p-3 font-medium">
+                      <button 
+                        onClick={() => handleSort('total_checks')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Total Checks
+                        {getSortIcon('total_checks')}
+                      </button>
+                    </th>
+                    <th className="text-left p-3 font-medium">
+                      <button 
+                        onClick={() => handleSort('unique_expiditors')}
+                        className="flex items-center gap-1 hover:text-blue-600 transition-colors"
+                      >
+                        Unique Expiditors
+                        {getSortIcon('unique_expiditors')}
+                      </button>
+                    </th>
                     <th className="text-left p-3 font-medium">Area</th>
                     <th className="text-left p-3 font-medium">Actions</th>
                   </tr>
@@ -439,36 +558,6 @@ export default function AnalyticsPage() {
               {analyticsData.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   No analytics data found with the current filters.
-                </div>
-              )}
-              
-              {/* Pagination Controls */}
-              {analyticsData.length > 0 && (
-                <div className="flex items-center justify-between p-4 border-t">
-                  <div className="text-sm text-gray-700">
-                    Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalRecords)} of {totalRecords} records
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm text-gray-700">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
@@ -571,6 +660,17 @@ export default function AnalyticsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <Button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 rounded-full shadow-lg"
+          size="icon"
+        >
+          <ChevronUp className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );

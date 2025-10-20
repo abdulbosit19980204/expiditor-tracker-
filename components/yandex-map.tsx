@@ -45,7 +45,7 @@ export function YandexMap({
       }
 
       const script = document.createElement('script');
-      script.src = 'https://api-maps.yandex.ru/2.1/?apikey=&lang=en_US';
+      script.src = '/api/yandex-maps/?v=2.1&lang=en_US';
       script.async = true;
       script.onload = () => {
         window.ymaps.ready(() => {

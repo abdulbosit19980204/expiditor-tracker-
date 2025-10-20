@@ -409,21 +409,54 @@ class CheckAnalytics(models.Model):
     
     def get_check_locations(self):
         """Get check locations for map visualization."""
-        checks = self.get_checks()
         locations = []
-        for check in checks:
-            if check.check_lat and check.check_lon:
-                locations.append({
-                    'id': check.id,
-                    'check_id': check.check_id,
-                    'client_name': check.client_name or 'Unknown',
-                    'lat': float(check.check_lat),
-                    'lng': float(check.check_lon),
-                    'time': check.yetkazilgan_vaqti.isoformat(),
-                    'expeditor': check.ekispiditor or 'Unknown',
-                    'status': check.status or 'Unknown',
-                    'address': getattr(check, 'address', '') or ''
-                })
+        
+        # First try to get from check_details if available
+        if self.check_details and isinstance(self.check_details, list) and self.check_ids:
+            for i, detail in enumerate(self.check_details):
+                if isinstance(detail, dict) and detail.get('lat') and detail.get('lng'):
+                    # Get check_id from check_ids array
+                    check_id = self.check_ids[i] if i < len(self.check_ids) else 'Unknown'
+                    client_name = detail.get('client_name', 'Unknown')
+                    
+                    # Try to get additional info from Check object
+                    if check_id != 'Unknown':
+                        try:
+                            from .models import Check
+                            check_obj = Check.objects.get(check_id=check_id)
+                            client_name = check_obj.client_name or 'Unknown'
+                        except:
+                            pass
+                    
+                    locations.append({
+                        'id': detail.get('id', 0),
+                        'check_id': check_id,
+                        'client_name': client_name,
+                        'lat': float(detail.get('lat', 0)),
+                        'lng': float(detail.get('lng', 0)),
+                        'time': detail.get('time', ''),
+                        'expeditor': detail.get('expeditor', 'Unknown'),
+                        'status': detail.get('status', 'Unknown'),
+                        'address': detail.get('address', '')
+                    })
+        
+        # If no locations from check_details, try to get from actual Check objects
+        if not locations:
+            checks = self.get_checks()
+            for check in checks:
+                if check.check_lat and check.check_lon:
+                    locations.append({
+                        'id': check.id,
+                        'check_id': check.check_id,
+                        'client_name': check.client_name or 'Unknown',
+                        'lat': float(check.check_lat),
+                        'lng': float(check.check_lon),
+                        'time': check.yetkazilgan_vaqti.isoformat() if check.yetkazilgan_vaqti else '',
+                        'expeditor': check.ekispiditor or 'Unknown',
+                        'status': check.status or 'Unknown',
+                        'address': getattr(check, 'address', '') or ''
+                    })
+        
         return locations
     
     @staticmethod

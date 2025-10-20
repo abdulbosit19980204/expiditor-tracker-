@@ -96,13 +96,20 @@ class TaskExecutor:
             
             response = view.get(MockRequest())
             
-            if response.status_code == 200:
-                data = response.data
-                return {
-                    'message': f"Updated {data.get('updated', 0)} records",
-                    'total': data.get('updated', 0),
-                    'processed': data.get('updated', 0)
-                }
+            if response.status_code in [200, 204]:
+                if response.status_code == 200:
+                    data = response.data
+                    return {
+                        'message': f"Updated {data.get('updated', 0)} records",
+                        'total': data.get('updated', 0),
+                        'processed': data.get('updated', 0)
+                    }
+                else:  # 204 - No Content
+                    return {
+                        'message': "No new data to update",
+                        'total': 0,
+                        'processed': 0
+                    }
             else:
                 raise Exception(f"Update failed with status {response.status_code}")
                 
