@@ -5,6 +5,7 @@ from .views import (
     SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet, FilialViewSet,
     AnalyticsSummaryView, TelegramTargetView, CheckAnalyticsViewSet, CheckAnalyticsAPIView,
 )
+from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView
 from .integration import UpdateChecksView
 
 # Create a router and register our viewsets with it.
@@ -17,6 +18,8 @@ router.register(r'filial', FilialViewSet)  # Registering FilialViewSet
 router.register(r'ekispiditor', EkispiditorViewSet, basename='ekispiditor')
 router.register(r'check', CheckViewSet, basename='check')
 router.register(r'analytics', CheckAnalyticsViewSet, basename='analytics')
+router.register(r'tasks', ScheduledTaskViewSet, basename='tasks')
+router.register(r'task-runs', TaskRunViewSet, basename='task-runs')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
@@ -27,4 +30,5 @@ urlpatterns = [
     path('analytics-simple/', CheckAnalyticsAPIView.as_view(), name='analytics-simple'),
     path('telegram/target/', TelegramTargetView.as_view(), name='telegram-target'),
     path('update-checks/', UpdateChecksView.as_view(), name='update-checks'),
+    path('task-status/', TaskStatusView.as_view(), name='task-status'),
 ]
