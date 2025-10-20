@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount
+from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount, CheckAnalytics
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -76,3 +76,24 @@ class TelegramAccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = TelegramAccount
         fields = ['id', 'display_name', 'username', 'phone_number', 'is_active', 'created_at', 'updated_at']
+
+
+class CheckAnalyticsSerializer(serializers.ModelSerializer):
+    time_window_display = serializers.ReadOnlyField()
+    area_display = serializers.ReadOnlyField()
+    check_locations = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = CheckAnalytics
+        fields = [
+            'id', 'window_start', 'window_end', 'window_duration_minutes', 
+            'center_lat', 'center_lon', 'radius_meters', 'total_checks', 
+            'unique_expiditors', 'most_active_expiditor', 'most_active_count', 
+            'avg_checks_per_expiditor', 'analysis_date', 'time_window_display', 
+            'area_display', 'check_ids', 'check_details', 'check_locations',
+            'created_at', 'updated_at'
+        ]
+    
+    def get_check_locations(self, obj):
+        """Get check locations for map visualization."""
+        return obj.get_check_locations()

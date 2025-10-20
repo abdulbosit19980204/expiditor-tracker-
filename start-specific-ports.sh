@@ -25,11 +25,14 @@ echo -e "${GREEN}🐍 Starting Django Backend on PORT 7896...${NC}"
 cd "$PROJECT_ROOT/backend"
 source venv/bin/activate
 
+# Load environment variables
+source production.env
+
 # Collect static files
 python3 manage.py collectstatic --noinput
 
 # Start Gunicorn on port 7896
-nohup gunicorn \
+nohup env $(cat production.env | xargs) gunicorn \
     --bind 0.0.0.0:7896 \
     --workers 3 \
     --timeout 120 \

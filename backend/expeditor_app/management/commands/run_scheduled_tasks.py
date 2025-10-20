@@ -4,6 +4,7 @@ from datetime import timedelta
 from expeditor_app.models import ScheduledTask, ProblemCheck, Check, CheckDetail, IntegrationEndpoint, EmailRecipient, TaskRun, EmailConfig
 from expeditor_app.integration import UpdateChecksView
 from django.db.models import Q
+from django.core.management import call_command
 
 
 class Command(BaseCommand):
@@ -68,6 +69,30 @@ class Command(BaseCommand):
                 recipients = [r.email for r in EmailRecipient.objects.filter(is_active=True)]
                 cfg = EmailConfig.objects.filter(is_active=True).first()
                 _ = (total_checks, total_details, unresolved, recipients, cfg)
+
+            elif task.task_type == ScheduledTask.TASK_ANALYZE_PATTERNS:
+                # Run check pattern analysis
+                params = task.params or {}
+                time_window = params.get('time_window_minutes', 10)
+                distance = params.get('distance_meters', 15)
+                lookback = params.get('lookback_hours', 24)
+                
+                run.status_message = f'Analyzing patterns: {time_window}min windows, {distance}m radius'
+                run.save(update_fields=['status_message'])
+                
+                try:
+                    call_command(
+                        'analyze_check_patterns',
+                        time_window_minutes=time_window,
+                        distance_meters=distance,
+                        lookback_hours=lookback,
+                        verbosity=0  # Suppress output for scheduled runs
+                    )
+                    run.status_message = 'Pattern analysis completed successfully'
+                except Exception as e:
+                    run.status_message = f'Pattern analysis failed: {str(e)}'
+                    run.save(update_fields=['status_message'])
+                    continue
 
             # Update scheduling metadata
             task.last_run_at = now

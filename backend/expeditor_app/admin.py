@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
-    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount,
+    ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount, CheckAnalytics,
 )
 
 @admin.register(Projects)
@@ -102,3 +102,27 @@ class TelegramAccountAdmin(admin.ModelAdmin):
     list_display = ['display_name', 'username', 'phone_number', 'is_active', 'updated_at']
     list_filter = ['is_active']
     search_fields = ['display_name', 'username', 'phone_number']
+
+@admin.register(CheckAnalytics)
+class CheckAnalyticsAdmin(admin.ModelAdmin):
+    list_display = ['time_window_display', 'total_checks', 'unique_expiditors', 'most_active_expiditor', 'most_active_count', 'analysis_date']
+    list_filter = ['analysis_date', 'window_duration_minutes', 'radius_meters']
+    search_fields = ['most_active_expiditor']
+    readonly_fields = ['created_at', 'updated_at', 'time_window_display', 'area_display']
+    ordering = ['-analysis_date', '-window_start']
+    
+    fieldsets = (
+        ('Time Window', {
+            'fields': ('window_start', 'window_end', 'window_duration_minutes', 'time_window_display')
+        }),
+        ('Geographic Area', {
+            'fields': ('center_lat', 'center_lon', 'radius_meters', 'area_display')
+        }),
+        ('Statistics', {
+            'fields': ('total_checks', 'unique_expiditors', 'most_active_expiditor', 'most_active_count', 'avg_checks_per_expiditor')
+        }),
+        ('Metadata', {
+            'fields': ('analysis_date', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

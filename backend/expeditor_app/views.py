@@ -15,10 +15,10 @@ from django.views.decorators.cache import cache_page
 import django_filters
 import hashlib
 
-from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, TelegramAccount
+from .models import Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, TelegramAccount, CheckAnalytics
 from .serializers import (
     ProjectsSerializer, CheckDetailSerializer, SkladSerializer, 
-    CitySerializer, EkispiditorSerializer, CheckSerializer, FilialSerializer, TelegramAccountSerializer
+    CitySerializer, EkispiditorSerializer, CheckSerializer, FilialSerializer, TelegramAccountSerializer, CheckAnalyticsSerializer
 )
 
 
@@ -97,6 +97,18 @@ class EkispiditorFilter(django_filters.FilterSet):
     class Meta:
         model = Ekispiditor
         fields = ['filial', 'filial_name', 'is_active', 'has_checks']
+
+
+class CheckAnalyticsFilter(django_filters.FilterSet):
+    date_from = django_filters.DateTimeFilter(field_name='window_start', lookup_expr='gte')
+    date_to = django_filters.DateTimeFilter(field_name='window_end', lookup_expr='lte')
+    expiditor = django_filters.CharFilter(field_name='most_active_expiditor', lookup_expr='icontains')
+    min_checks = django_filters.NumberFilter(field_name='total_checks', lookup_expr='gte')
+    max_checks = django_filters.NumberFilter(field_name='total_checks', lookup_expr='lte')
+    
+    class Meta:
+        model = CheckAnalytics
+        fields = ['date_from', 'date_to', 'expiditor', 'min_checks', 'max_checks', 'radius_meters', 'window_duration_minutes']
 
 
 class ProjectsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -201,6 +213,46 @@ class CheckViewSet(viewsets.ReadOnlyModelViewSet):
         )
         serializer = self.get_serializer(checks, many=True)
         return Response(serializer.data)
+
+
+class CheckAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CheckAnalytics.objects.all()
+    serializer_class = CheckAnalyticsSerializer
+    pagination_class = CustomPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = CheckAnalyticsFilter
+    search_fields = ['most_active_expiditor']
+    ordering_fields = ['window_start', 'window_end', 'total_checks', 'most_active_count', 'analysis_date']
+    ordering = ['-window_start', '-analysis_date']
+
+
+class CheckAnalyticsAPIView(APIView):
+    """Simple API view for analytics data"""
+    def get(self, request):
+        try:
+            queryset = CheckAnalytics.objects.all().order_by('-window_start', '-analysis_date')
+            
+            # Apply basic filtering
+            if 'expiditor' in request.GET:
+                queryset = queryset.filter(most_active_expiditor__icontains=request.GET['expiditor'])
+            
+            if 'min_checks' in request.GET:
+                try:
+                    min_checks = int(request.GET['min_checks'])
+                    queryset = queryset.filter(total_checks__gte=min_checks)
+                except ValueError:
+                    pass
+            
+            # Limit results for now
+            queryset = queryset[:100]
+            
+            serializer = CheckAnalyticsSerializer(queryset, many=True)
+            return Response({
+                'count': queryset.count(),
+                'results': serializer.data
+            })
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class StatisticsView(APIView):
     def get(self, request):
