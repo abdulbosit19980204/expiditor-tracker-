@@ -53,6 +53,7 @@ interface ScheduledTask {
   params: any
   created_at: string
   updated_at: string
+  estimated_duration: number
 }
 
 interface TaskRun {
@@ -358,6 +359,46 @@ export default function TaskManagement() {
       })
     }
   }
+  
+  const cancelTaskRun = async (taskRunId: number) => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/task-runs/${taskRunId}/cancel/`, {
+        method: 'POST',
+        headers,
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Success",
+          description: data.message || "Task cancelled successfully",
+        })
+        loadTaskRuns()
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.detail || "Failed to cancel task",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to cancel task",
+        variant: "destructive",
+      })
+    }
+  }
 
   const getTaskTypeLabel = (taskType: string) => {
     const labels = {
@@ -406,6 +447,22 @@ export default function TaskManagement() {
     const end = finishedAt ? new Date(finishedAt) : new Date()
     const duration = (end.getTime() - start.getTime()) / 1000
     return `${duration.toFixed(1)}s`
+  }
+  
+  const formatEstimatedTime = (seconds: number) => {
+    if (seconds < 1) {
+      return `${(seconds * 1000).toFixed(0)}ms`
+    } else if (seconds < 60) {
+      return `~${seconds.toFixed(1)}s`
+    } else if (seconds < 3600) {
+      const minutes = Math.floor(seconds / 60)
+      const secs = Math.floor(seconds % 60)
+      return `~${minutes}m ${secs}s`
+    } else {
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+      return `~${hours}h ${minutes}m`
+    }
   }
 
   const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -685,6 +742,7 @@ export default function TaskManagement() {
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Interval</TableHead>
+                  <TableHead>Est. Time</TableHead>
                   <TableHead>Next Run</TableHead>
                   <TableHead>Last Run</TableHead>
                   <TableHead>Actions</TableHead>
@@ -709,6 +767,14 @@ export default function TaskManagement() {
                       <div className="flex items-center gap-1">
                         <Timer className="h-4 w-4 text-gray-500" />
                         <span>{task.interval_minutes} min</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium text-blue-600">
+                          {formatEstimatedTime(task.estimated_duration || 1)}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -806,6 +872,7 @@ export default function TaskManagement() {
                   <TableHead>Started At</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Message</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -846,6 +913,18 @@ export default function TaskManagement() {
                       <span className="text-sm text-gray-600 max-w-xs truncate">
                         {run.status_message || '-'}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      {run.is_running && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => cancelTaskRun(run.id)}
+                          title="Stop Task"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

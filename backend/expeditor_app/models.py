@@ -279,6 +279,18 @@ class TaskRun(models.Model):
             self.status_message = error_message
         self.finished_at = timezone.now()
         self.save()
+    
+    def mark_cancelled(self, cancel_message=None):
+        """Mark task run as cancelled."""
+        from django.utils import timezone
+        self.is_running = False
+        self.status = self.STATUS_CANCELLED
+        if cancel_message:
+            self.status_message = cancel_message
+        else:
+            self.status_message = "Task was cancelled by user"
+        self.finished_at = timezone.now()
+        self.save()
 
 
 class TaskList(models.Model):

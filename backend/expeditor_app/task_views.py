@@ -131,6 +131,35 @@ class TaskRunViewSet(viewsets.ReadOnlyModelViewSet):
         recent_tasks = TaskRun.objects.all().order_by('-started_at')[:limit]
         serializer = self.get_serializer(recent_tasks, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """Cancel a running task."""
+        try:
+            task_run = self.get_object()
+            
+            # Check if task is actually running
+            if task_run.status != TaskRun.STATUS_RUNNING:
+                return Response({
+                    'detail': f'Task is not running. Current status: {task_run.get_status_display()}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Mark as cancelled
+            task_run.mark_cancelled(cancel_message="Cancelled by user")
+            
+            logger.info(f'Task run {pk} cancelled by user {request.user.username}')
+            
+            return Response({
+                'message': f'Task "{task_run.task_type}" cancelled successfully',
+                'task_run_id': task_run.id,
+                'status': 'cancelled'
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f'Failed to cancel task {pk}: {str(e)}')
+            return Response({
+                'detail': f'Failed to cancel task: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class TaskStatusView(APIView):
