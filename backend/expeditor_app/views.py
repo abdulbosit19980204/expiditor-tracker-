@@ -717,8 +717,8 @@ class ViolationAnalyticsDashboardView(APIView):
         min_radius = request.GET.get('min_radius')
         max_radius = request.GET.get('max_radius')
         
-        # Base queryset
-        analytics_qs = CheckAnalytics.objects.all()
+        # Base queryset - ONLY violations with 3+ checks
+        analytics_qs = CheckAnalytics.objects.filter(total_checks__gte=3)
         
         # Apply filters
         if date_from:
@@ -939,8 +939,11 @@ class ViolationDetailView(APIView):
         if not expeditor:
             return Response({'error': 'expeditor parameter is required'}, status=400)
         
-        # Filter violations for this expeditor
-        analytics_qs = CheckAnalytics.objects.filter(most_active_expiditor__icontains=expeditor)
+        # Filter violations for this expeditor - ONLY 3+ checks
+        analytics_qs = CheckAnalytics.objects.filter(
+            most_active_expiditor__icontains=expeditor,
+            total_checks__gte=3
+        )
         
         # Apply date filters if provided
         if date_from:
@@ -1008,6 +1011,109 @@ class ViolationDetailView(APIView):
             'filters_applied': {
                 'date_from': date_from,
                 'date_to': date_to,
+            }
+        }
+        
+        return Response(response_data)
+
+
+class ViolationChecksListView(APIView):
+    """
+    Get paginated list of all checks that are part of violations (3+ checks).
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        # Get filter parameters
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        expeditor = request.GET.get('expeditor')
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 50))
+        
+        # Get violations with 3+ checks
+        analytics_qs = CheckAnalytics.objects.filter(total_checks__gte=3)
+        
+        # Apply filters
+        if date_from:
+            try:
+                date_from_obj = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_start__gte=date_from_obj)
+            except:
+                pass
+        
+        if date_to:
+            try:
+                date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_end__lte=date_to_obj)
+            except:
+                pass
+        
+        if expeditor:
+            analytics_qs = analytics_qs.filter(most_active_expiditor__icontains=expeditor)
+        
+        # Collect all check IDs from violations
+        all_check_ids = []
+        for analytics in analytics_qs:
+            if analytics.check_ids:
+                all_check_ids.extend(analytics.check_ids)
+        
+        # Remove duplicates and get Check objects
+        unique_check_ids = list(set(all_check_ids))
+        checks_qs = Check.objects.filter(check_id__in=unique_check_ids).order_by('-yetkazilgan_vaqti')
+        
+        # Calculate total
+        total_checks = checks_qs.count()
+        total_pages = (total_checks + page_size - 1) // page_size
+        
+        # Pagination
+        start = (page - 1) * page_size
+        end = start + page_size
+        checks = checks_qs[start:end]
+        
+        # Serialize checks
+        checks_data = []
+        for check in checks:
+            # Get check detail
+            check_detail = None
+            try:
+                detail = CheckDetail.objects.get(check_id=check.check_id)
+                check_detail = {
+                    'total_sum': float(detail.total_sum) if detail.total_sum else 0,
+                    'nalichniy': float(detail.nalichniy) if detail.nalichniy else 0,
+                    'uzcard': float(detail.uzcard) if detail.uzcard else 0,
+                    'humo': float(detail.humo) if detail.humo else 0,
+                    'click': float(detail.click) if detail.click else 0,
+                }
+            except CheckDetail.DoesNotExist:
+                pass
+            
+            checks_data.append({
+                'id': check.id,
+                'check_id': check.check_id,
+                'expeditor': check.ekispiditor,
+                'project': check.project,
+                'city': check.city,
+                'sklad': check.sklad,
+                'client_name': check.client_name,
+                'client_address': check.client_address,
+                'delivered_at': check.yetkazilgan_vaqti.isoformat() if check.yetkazilgan_vaqti else None,
+                'status': check.status,
+                'lat': float(check.check_lat) if check.check_lat else None,
+                'lng': float(check.check_lon) if check.check_lon else None,
+                'check_detail': check_detail,
+            })
+        
+        response_data = {
+            'total': total_checks,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': total_pages,
+            'checks': checks_data,
+            'filters_applied': {
+                'date_from': date_from,
+                'date_to': date_to,
+                'expeditor': expeditor,
             }
         }
         

@@ -4,7 +4,7 @@ from .views import (
     StatisticsView, GlobalStatisticsView, ProjectsViewSet, CheckDetailViewSet, 
     SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet, FilialViewSet,
     AnalyticsSummaryView, TelegramTargetView, CheckAnalyticsViewSet, CheckAnalyticsAPIView,
-    ViolationAnalyticsDashboardView, ViolationDetailView,
+    ViolationAnalyticsDashboardView, ViolationDetailView, ViolationChecksListView,
 )
 from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView, TaskListViewSet, TaskAnalyticsView
 from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
@@ -33,6 +33,7 @@ urlpatterns = [
     path('analytics/summary/', AnalyticsSummaryView.as_view(), name='analytics-summary'),
     path('analytics/violation-dashboard/', ViolationAnalyticsDashboardView.as_view(), name='violation-dashboard'),
     path('analytics/violation-detail/', ViolationDetailView.as_view(), name='violation-detail'),
+    path('analytics/violation-checks/', ViolationChecksListView.as_view(), name='violation-checks'),
     path('analytics-simple/', CheckAnalyticsAPIView.as_view(), name='analytics-simple'),
     
     # Statistics endpoints

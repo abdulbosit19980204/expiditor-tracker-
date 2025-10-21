@@ -28,7 +28,8 @@ import {
   ChevronDown,
   Search,
   LogOut,
-  User
+  User,
+  CheckCircle
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
@@ -112,6 +113,9 @@ export default function ViolationAnalyticsDashboard() {
   const [showFilters, setShowFilters] = useState(false)
   const [selectedExpeditor, setSelectedExpeditor] = useState<string | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [checksData, setChecksData] = useState<any>(null)
+  const [checksLoading, setChecksLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
   
   const [filters, setFilters] = useState({
     date_from: '',
@@ -189,6 +193,9 @@ export default function ViolationAnalyticsDashboard() {
 
   const applyFilters = () => {
     fetchDashboardData()
+    // Reset checks data when filters change
+    setChecksData(null)
+    setCurrentPage(1)
     setShowFilters(false)
   }
 
@@ -200,6 +207,8 @@ export default function ViolationAnalyticsDashboard() {
       min_radius: '',
       max_radius: '',
     })
+    setChecksData(null)
+    setCurrentPage(1)
     setTimeout(() => fetchDashboardData(), 100)
   }
 
@@ -247,6 +256,43 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
   const handleCloseDetailModal = () => {
     setShowDetailModal(false)
     setSelectedExpeditor(null)
+  }
+
+  const fetchViolationChecks = async (page = 1) => {
+    if (!token) return
+
+    setChecksLoading(true)
+    try {
+      const queryParams = new URLSearchParams({ page: page.toString(), page_size: '50' })
+      if (filters.date_from) queryParams.append('date_from', filters.date_from)
+      if (filters.date_to) queryParams.append('date_to', filters.date_to)
+      if (filters.expeditor) queryParams.append('expeditor', filters.expeditor)
+
+      const response = await fetch(
+        `${API_BASE_URL}/analytics/violation-checks/?${queryParams.toString()}`,
+        {
+          headers: {
+            'Authorization': `Token ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      if (!response.ok) throw new Error('Failed to fetch checks')
+
+      const result = await response.json()
+      setChecksData(result)
+      setCurrentPage(page)
+    } catch (error: any) {
+      console.error('Error fetching violation checks:', error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load violation checks",
+        variant: "destructive"
+      })
+    } finally {
+      setChecksLoading(false)
+    }
   }
 
   if (authLoading || loading) {
@@ -502,12 +548,21 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="violators" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto gap-2 bg-white p-2 shadow-md">
+        <Tabs defaultValue="violators" className="space-y-4" onValueChange={(value) => {
+          if (value === 'checks' && !checksData) {
+            fetchViolationChecks(1)
+          }
+        }}>
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-2 bg-white p-2 shadow-md">
             <TabsTrigger value="violators" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Top Violators</span>
               <span className="sm:hidden">Violators</span>
+            </TabsTrigger>
+            <TabsTrigger value="checks" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Violation Checks</span>
+              <span className="sm:hidden">Checks</span>
             </TabsTrigger>
             <TabsTrigger value="geography" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <MapPin className="h-4 w-4 mr-2" />
@@ -530,6 +585,138 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
               <span className="sm:hidden">Trend</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Violation Checks Tab */}
+          <TabsContent value="checks" className="space-y-4">
+            <Card className="shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50">
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-indigo-600" />
+                  Violation Checks List (3+ checks per location)
+                </CardTitle>
+                <CardDescription>All checks that are part of violation patterns</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {checksLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <LoadingSpinner size="lg" />
+                    <span className="ml-2 text-gray-600">Loading checks...</span>
+                  </div>
+                ) : !checksData ? (
+                  <div className="text-center py-12 text-gray-600">
+                    Click to load violation checks
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Summary */}
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Total Violation Checks</p>
+                          <p className="text-2xl font-bold text-blue-600">{checksData.total.toLocaleString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-gray-600">Page {checksData.page} of {checksData.total_pages}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Checks Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b-2 border-gray-200 bg-gray-50">
+                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Check ID</th>
+                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Expeditor</th>
+                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Client</th>
+                            <th className="text-left py-3 px-3 font-semibold text-gray-700">City</th>
+                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Time</th>
+                            <th className="text-right py-3 px-3 font-semibold text-gray-700">Total Sum</th>
+                            <th className="text-center py-3 px-3 font-semibold text-gray-700">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {checksData.checks.map((check: any, idx: number) => (
+                            <tr key={idx} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
+                              <td className="py-3 px-3 font-mono text-xs">{check.check_id}</td>
+                              <td className="py-3 px-3 truncate max-w-[150px]" title={check.expeditor}>
+                                {check.expeditor || '-'}
+                              </td>
+                              <td className="py-3 px-3 truncate max-w-[200px]" title={check.client_name}>
+                                {check.client_name || '-'}
+                              </td>
+                              <td className="py-3 px-3">{check.city || '-'}</td>
+                              <td className="py-3 px-3 text-xs">
+                                {check.delivered_at ? new Date(check.delivered_at).toLocaleString('ru-RU', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : '-'}
+                              </td>
+                              <td className="py-3 px-3 text-right font-semibold">
+                                {check.check_detail ? `${check.check_detail.total_sum.toLocaleString()} so'm` : '-'}
+                              </td>
+                              <td className="py-3 px-3 text-center">
+                                <Badge 
+                                  variant={check.status === 'delivered' ? 'default' : check.status === 'failed' ? 'destructive' : 'secondary'}
+                                  className="text-xs"
+                                >
+                                  {check.status || 'pending'}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {checksData.total_pages > 1 && (
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fetchViolationChecks(currentPage - 1)}
+                          disabled={currentPage === 1 || checksLoading}
+                        >
+                          Previous
+                        </Button>
+                        
+                        <div className="flex items-center gap-2">
+                          {Array.from({ length: Math.min(5, checksData.total_pages) }, (_, i) => {
+                            const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i
+                            if (pageNum > checksData.total_pages) return null
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={pageNum === currentPage ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => fetchViolationChecks(pageNum)}
+                                disabled={checksLoading}
+                                className="w-10"
+                              >
+                                {pageNum}
+                              </Button>
+                            )
+                          })}
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fetchViolationChecks(currentPage + 1)}
+                          disabled={currentPage === checksData.total_pages || checksLoading}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           {/* Top Violators Tab */}
           <TabsContent value="violators" className="space-y-4">
