@@ -23,6 +23,33 @@ import {
 } from "lucide-react"
 import type { Statistics } from "@/lib/types"
 
+// Katta raqamlarni formatlash funksiyasi
+const formatLargeNumber = (num: number): { main: string; sub: string } => {
+  if (num >= 1000000000) {
+    const billions = (num / 1000000000).toFixed(1)
+    const remainder = num % 1000000000
+    return {
+      main: `${billions}B`,
+      sub: remainder.toLocaleString()
+    }
+  } else if (num >= 1000000) {
+    const millions = (num / 1000000).toFixed(1)
+    const remainder = num % 1000000
+    return {
+      main: `${millions}M`,
+      sub: remainder.toLocaleString()
+    }
+  } else if (num >= 1000) {
+    const thousands = (num / 1000).toFixed(1)
+    const remainder = num % 1000
+    return {
+      main: `${thousands}K`,
+      sub: remainder.toLocaleString()
+    }
+  }
+  return { main: num.toLocaleString(), sub: '' }
+}
+
 interface EnhancedStatisticsPanelProps {
   statistics: Statistics | null
   isLoading?: boolean
@@ -62,9 +89,22 @@ const MetricCard = memo(function MetricCard({
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">{title}</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {typeof value === 'number' ? value.toLocaleString() : value}
-              </p>
+              {typeof value === 'number' ? (
+                <div>
+                  <p className="text-2xl font-bold text-gray-900 leading-tight">
+                    {formatLargeNumber(value).main}
+                  </p>
+                  {formatLargeNumber(value).sub && (
+                    <p className="text-xs text-gray-400 font-normal">
+                      {formatLargeNumber(value).sub}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900">
+                  {value}
+                </p>
+              )}
               {description && (
                 <p className="text-xs text-gray-500 mt-1">{description}</p>
               )}
@@ -166,7 +206,7 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
       {
         key: 'totalSum' as const,
         title: 'Total Amount',
-        value: formatCurrency(statistics.totalSum),
+        value: statistics.totalSum, // Raqam sifatida yuborish
         icon: <DollarSign className="h-5 w-5 text-green-600" />,
         description: 'Total check value',
         trend: { value: 15, isPositive: true }
@@ -174,7 +214,7 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
       {
         key: 'avgCheckSum' as const,
         title: 'Average Check',
-        value: formatCurrency(statistics.avgCheckSum || 0),
+        value: statistics.avgCheckSum || 0, // Raqam sifatida yuborish
         icon: <TrendingUp className="h-5 w-5 text-blue-600" />,
         description: 'Per check average',
         trend: { value: 7, isPositive: true }
