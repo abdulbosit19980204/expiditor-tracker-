@@ -21,7 +21,9 @@ import {
   EyeOff,
   Home,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  User,
+  LogOut
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -284,12 +286,14 @@ export default function YandexTokenManagement() {
         </div>
         <div className="flex items-center gap-2">
           {/* User Profile */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
-            <User className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">
-              {user?.first_name} {user?.last_name}
-            </span>
-          </div>
+          {user && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {user.first_name} {user.last_name}
+              </span>
+            </div>
+          )}
           
           <Button onClick={loadTokens} variant="outline" title="Refresh">
             <RefreshCw className="h-4 w-4" />
