@@ -490,57 +490,57 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
 
         {/* Overview Statistics */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90 font-medium">Total Violations</p>
-                  <p className="text-4xl font-bold mt-2">{data.overview.total_violations.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600 font-medium">Total Violations</p>
+                  <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.total_violations.toLocaleString()}</p>
                 </div>
-                <div className="bg-white/20 p-4 rounded-xl">
-                  <AlertTriangle className="h-8 w-8" />
+                <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-red-500 transition-colors">
+                  <AlertTriangle className="h-8 w-8 text-gray-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90 font-medium">Checks Involved</p>
-                  <p className="text-4xl font-bold mt-2">{data.overview.total_checks_involved.toLocaleString()}</p>
+                  <p className="text-sm text-gray-600 font-medium">Checks Involved</p>
+                  <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.total_checks_involved.toLocaleString()}</p>
                 </div>
-                <div className="bg-white/20 p-4 rounded-xl">
-                  <Target className="h-8 w-8" />
+                <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-blue-500 transition-colors">
+                  <Target className="h-8 w-8 text-gray-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90 font-medium">Expeditors</p>
-                  <p className="text-4xl font-bold mt-2">{data.overview.unique_expeditors}</p>
+                  <p className="text-sm text-gray-600 font-medium">Expeditors</p>
+                  <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.unique_expeditors}</p>
                 </div>
-                <div className="bg-white/20 p-4 rounded-xl">
-                  <Users className="h-8 w-8" />
+                <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-purple-500 transition-colors">
+                  <Users className="h-8 w-8 text-gray-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <Card className="bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all group cursor-pointer">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90 font-medium">Avg Radius</p>
-                  <p className="text-4xl font-bold mt-2">{Math.round(data.overview.avg_radius_meters)}m</p>
+                  <p className="text-sm text-gray-600 font-medium">Avg Radius</p>
+                  <p className="text-4xl font-bold mt-2 text-gray-900">{Math.round(data.overview.avg_radius_meters)}m</p>
                 </div>
-                <div className="bg-white/20 p-4 rounded-xl">
-                  <MapPin className="h-8 w-8" />
+                <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-orange-500 transition-colors">
+                  <MapPin className="h-8 w-8 text-gray-600 group-hover:text-white transition-colors" />
                 </div>
               </div>
             </CardContent>
@@ -553,33 +553,33 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             fetchViolationChecks(1)
           }
         }}>
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-2 bg-white p-2 shadow-md">
-            <TabsTrigger value="violators" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-2 bg-white p-2 border border-gray-200">
+            <TabsTrigger value="violators" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Top Violators</span>
               <span className="sm:hidden">Violators</span>
             </TabsTrigger>
-            <TabsTrigger value="checks" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="checks" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <CheckCircle className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Violation Checks</span>
               <span className="sm:hidden">Checks</span>
             </TabsTrigger>
-            <TabsTrigger value="geography" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="geography" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <MapPin className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Geography</span>
               <span className="sm:hidden">Map</span>
             </TabsTrigger>
-            <TabsTrigger value="time" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="time" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Clock className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Time</span>
               <span className="sm:hidden">Time</span>
             </TabsTrigger>
-            <TabsTrigger value="severity" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="severity" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <AlertTriangle className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Severity</span>
               <span className="sm:hidden">Level</span>
             </TabsTrigger>
-            <TabsTrigger value="trends" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="trends" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Trends</span>
               <span className="sm:hidden">Trend</span>
@@ -588,15 +588,16 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
 
           {/* Violation Checks Tab */}
           <TabsContent value="checks" className="space-y-4">
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50">
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-indigo-600" />
-                  Violation Checks List (3+ checks per location)
-                </CardTitle>
-                <CardDescription>All checks that are part of violation patterns</CardDescription>
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="bg-white border-b border-gray-200 py-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl font-semibold text-gray-800">Violation Checks Data</CardTitle>
+                  <div className="text-sm text-gray-600">
+                    {checksData && `Showing 1 to ${checksData.checks.length} of ${checksData.total} records`}
+                  </div>
+                </div>
               </CardHeader>
-              <CardContent className="pt-6">
+              <CardContent className="p-0">
                 {checksLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <LoadingSpinner size="lg" />
@@ -607,63 +608,76 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                     Click to load violation checks
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Summary */}
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Violation Checks</p>
-                          <p className="text-2xl font-bold text-blue-600">{checksData.total.toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">Page {checksData.page} of {checksData.total_pages}</p>
-                        </div>
-                      </div>
-                    </div>
-
+                  <div>
                     {/* Checks Table */}
                     <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
+                      <table className="w-full">
                         <thead>
-                          <tr className="border-b-2 border-gray-200 bg-gray-50">
-                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Check ID</th>
-                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Expeditor</th>
-                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Client</th>
-                            <th className="text-left py-3 px-3 font-semibold text-gray-700">City</th>
-                            <th className="text-left py-3 px-3 font-semibold text-gray-700">Time</th>
-                            <th className="text-right py-3 px-3 font-semibold text-gray-700">Total Sum</th>
-                            <th className="text-center py-3 px-3 font-semibold text-gray-700">Status</th>
+                          <tr className="border-b border-gray-200 bg-white">
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date & Time</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Expeditor</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Client</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Location</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">City</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Total Sum</th>
+                            <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="bg-white">
                           {checksData.checks.map((check: any, idx: number) => (
-                            <tr key={idx} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                              <td className="py-3 px-3 font-mono text-xs">{check.check_id}</td>
-                              <td className="py-3 px-3 truncate max-w-[150px]" title={check.expeditor}>
-                                {check.expeditor || '-'}
+                            <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                              <td className="py-3 px-4 text-sm text-gray-700">
+                                {check.delivered_at ? (
+                                  <div>
+                                    <div className="font-medium">
+                                      {new Date(check.delivered_at).toLocaleDateString('en-GB', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric'
+                                      })}
+                                    </div>
+                                    <div className="text-xs text-gray-500">
+                                      {new Date(check.delivered_at).toLocaleTimeString('en-GB', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </div>
+                                  </div>
+                                ) : '-'}
                               </td>
-                              <td className="py-3 px-3 truncate max-w-[200px]" title={check.client_name}>
+                              <td className="py-3 px-4 text-sm text-gray-700">
+                                <div className="font-medium truncate max-w-[150px]" title={check.expeditor}>
+                                  {check.expeditor || '-'}
+                                </div>
+                                <div className="text-xs text-gray-500 font-mono">
+                                  {check.check_id?.substring(0, 12)}...
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-sm text-gray-700 truncate max-w-[200px]" title={check.client_name}>
                                 {check.client_name || '-'}
                               </td>
-                              <td className="py-3 px-3">{check.city || '-'}</td>
-                              <td className="py-3 px-3 text-xs">
-                                {check.delivered_at ? new Date(check.delivered_at).toLocaleString('ru-RU', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                }) : '-'}
+                              <td className="py-3 px-4 text-xs text-gray-600 font-mono">
+                                {check.lat && check.lng ? (
+                                  <div>
+                                    <div>Lat: {check.lat.toFixed(4)}</div>
+                                    <div>Lon: {check.lng.toFixed(4)}</div>
+                                  </div>
+                                ) : '-'}
                               </td>
-                              <td className="py-3 px-3 text-right font-semibold">
-                                {check.check_detail ? `${check.check_detail.total_sum.toLocaleString()} so'm` : '-'}
+                              <td className="py-3 px-4 text-sm text-gray-700">{check.city || '-'}</td>
+                              <td className="py-3 px-4 text-sm text-gray-900 text-right font-medium">
+                                {check.check_detail ? check.check_detail.total_sum.toLocaleString() : '-'}
                               </td>
-                              <td className="py-3 px-3 text-center">
-                                <Badge 
-                                  variant={check.status === 'delivered' ? 'default' : check.status === 'failed' ? 'destructive' : 'secondary'}
-                                  className="text-xs"
-                                >
+                              <td className="py-3 px-4 text-center">
+                                <span className={`inline-block px-2 py-1 text-xs rounded ${
+                                  check.status === 'delivered' 
+                                    ? 'bg-green-100 text-green-800' 
+                                    : check.status === 'failed'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-gray-100 text-gray-800'
+                                }`}>
                                   {check.status || 'pending'}
-                                </Badge>
+                                </span>
                               </td>
                             </tr>
                           ))}
@@ -673,20 +687,22 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
 
                     {/* Pagination */}
                     {checksData.total_pages > 1 && (
-                      <div className="flex items-center justify-between pt-4 border-t">
+                      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-white">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => fetchViolationChecks(currentPage - 1)}
                           disabled={currentPage === 1 || checksLoading}
+                          className="text-sm"
                         >
                           Previous
                         </Button>
                         
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-gray-600 mr-2">Page {currentPage} of {checksData.total_pages}</span>
                           {Array.from({ length: Math.min(5, checksData.total_pages) }, (_, i) => {
                             const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i
-                            if (pageNum > checksData.total_pages) return null
+                            if (pageNum > checksData.total_pages || pageNum < 1) return null
                             return (
                               <Button
                                 key={pageNum}
@@ -694,7 +710,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                                 size="sm"
                                 onClick={() => fetchViolationChecks(pageNum)}
                                 disabled={checksLoading}
-                                className="w-10"
+                                className="w-8 h-8 p-0 text-sm"
                               >
                                 {pageNum}
                               </Button>
@@ -707,6 +723,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                           size="sm"
                           onClick={() => fetchViolationChecks(currentPage + 1)}
                           disabled={currentPage === checksData.total_pages || checksLoading}
+                          className="text-sm"
                         >
                           Next
                         </Button>

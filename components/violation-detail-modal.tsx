@@ -11,18 +11,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   MapPin,
   Clock,
   Target,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
   Users,
   Download,
   X,
-  Loader2
+  ArrowLeft
 } from 'lucide-react'
 import { LoadingSpinner } from '@/components/loading-spinner'
 
@@ -92,22 +89,20 @@ export function ViolationDetailModal({
 
   useEffect(() => {
     if (open && expeditor && token) {
-      // Reset map state when opening
       setMapLoaded(false)
       setMapInstance(null)
+      setSelectedViolation(null)
       fetchViolationDetail()
     }
   }, [open, expeditor, token, dateFrom, dateTo])
 
   useEffect(() => {
-    if (open && data && !mapLoaded && data.all_check_locations.length > 0) {
-      // Small delay to ensure DOM is ready
+    if (open && selectedViolation && !mapLoaded) {
       setTimeout(() => {
         initializeMap()
-      }, 500)
+      }, 300)
     }
     
-    // Cleanup on close
     return () => {
       if (mapInstance) {
         try {
@@ -117,7 +112,7 @@ export function ViolationDetailModal({
         }
       }
     }
-  }, [open, data, mapLoaded])
+  }, [open, selectedViolation])
 
   const fetchViolationDetail = async () => {
     if (!expeditor) return
@@ -150,20 +145,18 @@ export function ViolationDetailModal({
   }
 
   const initializeMap = async () => {
-    if (!data || !data.all_check_locations.length) {
-      console.log('No data or locations for map')
+    if (!selectedViolation) {
+      console.log('No violation selected')
       return
     }
 
-    // Check if map container exists
-    const mapContainer = document.getElementById('yandex-map')
+    const mapContainer = document.getElementById('violation-map-container')
     if (!mapContainer) {
       console.log('Map container not found')
       return
     }
 
     try {
-      // Load Yandex Maps script
       if (!(window as any).ymaps) {
         const script = document.createElement('script')
         script.src = 'https://api-maps.yandex.ru/2.1/?lang=en_RU&apikey=YOUR_YANDEX_API_KEY'
@@ -177,42 +170,44 @@ export function ViolationDetailModal({
 
       await (window as any).ymaps.ready(() => {
         const ymaps = (window as any).ymaps
-
-        // Clear existing map if any
+        
         mapContainer.innerHTML = ''
 
-        // Create map centered on first location
-        const firstLocation = data.all_check_locations[0]
-        const map = new ymaps.Map('yandex-map', {
-          center: [firstLocation.lat, firstLocation.lng],
-          zoom: 12,
+        const map = new ymaps.Map('violation-map-container', {
+          center: [selectedViolation.center_lat, selectedViolation.center_lon],
+          zoom: 15,
           controls: ['zoomControl', 'fullscreenControl']
         })
 
-        // Add markers for all check locations
-        data.all_check_locations.forEach((location) => {
+        // Add circle for violation radius
+        const circle = new ymaps.Circle(
+          [[selectedViolation.center_lat, selectedViolation.center_lon], selectedViolation.radius_meters],
+          {},
+          {
+            fillColor: '#ff000033',
+            strokeColor: '#ff0000',
+            strokeWidth: 2
+          }
+        )
+        map.geoObjects.add(circle)
+
+        // Add markers for checks in this violation
+        selectedViolation.check_locations.forEach((location) => {
           if (!location.lat || !location.lng) return
           
           const placemark = new ymaps.Placemark(
             [location.lat, location.lng],
             {
               balloonContent: `
-                <div style="padding: 10px;">
-                  <strong>${location.client_name || 'Unknown'}</strong><br/>
-                  Check ID: ${location.check_id}<br/>
-                  Time: ${location.time ? new Date(location.time).toLocaleString() : 'N/A'}<br/>
-                  Status: ${location.status || 'Unknown'}<br/>
-                  ${location.address ? `Address: ${location.address}` : ''}
+                <div style="padding: 8px;">
+                  <strong>${location.client_name || 'N/A'}</strong><br/>
+                  ${location.check_id}<br/>
+                  ${new Date(location.time).toLocaleString()}
                 </div>
-              `,
-              hintContent: location.client_name || 'Check Location'
+              `
             },
             {
-              preset: location.status === 'delivered' 
-                ? 'islands#greenDotIcon' 
-                : location.status === 'failed'
-                ? 'islands#redDotIcon'
-                : 'islands#yellowDotIcon'
+              preset: 'islands#redDotIcon'
             }
           )
           
@@ -221,49 +216,22 @@ export function ViolationDetailModal({
 
         setMapInstance(map)
         setMapLoaded(true)
-        console.log(`Map loaded with ${data.all_check_locations.length} locations`)
       })
     } catch (error) {
-      console.error('Error loading Yandex Maps:', error)
+      console.error('Error loading map:', error)
       setMapLoaded(false)
     }
   }
 
   const showViolationOnMap = (violation: ViolationInstance) => {
-    setSelectedViolation(violation)
-    
-    if (mapInstance && violation.center_lat && violation.center_lon) {
-      mapInstance.setCenter([violation.center_lat, violation.center_lon], 14)
-      
-      // Add a circle to show the violation radius
-      const ymaps = (window as any).ymaps
-      const circle = new ymaps.Circle(
-        [[violation.center_lat, violation.center_lon], violation.radius_meters],
-        {},
-        {
-          fillColor: violation.severity === 'critical' 
-            ? '#ff000055' 
-            : violation.severity === 'warning'
-            ? '#ff990055'
-            : '#ffff0055',
-          strokeColor: violation.severity === 'critical' 
-            ? '#ff0000' 
-            : violation.severity === 'warning'
-            ? '#ff9900'
-            : '#ffff00',
-          strokeWidth: 2
-        }
-      )
-      
-      // Clear previous circles
-      mapInstance.geoObjects.each((geoObject: any) => {
-        if (geoObject.geometry?.getType() === 'Circle') {
-          mapInstance.geoObjects.remove(geoObject)
-        }
-      })
-      
-      mapInstance.geoObjects.add(circle)
+    setMapLoaded(false)
+    if (mapInstance) {
+      try {
+        mapInstance.destroy()
+      } catch (e) {}
     }
+    setMapInstance(null)
+    setSelectedViolation(violation)
   }
 
   const getSeverityColor = (severity: string) => {
@@ -312,190 +280,167 @@ ${data.all_check_locations.map(l =>
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-7xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-2xl flex items-center gap-2">
-                <Users className="h-6 w-6 text-blue-600" />
-                Violation Details
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                Violations - {expeditor}
               </DialogTitle>
-              <DialogDescription className="text-base mt-1">
-                {expeditor}
+              <DialogDescription className="text-sm text-gray-600 mt-1">
+                {data?.summary.total_violations || 0} violations • {data?.summary.total_checks_involved || 0} checks
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
-              {data && (
-                <Button variant="outline" size="sm" onClick={exportToCSV}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
-              )}
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
           </div>
         </DialogHeader>
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center py-12">
-            <div className="text-center space-y-4">
-              <LoadingSpinner size="lg" />
-              <p className="text-gray-600">Loading violation details...</p>
-            </div>
+            <LoadingSpinner size="lg" />
           </div>
         ) : !data ? (
           <div className="flex-1 flex items-center justify-center py-12">
             <p className="text-gray-600">No data available</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-auto space-y-4">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <Card className="bg-gradient-to-br from-red-50 to-red-100">
-                <CardContent className="pt-4 pb-3">
-                  <div className="text-xs text-gray-600 mb-1">Violations</div>
-                  <div className="text-2xl font-bold text-red-600">
-                    {data.summary.total_violations}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-                <CardContent className="pt-4 pb-3">
-                  <div className="text-xs text-gray-600 mb-1">Total Checks</div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {data.summary.total_checks_involved}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
-                <CardContent className="pt-4 pb-3">
-                  <div className="text-xs text-gray-600 mb-1">Avg Radius</div>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {Math.round(data.summary.avg_radius_meters)}m
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-orange-50 to-orange-100">
-                <CardContent className="pt-4 pb-3">
-                  <div className="text-xs text-gray-600 mb-1">Max Radius</div>
-                  <div className="text-2xl font-bold text-orange-600">
-                    {Math.round(data.summary.max_radius_meters)}m
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-green-50 to-green-100">
-                <CardContent className="pt-4 pb-3">
-                  <div className="text-xs text-gray-600 mb-1">Min Radius</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {Math.round(data.summary.min_radius_meters)}m
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Tabs defaultValue="map" className="space-y-4">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="map">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Map View
-                </TabsTrigger>
-                <TabsTrigger value="list">
-                  <Target className="h-4 w-4 mr-2" />
-                  Violations List
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="map" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Check Locations Map</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div 
-                      id="yandex-map" 
-                      className="w-full h-[500px] rounded-lg border-2 border-gray-200"
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="list" className="space-y-3">
+          <div className="flex-1 overflow-hidden flex">
+            {/* Left - Violations List */}
+            <div className="w-[30%] border-r border-gray-200 overflow-y-auto p-4">
+              <div className="space-y-2">
                 {data.violations.map((violation, idx) => (
-                  <Card 
+                  <div
                     key={violation.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedViolation?.id === violation.id ? 'ring-2 ring-blue-500' : ''
-                    }`}
                     onClick={() => showViolationOnMap(violation)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                      selectedViolation?.id === violation.id
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white hover:bg-gray-50 border-gray-200'
+                    }`}
                   >
-                    <CardContent className="pt-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge className={`${getSeverityColor(violation.severity)} border`}>
-                              {violation.severity.toUpperCase()}
-                            </Badge>
-                            <span className="text-sm text-gray-600">
-                              {violation.total_checks} checks
-                            </span>
-                            <span className="text-sm text-gray-600">
-                              • {Math.round(violation.radius_meters)}m radius
+                    <div className="flex items-start gap-2">
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs ${
+                        selectedViolation?.id === violation.id ? 'bg-white text-gray-900' : 'bg-gray-900 text-white'
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold mb-1">
+                          {violation.total_checks} checks
+                        </div>
+                        <div className={`text-xs ${selectedViolation?.id === violation.id ? 'text-gray-300' : 'text-gray-600'}`}>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              {new Date(violation.window_start).toLocaleTimeString('en-GB', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
                             </span>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-                          <div className="text-sm text-gray-700 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gray-400" />
-                              <span>
-                                {new Date(violation.window_start).toLocaleString()} 
-                                {' - '}
-                                {new Date(violation.window_end).toLocaleString()}
-                              </span>
+            {/* Middle - Checks List */}
+            <div className="w-[35%] border-r border-gray-200 overflow-y-auto p-4 bg-gray-50">
+              {!selectedViolation ? (
+                <div className="h-full flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <Target className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">Select a violation</p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="mb-4 pb-3 border-b border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold text-gray-900">
+                        {selectedViolation.total_checks} Checks
+                      </h3>
+                      <Badge className={`${getSeverityColor(selectedViolation.severity)} border text-xs`}>
+                        {selectedViolation.severity.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <div>Radius: {Math.round(selectedViolation.radius_meters)}m</div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(selectedViolation.window_start).toLocaleString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    {selectedViolation.check_locations.map((check, idx) => (
+                      <div
+                        key={check.check_id}
+                        className="p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-xs">
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-semibold text-gray-900 truncate mb-1">
+                              {check.client_name || 'N/A'}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="h-4 w-4 text-gray-400" />
-                              <span>
-                                Center: {violation.center_lat?.toFixed(4)}, {violation.center_lon?.toFixed(4)}
-                              </span>
-                            </div>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {violation.check_ids.slice(0, 5).map((checkId) => (
-                                <Badge key={checkId} variant="outline" className="text-xs">
-                                  {checkId}
-                                </Badge>
-                              ))}
-                              {violation.check_ids.length > 5 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{violation.check_ids.length - 5} more
-                                </Badge>
-                              )}
+                            <div className="text-xs text-gray-600 space-y-0.5">
+                              <div className="font-mono truncate">{check.check_id}</div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {new Date(check.time).toLocaleTimeString('en-GB', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                <span className="font-mono text-[10px]">
+                                  {check.lat?.toFixed(4)}, {check.lng?.toFixed(4)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            showViolationOnMap(violation)
-                          }}
-                        >
-                          <MapPin className="h-4 w-4 mr-1" />
-                          Show on Map
-                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </TabsContent>
-            </Tabs>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right - Map */}
+            <div className="w-[35%] p-4 bg-white">
+              {!selectedViolation ? (
+                <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center">
+                    <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-sm">Select a violation to view on map</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col">
+                  <div className="flex-1 rounded-lg border border-gray-200 overflow-hidden">
+                    <div 
+                      id="violation-map-container" 
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </DialogContent>
