@@ -2,14 +2,31 @@ import type { Check, Expeditor, Project, Sklad, City, Filial, Statistics } from 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
+// Get authentication token from localStorage
+function getAuthToken(): string | null {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token')
+  }
+  return null
+}
+
 // Request configuration
-const REQUEST_CONFIG = {
-  headers: {
+function getRequestConfig(): RequestInit {
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
-  },
-  cache: "default" as RequestCache,
-  next: { revalidate: 60 } // Cache for 60 seconds
+  }
+  
+  if (token) {
+    headers.Authorization = `Token ${token}`
+  }
+  
+  return {
+    headers,
+    cache: "default" as RequestCache,
+    next: { revalidate: 60 } // Cache for 60 seconds
+  }
 }
 
 // Safe request helper with better error handling and retry logic
@@ -18,7 +35,7 @@ async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | nul
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, REQUEST_CONFIG)
+      const res = await fetch(url, getRequestConfig())
 
       if (!res.ok) {
         console.warn(`API request failed for ${endpoint}: ${res.status} ${res.statusText}`)

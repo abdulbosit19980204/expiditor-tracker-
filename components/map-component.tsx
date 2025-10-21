@@ -74,8 +74,23 @@ export const MapComponent = memo(function MapComponent({
   useEffect(() => {
     if (typeof window === "undefined") return
     
+    // Check if Yandex Maps is already loaded
     if (window.ymaps) {
       setStatus("ready")
+      return
+    }
+
+    // Check if script is already being loaded
+    if (document.querySelector('script[src*="api-maps.yandex.ru"]')) {
+      // Wait for existing script to load
+      const checkYmaps = () => {
+        if (window.ymaps) {
+          setStatus("ready")
+        } else {
+          setTimeout(checkYmaps, 100)
+        }
+      }
+      checkYmaps()
       return
     }
 

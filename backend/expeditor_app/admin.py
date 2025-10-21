@@ -178,15 +178,15 @@ class TelegramAccountAdmin(admin.ModelAdmin):
 
 @admin.register(YandexToken)
 class YandexTokenAdmin(admin.ModelAdmin):
-    list_display = ['name', 'status', 'api_key_preview', 'created_at', 'updated_at']
+    list_display = ['name', 'keyword', 'status', 'api_key_preview', 'created_at', 'updated_at']
     list_filter = ['status', 'created_at']
-    search_fields = ['name', 'api_key', 'description']
+    search_fields = ['name', 'keyword', 'api_key', 'description']
     readonly_fields = ['created_at', 'updated_at']
-    actions = ['activate_token', 'deactivate_token', 'block_token']
+    actions = ['activate_token', 'deactivate_token', 'block_token', 'delete_selected_tokens']
     
     fieldsets = (
         ('Token Information', {
-            'fields': ('name', 'api_key', 'description')
+            'fields': ('name', 'keyword', 'api_key', 'description')
         }),
         ('Status', {
             'fields': ('status',)
@@ -226,6 +226,33 @@ class YandexTokenAdmin(admin.ModelAdmin):
         count = queryset.update(status=YandexToken.STATUS_BLOCKED)
         messages.success(request, f'{count} token(s) blocked')
     block_token.short_description = "Block selected tokens"
+    
+    def delete_selected_tokens(self, request, queryset):
+        """Delete selected tokens with confirmation."""
+        if request.POST.get('post'):
+            # Confirmation received, proceed with deletion
+            count = queryset.count()
+            queryset.delete()
+            messages.success(request, f'{count} token(s) deleted successfully')
+        else:
+            # Show confirmation page
+            from django.contrib.admin.helpers import ActionForm
+            from django.template.response import TemplateResponse
+            from django.utils.html import format_html
+            
+            context = {
+                'title': 'Are you sure?',
+                'queryset': queryset,
+                'action_name': 'delete_selected_tokens',
+                'action_form': ActionForm(),
+                'opts': self.model._meta,
+                'app_label': self.model._meta.app_label,
+                'action_checkbox_name': '_selected_action',
+                'selected_actions': request.POST.getlist('_selected_action'),
+            }
+            
+            return TemplateResponse(request, 'admin/expeditor_app/yandextoken/delete_selected_confirmation.html', context)
+    delete_selected_tokens.short_description = "Delete selected tokens"
 
 
 @admin.register(CheckAnalytics)
@@ -257,3 +284,53 @@ class CheckAnalyticsAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# CustomUserAdmin temporarily disabled
+# @admin.register(CustomUser)
+# class CustomUserAdmin(admin.ModelAdmin):
+#     list_display = ['username', 'email', 'first_name', 'last_name', 'is_approved', 'is_active', 'is_staff', 'created_at']
+#     list_filter = ['is_approved', 'is_active', 'is_staff', 'is_superuser', 'created_at']
+#     search_fields = ['username', 'email', 'first_name', 'last_name', 'phone_number', 'department', 'position']
+#     readonly_fields = ['created_at', 'updated_at', 'date_joined', 'last_login']
+#     actions = ['approve_users', 'disapprove_users', 'activate_users', 'deactivate_users']
+#     
+#     fieldsets = (
+#         ('Basic Information', {
+#             'fields': ('username', 'email', 'first_name', 'last_name')
+#         }),
+#         ('Contact Information', {
+#             'fields': ('phone_number', 'department', 'position')
+#         }),
+#         ('Permissions', {
+#             'fields': ('is_approved', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+#         }),
+#         ('Important Dates', {
+#             'fields': ('created_at', 'updated_at', 'date_joined', 'last_login'),
+#             'classes': ('collapse',)
+#         }),
+#     )
+#     
+#     def approve_users(self, request, queryset):
+#         """Approve selected users."""
+#         count = queryset.update(is_approved=True, is_active=True)
+#         messages.success(request, f'{count} user(s) approved')
+#     approve_users.short_description = "Approve selected users"
+#     
+#     def disapprove_users(self, request, queryset):
+#         """Disapprove selected users."""
+#         count = queryset.update(is_approved=False)
+#         messages.success(request, f'{count} user(s) disapproved')
+#     disapprove_users.short_description = "Disapprove selected users"
+#     
+#     def activate_users(self, request, queryset):
+#         """Activate selected users."""
+#         count = queryset.update(is_active=True)
+#         messages.success(request, f'{count} user(s) activated')
+#     activate_users.short_description = "Activate selected users"
+#     
+#     def deactivate_users(self, request, queryset):
+#         """Deactivate selected users."""
+#         count = queryset.update(is_active=False)
+#         messages.success(request, f'{count} user(s) deactivated')
+#     deactivate_users.short_description = "Deactivate selected users"

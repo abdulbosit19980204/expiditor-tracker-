@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 from django.contrib import messages
 from .models import YandexToken
 from .yandex_token_serializers import YandexTokenSerializer
@@ -9,6 +10,8 @@ from .yandex_token_serializers import YandexTokenSerializer
 class YandexTokenViewSet(viewsets.ModelViewSet):
     queryset = YandexToken.objects.all().order_by('-created_at')
     serializer_class = YandexTokenSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []  # Disable authentication for this viewset
     
     @action(detail=True, methods=['post'])
     def activate(self, request, pk=None):
@@ -60,6 +63,9 @@ class YandexTokenViewSet(viewsets.ModelViewSet):
 
 class YandexTokenStatusView(APIView):
     """Provides current Yandex token status."""
+    permission_classes = [AllowAny]
+    authentication_classes = []  # Disable authentication for this view
+    
     def get(self, request):
         active_token = YandexToken.get_active_token()
         total_tokens = YandexToken.objects.count()

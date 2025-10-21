@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye, ChevronUp, ChevronDown, ArrowUpDown, Home, ArrowLeft, RefreshCw } from 'lucide-react';
+import { CalendarIcon, Filter, Search, MapPin, Clock, User, BarChart3, Eye, ChevronUp, ChevronDown, ArrowUpDown, Home, ArrowLeft, RefreshCw, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { YandexMap } from '@/components/yandex-map';
 import Link from 'next/link';
+import { AuthGuard } from '@/components/auth-guard';
+import { useAuth } from '@/lib/auth-context';
 
 interface CheckLocation {
   id: number;
@@ -62,6 +64,7 @@ type SortField = 'window_start' | 'total_checks' | 'most_active_count' | 'unique
 type SortDirection = 'asc' | 'desc';
 
 export default function AnalyticsPage() {
+  const { user, logout } = useAuth();
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAnalytics, setSelectedAnalytics] = useState<AnalyticsData | null>(null);
@@ -178,7 +181,8 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AuthGuard>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -188,6 +192,14 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* User Profile */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
+            <User className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">
+              {user?.first_name} {user?.last_name}
+            </span>
+          </div>
+          
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
@@ -204,6 +216,9 @@ export default function AnalyticsPage() {
               <Home className="h-4 w-4" />
             </Button>
           </Link>
+          <Button variant="outline" onClick={logout} title="Logout">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -679,5 +694,6 @@ export default function AnalyticsPage() {
         </Button>
       )}
     </div>
+    </AuthGuard>
   );
 }

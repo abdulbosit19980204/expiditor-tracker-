@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
 from django.db.models import Count, Sum, Q, OuterRef, Subquery, IntegerField, FloatField, F, Value, Prefetch
 from django.db.models.functions import TruncDate, TruncHour, Coalesce
 from django.utils import timezone
@@ -224,10 +225,15 @@ class CheckAnalyticsViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['most_active_expiditor']
     ordering_fields = ['window_start', 'window_end', 'total_checks', 'most_active_count', 'analysis_date']
     ordering = ['-window_start', '-analysis_date']
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
 
 class CheckAnalyticsAPIView(APIView):
     """Simple API view for analytics data"""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
     def get(self, request):
         try:
             queryset = CheckAnalytics.objects.all().order_by('-window_start', '-analysis_date')

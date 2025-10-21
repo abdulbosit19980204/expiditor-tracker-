@@ -23,10 +23,15 @@ import {
   Timer,
   Calendar,
   Home,
-  ArrowLeft
+  ArrowLeft,
+  Key,
+  LogOut,
+  User
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { AuthGuard } from "@/components/auth-guard"
+import { useAuth } from "@/lib/auth-context"
 
 interface ScheduledTask {
   id: number
@@ -57,6 +62,7 @@ interface TaskRun {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 export default function TaskManagement() {
+  const { user, logout } = useAuth();
   const [tasks, setTasks] = useState<ScheduledTask[]>([])
   const [taskRuns, setTaskRuns] = useState<TaskRun[]>([])
   const [loading, setLoading] = useState(true)
@@ -276,7 +282,8 @@ export default function TaskManagement() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AuthGuard>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -289,14 +296,30 @@ export default function TaskManagement() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* User Profile */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
+            <User className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">
+              {user?.first_name} {user?.last_name}
+            </span>
+          </div>
+          
           <Button onClick={() => { loadTasks(); loadTaskRuns(); }} variant="outline" title="Refresh">
             <RefreshCw className="h-4 w-4" />
           </Button>
+          <Link href="/yandex-tokens">
+            <Button variant="outline" title="Yandex Tokens">
+              <Key className="h-4 w-4" />
+            </Button>
+          </Link>
           <Link href="/">
             <Button variant="outline" title="Home">
               <Home className="h-4 w-4" />
             </Button>
           </Link>
+          <Button variant="outline" onClick={logout} title="Logout">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -526,5 +549,6 @@ export default function TaskManagement() {
         </Button>
       )}
     </div>
+    </AuthGuard>
   )
 }

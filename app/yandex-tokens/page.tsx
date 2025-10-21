@@ -24,10 +24,13 @@ import {
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { AuthGuard } from "@/components/auth-guard"
+import { useAuth } from "@/lib/auth-context"
 
 interface YandexToken {
   id: number
   name: string
+  keyword: string
   api_key: string
   api_key_preview: string
   status: 'active' | 'inactive' | 'blocked'
@@ -49,6 +52,7 @@ export default function YandexTokenManagement() {
   // Form states
   const [formData, setFormData] = useState({
     name: '',
+    keyword: 'YANDEX_MAPS_API_KEY',
     api_key: '',
     description: ''
   })
@@ -163,7 +167,10 @@ export default function YandexTokenManagement() {
   }
 
   const handleDelete = async (tokenId: number) => {
-    if (!confirm('Are you sure you want to delete this token?')) return
+    const token = tokens.find(t => t.id === tokenId)
+    const tokenName = token?.name || 'this token'
+    
+    if (!confirm(`Are you sure you want to delete "${tokenName}"?\n\nThis action cannot be undone and will permanently remove the token from the system.`)) return
     
     try {
       const response = await fetch(`${API_BASE_URL}/yandex-tokens/${tokenId}/`, {
@@ -173,7 +180,7 @@ export default function YandexTokenManagement() {
       if (response.ok) {
         toast({
           title: "Success",
-          description: "Token deleted successfully",
+          description: `Token "${tokenName}" deleted successfully`,
           variant: "success",
         })
         loadTokens()
@@ -196,6 +203,7 @@ export default function YandexTokenManagement() {
   const resetForm = () => {
     setFormData({
       name: '',
+      keyword: 'YANDEX_MAPS_API_KEY',
       api_key: '',
       description: ''
     })
@@ -206,6 +214,7 @@ export default function YandexTokenManagement() {
     setEditingToken(token)
     setFormData({
       name: token.name,
+      keyword: token.keyword,
       api_key: token.api_key,
       description: token.description
     })
@@ -259,7 +268,8 @@ export default function YandexTokenManagement() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AuthGuard>
+      <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -303,6 +313,16 @@ export default function YandexTokenManagement() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter token name"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="keyword">Keyword</Label>
+              <Input
+                id="keyword"
+                value={formData.keyword}
+                onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
+                placeholder="YANDEX_MAPS_API_KEY"
                 required
               />
             </div>
@@ -351,6 +371,16 @@ export default function YandexTokenManagement() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter token name"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_keyword">Keyword</Label>
+              <Input
+                id="edit_keyword"
+                value={formData.keyword}
+                onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
+                placeholder="YANDEX_MAPS_API_KEY"
                 required
               />
             </div>
@@ -411,7 +441,8 @@ export default function YandexTokenManagement() {
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500">
-                    {token.api_key_preview}
+                    <div>Keyword: {token.keyword}</div>
+                    <div>API Key: {token.api_key_preview}</div>
                   </div>
                 </div>
                 
@@ -503,5 +534,6 @@ export default function YandexTokenManagement() {
         )}
       </div>
     </div>
+    </AuthGuard>
   )
 }

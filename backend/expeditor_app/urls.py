@@ -7,6 +7,7 @@ from .views import (
 )
 from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView
 from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
+from .auth_views import register_user, login_user, logout_user, get_user_profile, check_auth_status
 from .integration import UpdateChecksView
 
 # Create a router and register our viewsets with it.
@@ -34,4 +35,10 @@ urlpatterns = [
     path('update-checks/', UpdateChecksView.as_view(), name='update-checks'),
     path('task-status/', TaskStatusView.as_view(), name='task-status'),
     path('yandex-token-status/', YandexTokenStatusView.as_view(), name='yandex-token-status'),
+    # Authentication endpoints
+    path('auth/register/', register_user, name='register'),
+    path('auth/login/', login_user, name='login'),
+    path('auth/logout/', logout_user, name='logout'),
+    path('auth/profile/', get_user_profile, name='profile'),
+    path('auth/status/', check_auth_status, name='auth-status'),
 ]

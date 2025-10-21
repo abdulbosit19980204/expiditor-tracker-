@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount, CheckAnalytics
+from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount, CheckAnalytics, YandexToken
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -97,3 +97,10 @@ class CheckAnalyticsSerializer(serializers.ModelSerializer):
     def get_check_locations(self, obj):
         """Get check locations for map visualization."""
         return obj.get_check_locations()
+
+
+class YandexTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = YandexToken
+        fields = ['id', 'name', 'keyword', 'api_key', 'status', 'description', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']

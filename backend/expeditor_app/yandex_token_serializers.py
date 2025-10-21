@@ -6,7 +6,7 @@ class YandexTokenSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = YandexToken
-        fields = ['id', 'name', 'api_key', 'api_key_preview', 'status', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'keyword', 'api_key', 'api_key_preview', 'status', 'description', 'created_at', 'updated_at']
         extra_kwargs = {
             'api_key': {'write_only': True}  # Hide API key in responses for security
         }

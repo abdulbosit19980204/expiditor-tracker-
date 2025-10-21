@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
 import math
 
 class Projects(models.Model):
@@ -360,6 +361,7 @@ class YandexToken(models.Model):
     ]
     
     name = models.CharField(max_length=100, help_text="Token name for identification")
+    keyword = models.CharField(max_length=50, unique=True, default='YANDEX_MAPS_API_KEY', help_text="Unique keyword for env file identification (e.g., 'YANDEX_MAPS_API_KEY')")
     api_key = models.CharField(max_length=200, unique=True, help_text="Yandex Maps API key")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_INACTIVE, db_index=True, help_text="Token status")
     description = models.TextField(blank=True, null=True, help_text="Token description")
@@ -395,18 +397,21 @@ class YandexToken(models.Model):
                 with open(env_path, 'r') as f:
                     env_content = f.read()
             
-            # Update or add NEXT_PUBLIC_YANDEX_MAPS_API_KEY
+            # Update or add the keyword-based environment variable
             lines = env_content.split('\n')
             updated = False
             
+            # Use the keyword field to determine which env variable to update
+            env_key = f'NEXT_PUBLIC_{self.keyword}' if not self.keyword.startswith('NEXT_PUBLIC_') else self.keyword
+            
             for i, line in enumerate(lines):
-                if line.startswith('NEXT_PUBLIC_YANDEX_MAPS_API_KEY='):
-                    lines[i] = f'NEXT_PUBLIC_YANDEX_MAPS_API_KEY={self.api_key}'
+                if line.startswith(f'{env_key}='):
+                    lines[i] = f'{env_key}={self.api_key}'
                     updated = True
                     break
             
             if not updated:
-                lines.append(f'NEXT_PUBLIC_YANDEX_MAPS_API_KEY={self.api_key}')
+                lines.append(f'{env_key}={self.api_key}')
             
             # Write back to file
             with open(env_path, 'w') as f:
@@ -556,3 +561,21 @@ class CheckAnalytics(models.Model):
         # Radius of earth in meters
         r = 6371000
         return c * r
+
+
+# CustomUser model temporarily disabled for migration
+# class CustomUser(AbstractUser):
+#     """Extended user model with additional fields for approval system."""
+#     is_approved = models.BooleanField(default=False, help_text="Designates whether this user has been approved by an admin.")
+#     phone_number = models.CharField(max_length=20, blank=True, null=True)
+#     department = models.CharField(max_length=100, blank=True, null=True)
+#     position = models.CharField(max_length=100, blank=True, null=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+#     
+#     class Meta:
+#         verbose_name = "User"
+#         verbose_name_plural = "Users"
+#     
+#     def __str__(self):
+#         return f"{self.username} ({'Approved' if self.is_approved else 'Pending'})"
