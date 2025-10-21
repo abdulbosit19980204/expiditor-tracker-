@@ -922,3 +922,93 @@ class ViolationAnalyticsDashboardView(APIView):
         }
         
         return Response(response_data)
+
+
+class ViolationDetailView(APIView):
+    """
+    Get detailed violation information for a specific expeditor.
+    Returns all violation instances and their check locations.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        expeditor = request.GET.get('expeditor')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        
+        if not expeditor:
+            return Response({'error': 'expeditor parameter is required'}, status=400)
+        
+        # Filter violations for this expeditor
+        analytics_qs = CheckAnalytics.objects.filter(most_active_expiditor__icontains=expeditor)
+        
+        # Apply date filters if provided
+        if date_from:
+            try:
+                date_from_obj = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_start__gte=date_from_obj)
+            except:
+                pass
+        
+        if date_to:
+            try:
+                date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_end__lte=date_to_obj)
+            except:
+                pass
+        
+        # Get all violations and their details
+        violations = []
+        all_check_locations = []
+        
+        for analytics in analytics_qs.order_by('-window_start')[:100]:  # Limit to 100 most recent
+            # Get check locations for this violation
+            check_locations = analytics.get_check_locations()
+            
+            violation_data = {
+                'id': analytics.id,
+                'window_start': analytics.window_start.isoformat() if analytics.window_start else None,
+                'window_end': analytics.window_end.isoformat() if analytics.window_end else None,
+                'total_checks': analytics.total_checks,
+                'check_ids': analytics.check_ids or [],
+                'center_lat': float(analytics.center_lat) if analytics.center_lat else None,
+                'center_lon': float(analytics.center_lon) if analytics.center_lon else None,
+                'radius_meters': float(analytics.radius_meters) if analytics.radius_meters else 0,
+                'expeditor': analytics.most_active_expiditor,
+                'check_locations': check_locations,
+                'severity': 'critical' if analytics.radius_meters and analytics.radius_meters >= 1000 else (
+                    'warning' if analytics.radius_meters and analytics.radius_meters >= 500 else 'minor'
+                )
+            }
+            
+            violations.append(violation_data)
+            all_check_locations.extend(check_locations)
+        
+        # Summary statistics
+        from django.db.models import Sum, Avg, Max, Min
+        summary_stats = analytics_qs.aggregate(
+            total_violations=Count('id'),
+            total_checks=Sum('total_checks'),
+            avg_radius=Avg('radius_meters'),
+            max_radius=Max('radius_meters'),
+            min_radius=Min('radius_meters')
+        )
+        
+        response_data = {
+            'expeditor': expeditor,
+            'summary': {
+                'total_violations': summary_stats['total_violations'] or 0,
+                'total_checks_involved': summary_stats['total_checks'] or 0,
+                'avg_radius_meters': round(summary_stats['avg_radius'], 2) if summary_stats['avg_radius'] else 0,
+                'max_radius_meters': round(summary_stats['max_radius'], 2) if summary_stats['max_radius'] else 0,
+                'min_radius_meters': round(summary_stats['min_radius'], 2) if summary_stats['min_radius'] else 0,
+            },
+            'violations': violations,
+            'all_check_locations': all_check_locations,
+            'filters_applied': {
+                'date_from': date_from,
+                'date_to': date_to,
+            }
+        }
+        
+        return Response(response_data)

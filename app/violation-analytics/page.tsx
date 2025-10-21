@@ -35,6 +35,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/loading-spinner'
 import { toast } from '@/hooks/use-toast'
+import { ViolationDetailModal } from '@/components/violation-detail-modal'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7896/api'
 
@@ -109,6 +110,8 @@ export default function ViolationAnalyticsDashboard() {
   const [refreshing, setRefreshing] = useState(false)
   const [data, setData] = useState<DashboardData | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedExpeditor, setSelectedExpeditor] = useState<string | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
   
   const [filters, setFilters] = useState({
     date_from: '',
@@ -234,6 +237,16 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
       description: "Report exported successfully",
       variant: "default"
     })
+  }
+
+  const handleExpeditorClick = (expeditorName: string) => {
+    setSelectedExpeditor(expeditorName)
+    setShowDetailModal(true)
+  }
+
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false)
+    setSelectedExpeditor(null)
   }
 
   if (authLoading || loading) {
@@ -535,7 +548,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                     {data.top_violators.slice(0, 10).map((violator, idx) => (
                       <div 
                         key={idx} 
-                        className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:shadow-md transition-all group"
+                        className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:shadow-md transition-all group cursor-pointer"
+                        onClick={() => handleExpeditorClick(violator.most_active_expiditor)}
                       >
                         <div className="flex items-center gap-4 flex-1">
                           <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-md ${
@@ -547,8 +561,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                             {idx + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                            <p className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors flex items-center gap-2">
                               {violator.most_active_expiditor || 'Unknown'}
+                              <Target className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </p>
                             <p className="text-sm text-gray-600">
                               {violator.total_checks} checks • Avg {Math.round(violator.avg_radius)}m
@@ -558,6 +573,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                         <div className="text-right ml-4">
                           <p className="text-2xl font-bold text-red-600">{violator.violation_count}</p>
                           <p className="text-xs text-gray-500 uppercase tracking-wide">violations</p>
+                          <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            Click for details
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -587,8 +605,12 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                       </thead>
                       <tbody>
                         {data.expeditor_performance.slice(0, 15).map((exp, idx) => (
-                          <tr key={idx} className="border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                            <td className="py-3 px-2 truncate max-w-[150px]" title={exp.most_active_expiditor}>
+                          <tr 
+                            key={idx} 
+                            className="border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer"
+                            onClick={() => handleExpeditorClick(exp.most_active_expiditor)}
+                          >
+                            <td className="py-3 px-2 truncate max-w-[150px] font-medium text-blue-600 hover:text-blue-700" title={exp.most_active_expiditor}>
                               {exp.most_active_expiditor || 'Unknown'}
                             </td>
                             <td className="text-right py-3 px-2 font-semibold text-red-600">{exp.violations}</td>
@@ -902,6 +924,18 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
           </Card>
         )}
       </div>
+
+      {/* Detail View Modal */}
+      {token && (
+        <ViolationDetailModal
+          open={showDetailModal}
+          onClose={handleCloseDetailModal}
+          expeditor={selectedExpeditor}
+          token={token}
+          dateFrom={filters.date_from}
+          dateTo={filters.date_to}
+        />
+      )}
     </div>
   )
 }
