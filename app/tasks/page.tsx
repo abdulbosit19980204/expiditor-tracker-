@@ -162,11 +162,18 @@ export default function TaskManagement() {
     try {
       setRunningTasks(prev => new Set(prev).add(taskId))
       
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/run_now/`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       })
       
       if (response.ok) {

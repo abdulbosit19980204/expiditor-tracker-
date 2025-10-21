@@ -30,6 +30,15 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
   }
 
   const formatCurrency = (amount: number) => {
+    // Katta raqamlar uchun qisqartirish
+    if (amount >= 1000000000) {
+      return (amount / 1000000000).toFixed(1) + "B UZS"
+    } else if (amount >= 1000000) {
+      return (amount / 1000000).toFixed(1) + "M UZS"
+    } else if (amount >= 1000) {
+      return (amount / 1000).toFixed(1) + "K UZS"
+    }
+    
     return (
       new Intl.NumberFormat("uz-UZ", {
         style: "decimal",

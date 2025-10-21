@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { useAuth } from "@/lib/auth-context"
 import { 
   Key, 
   Plus, 
@@ -25,7 +26,6 @@ import {
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { AuthGuard } from "@/components/auth-guard"
-import { useAuth } from "@/lib/auth-context"
 
 interface YandexToken {
   id: number
