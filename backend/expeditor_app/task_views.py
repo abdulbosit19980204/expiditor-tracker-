@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.pagination import PageNumberPagination
 from django.utils import timezone
 from expeditor_app.models import ScheduledTask, TaskRun, TaskList
 from expeditor_app.task_serializers import ScheduledTaskSerializer, TaskRunSerializer, TaskListSerializer
@@ -16,6 +17,13 @@ from expeditor_app.task_executor import TaskExecutor
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class TaskRunPagination(PageNumberPagination):
+    """Custom pagination for task runs."""
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 class ScheduledTaskViewSet(viewsets.ModelViewSet):
@@ -91,19 +99,36 @@ class TaskRunViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TaskRun.objects.all().order_by('-started_at')
     serializer_class = TaskRunSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+    pagination_class = TaskRunPagination
+    
+    def get_queryset(self):
+        """Get task runs with optional filters."""
+        queryset = TaskRun.objects.all().order_by('-started_at')
+        
+        # Filter by task_type if provided
+        task_type = self.request.GET.get('task_type')
+        if task_type:
+            queryset = queryset.filter(task_type=task_type)
+        
+        # Filter by status if provided
+        status_filter = self.request.GET.get('status')
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        
+        return queryset
     
     @action(detail=False, methods=['get'])
     def running(self, request):
         """Get all currently running tasks."""
-        running_tasks = self.queryset.filter(is_running=True)
+        running_tasks = TaskRun.objects.filter(status=TaskRun.STATUS_RUNNING).order_by('-started_at')
         serializer = self.get_serializer(running_tasks, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def recent(self, request):
-        """Get recent task runs."""
+        """Get recent task runs (without pagination for quick view)."""
         limit = int(request.GET.get('limit', 10))
-        recent_tasks = self.queryset[:limit]
+        recent_tasks = TaskRun.objects.all().order_by('-started_at')[:limit]
         serializer = self.get_serializer(recent_tasks, many=True)
         return Response(serializer.data)
 

@@ -29,7 +29,13 @@ import {
   LogOut,
   User,
   Info,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
+  Zap,
+  Target,
+  BarChart3
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -72,6 +78,27 @@ interface TaskInfo {
   is_active: boolean
 }
 
+interface TaskAnalytics {
+  overview: {
+    total_runs: number
+    completed_runs: number
+    failed_runs: number
+    running_now: number
+    success_rate: number
+    avg_duration_seconds: number
+  }
+  most_frequent_tasks: Array<{ task_type: string; run_count: number }>
+  fastest_tasks: Array<{ task_type: string; avg_duration_seconds: number; run_count: number }>
+  slowest_tasks: Array<{ task_type: string; avg_duration_seconds: number; run_count: number }>
+  by_task_type: Array<{ task_type: string; total: number; completed: number; failed: number; running: number }>
+}
+
+interface PaginationInfo {
+  count: number
+  next: string | null
+  previous: string | null
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 export default function TaskManagement() {
@@ -83,19 +110,33 @@ export default function TaskManagement() {
   const [loading, setLoading] = useState(true)
   const [runningTasks, setRunningTasks] = useState<Set<number>>(new Set())
   const [showScrollTop, setShowScrollTop] = useState(false)
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({ count: 0, next: null, previous: null })
+  
+  // Analytics state
+  const [analytics, setAnalytics] = useState<TaskAnalytics | null>(null)
 
   useEffect(() => {
     loadTasks()
     loadTaskRuns()
     loadTaskInfo()
+    loadAnalytics()
     
     // Refresh every 10 seconds
     const interval = setInterval(() => {
       loadTaskRuns()
+      loadAnalytics()
     }, 10000)
     
     return () => clearInterval(interval)
   }, [])
+  
+  useEffect(() => {
+    loadTaskRuns()
+  }, [currentPage, pageSize])
 
   // Scroll to top functionality
   useEffect(() => {
@@ -157,13 +198,17 @@ export default function TaskManagement() {
         headers.Authorization = `Token ${token}`
       }
 
-      const response = await fetch(`${API_BASE_URL}/task-runs/`, {
-        headers
-      })
+      const url = `${API_BASE_URL}/task-runs/?page=${currentPage}&page_size=${pageSize}`
+      const response = await fetch(url, { headers })
       
       if (response.ok) {
         const data = await response.json()
         setTaskRuns(data.results || data)
+        setPaginationInfo({
+          count: data.count || 0,
+          next: data.next || null,
+          previous: data.previous || null
+        })
       } else {
         console.error('Failed to load task runs:', response.statusText)
       }
@@ -172,7 +217,7 @@ export default function TaskManagement() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [currentPage, pageSize])
 
   const loadTaskInfo = useCallback(async () => {
     try {
@@ -197,6 +242,32 @@ export default function TaskManagement() {
       }
     } catch (error) {
       console.error('Failed to load task info:', error)
+    }
+  }, [])
+  
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+
+      const response = await fetch(`${API_BASE_URL}/task-analytics/?days=7`, {
+        headers
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAnalytics(data)
+      } else {
+        console.error('Failed to load analytics:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Failed to load analytics:', error)
     }
   }, [])
 
@@ -453,6 +524,150 @@ export default function TaskManagement() {
         </Card>
       </div>
 
+      {/* Analytics Section */}
+      {analytics && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <BarChart3 className="h-6 w-6 text-blue-600" />
+            Task Analytics (Last 7 Days)
+          </h2>
+          
+          {/* Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                </div>
+                <p className="text-3xl font-bold text-green-600">
+                  {analytics.overview.success_rate.toFixed(1)}%
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {analytics.overview.completed_runs} / {analytics.overview.total_runs} tasks
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-600">Avg Duration</p>
+                  <Timer className="h-5 w-5 text-blue-600" />
+                </div>
+                <p className="text-3xl font-bold text-blue-600">
+                  {analytics.overview.avg_duration_seconds.toFixed(1)}s
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Average task execution time
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-600">Failed Tasks</p>
+                  <XCircle className="h-5 w-5 text-red-600" />
+                </div>
+                <p className="text-3xl font-bold text-red-600">
+                  {analytics.overview.failed_runs}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Total failures in 7 days
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Analytics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Most Frequent Tasks */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Target className="h-4 w-4 text-purple-600" />
+                  Most Frequent Tasks
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {analytics.most_frequent_tasks.slice(0, 5).map((task, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-xs font-medium text-gray-700">{task.task_type}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {task.run_count} runs
+                    </Badge>
+                  </div>
+                ))}
+                {analytics.most_frequent_tasks.length === 0 && (
+                  <p className="text-xs text-gray-500 text-center py-4">No data available</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Fastest Tasks */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-green-600" />
+                  Fastest Tasks
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {analytics.fastest_tasks.slice(0, 5).map((task, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span className="text-xs font-medium text-gray-700">{task.task_type}</span>
+                    <Badge variant="outline" className="text-xs text-green-600">
+                      {task.avg_duration_seconds.toFixed(1)}s
+                    </Badge>
+                  </div>
+                ))}
+                {analytics.fastest_tasks.length === 0 && (
+                  <p className="text-xs text-gray-500 text-center py-4">No data available</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Task Type Distribution */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-blue-600" />
+                  By Task Type
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {analytics.by_task_type.slice(0, 5).map((task, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-700">{task.task_type}</span>
+                      <span className="text-xs text-gray-500">{task.total} total</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                        <div 
+                          className="bg-green-600 h-1.5 rounded-full" 
+                          style={{ width: `${(task.completed / task.total * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-green-600 font-medium">
+                        {task.completed}
+                      </span>
+                      <span className="text-xs text-red-600 font-medium">
+                        {task.failed}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {analytics.by_task_type.length === 0 && (
+                  <p className="text-xs text-gray-500 text-center py-4">No data available</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
       {/* Scheduled Tasks */}
       <Card>
         <CardHeader>
@@ -557,10 +772,28 @@ export default function TaskManagement() {
       {/* Task Runs */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            Recent Task Runs
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              Recent Task Runs
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Per page:</span>
+              <select 
+                value={pageSize} 
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setCurrentPage(1)
+                }}
+                className="border rounded px-2 py-1 text-sm"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -576,7 +809,7 @@ export default function TaskManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {taskRuns.slice(0, 20).map((run) => (
+                {taskRuns.map((run) => (
                   <TableRow key={run.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -625,6 +858,38 @@ export default function TaskManagement() {
               </div>
             )}
           </div>
+          
+          {/* Pagination Controls */}
+          {paginationInfo.count > 0 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="text-sm text-gray-600">
+                Showing {taskRuns.length} of {paginationInfo.count} results
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={!paginationInfo.previous}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-700 px-3">
+                  Page {currentPage} of {Math.ceil(paginationInfo.count / pageSize)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={!paginationInfo.next}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
