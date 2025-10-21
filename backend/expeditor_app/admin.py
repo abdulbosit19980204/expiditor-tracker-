@@ -159,9 +159,47 @@ class TaskRunAdmin(admin.ModelAdmin):
 
 @admin.register(TaskList)
 class TaskListAdmin(admin.ModelAdmin):
-    list_display = ['code', 'name', 'is_active', 'updated_at']
+    list_display = ['code', 'name', 'is_active', 'description_preview', 'updated_at']
     list_filter = ['is_active']
     search_fields = ['code', 'name', 'description']
+    readonly_fields = ['created_at', 'updated_at', 'description_display']
+    
+    fieldsets = (
+        ('Task Information', {
+            'fields': ('code', 'name', 'is_active')
+        }),
+        ('Description', {
+            'fields': ('description_display',),
+            'classes': ('wide',)
+        }),
+        ('Configuration', {
+            'fields': ('default_params', 'sample_result'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def description_preview(self, obj):
+        """Show first 100 characters of description."""
+        if obj.description:
+            preview = obj.description[:100].replace('\n', ' ')
+            return f"{preview}..." if len(obj.description) > 100 else preview
+        return "-"
+    description_preview.short_description = 'Description Preview'
+    
+    def description_display(self, obj):
+        """Display full description with markdown formatting."""
+        if obj.description:
+            from django.utils.html import format_html
+            # Convert markdown-like formatting to HTML
+            html_desc = obj.description.replace('\n', '<br>')
+            html_desc = html_desc.replace('**', '<strong>').replace('**', '</strong>')
+            return format_html('<div style="white-space: pre-wrap; padding: 10px; background: #f5f5f5; border-radius: 5px;">{}</div>', html_desc)
+        return "-"
+    description_display.short_description = 'Full Description'
 
 @admin.register(EmailConfig)
 class EmailConfigAdmin(admin.ModelAdmin):
