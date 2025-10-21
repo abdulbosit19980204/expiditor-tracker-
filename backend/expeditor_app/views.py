@@ -758,8 +758,9 @@ class ViolationAnalyticsDashboardView(APIView):
         
         unique_expeditors = analytics_qs.values('most_active_expiditor').distinct().count()
         
+        from django.db.models import Avg as AvgFunc
         avg_radius = analytics_qs.aggregate(
-            avg=Coalesce(F('radius_meters'), 0.0, output_field=FloatField())
+            avg=AvgFunc('radius_meters')
         )['avg'] or 0
         
         # === 2. TOP VIOLATORS ===
@@ -778,8 +779,9 @@ class ViolationAnalyticsDashboardView(APIView):
         # Get all check locations from analytics
         location_data = []
         for analytics in analytics_qs[:100]:  # Limit to prevent overload
-            if analytics.check_locations:
-                for loc in analytics.check_locations:
+            check_locs = analytics.get_check_locations()  # ✅ Method call
+            if check_locs:
+                for loc in check_locs:
                     location_data.append({
                         'lat': loc.get('lat'),
                         'lng': loc.get('lng'),
@@ -879,9 +881,16 @@ class ViolationAnalyticsDashboardView(APIView):
         expeditor_stats = analytics_qs.values('most_active_expiditor').annotate(
             violations=Count('id'),
             total_checks=Sum('total_checks'),
-            avg_checks_per_violation=Avg('total_checks'),
             avg_radius=Avg('radius_meters')
         ).order_by('-violations')[:20]
+        
+        # Calculate avg_checks_per_violation manually after aggregation
+        expeditor_stats_list = list(expeditor_stats)
+        for stat in expeditor_stats_list:
+            if stat['violations'] > 0:
+                stat['avg_checks_per_violation'] = round(stat['total_checks'] / stat['violations'], 2)
+            else:
+                stat['avg_checks_per_violation'] = 0
         
         # === COMPILE RESPONSE ===
         response_data = {
