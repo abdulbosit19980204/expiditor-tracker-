@@ -501,6 +501,8 @@ export default function AnalyticsPage() {
                       </button>
                     </th>
                     <th className="text-left p-3 font-medium">Area</th>
+                    <th className="text-left p-3 font-medium">Check ID</th>
+                    <th className="text-left p-3 font-medium">Client Name</th>
                     <th className="text-left p-3 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -555,6 +557,16 @@ export default function AnalyticsPage() {
                       <td className="p-3">
                         <div className="text-sm text-gray-600">
                           {item.area_display}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-sm font-mono">
+                          {item.check_locations.length > 0 ? item.check_locations[0].check_id : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="text-sm">
+                          {item.check_locations.length > 0 ? item.check_locations[0].client_name : 'N/A'}
                         </div>
                       </td>
                       <td className="p-3">

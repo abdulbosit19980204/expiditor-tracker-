@@ -10,10 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface StatisticsPanelProps {
   statistics: Statistics | null
+  onMonthChange?: (month: number) => void
 }
 
-export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
-  const [selectedMonth, setSelectedMonth] = useState("6") // July (0-based)
+export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelProps) {
+  // Joriy oyni aniqlash (0-based index)
+  const currentMonth = new Date().getMonth()
+  const [selectedMonth, setSelectedMonth] = useState(String(currentMonth))
 
   if (!statistics) {
     return (
@@ -291,7 +294,12 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
               <Calendar className="h-4 w-4" />
               Kunlik statistika (2025)
             </CardTitle>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Select value={selectedMonth} onValueChange={(value) => {
+              setSelectedMonth(value)
+              if (onMonthChange) {
+                onMonthChange(parseInt(value))
+              }
+            }}>
               <SelectTrigger className="w-40 mt-2">
                 <SelectValue placeholder="Oy tanlang" />
               </SelectTrigger>

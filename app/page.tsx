@@ -1010,7 +1010,22 @@ export default function ExpeditorTracker() {
 
             <div className={`${isMobile ? "flex-1" : "w-96"} bg-white border-l border-gray-200 flex flex-col`}>
               <div className={`${isMobile ? "border-b" : "h-1/2 border-b"} border-gray-200`}>
-                <StatisticsPanel statistics={statistics} />
+                <StatisticsPanel 
+                  statistics={statistics} 
+                  onMonthChange={(month) => {
+                    // Oy o'zgartirilganda yangi ma'lumotlar olish
+                    const year = 2025
+                    const startDate = new Date(year, month, 1)
+                    const endDate = new Date(year, month + 1, 0, 23, 59, 59)
+                    
+                    // Filters ni yangilash
+                    setFilters(prev => ({
+                      ...prev,
+                      dateFrom: startDate.toISOString(),
+                      dateTo: endDate.toISOString()
+                    }))
+                  }}
+                />
               </div>
 
               <div className={`${isMobile ? "flex-1" : "h-1/2"} flex flex-col`}>
