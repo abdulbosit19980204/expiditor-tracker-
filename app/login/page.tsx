@@ -1,19 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Eye, EyeOff } from "lucide-react"
+import { Loader2, Eye, EyeOff, CheckCircle, Clock } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login } = useAuth()
   const [formData, setFormData] = useState({
     username: "",
@@ -22,6 +23,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
+  const [pendingApproval, setPendingApproval] = useState(false)
+
+  useEffect(() => {
+    // Check for pending approval message from URL params
+    const message = searchParams.get('message')
+    if (message === 'pending_approval') {
+      setPendingApproval(true)
+    }
+  }, [searchParams])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -79,6 +89,18 @@ export default function LoginPage() {
             Sign in to your account
           </p>
         </div>
+
+        {/* Pending Approval Message */}
+        {pendingApproval && (
+          <Alert className="border-yellow-200 bg-yellow-50">
+            <Clock className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800">
+              <strong>Account Pending Approval</strong><br />
+              Your account has been created successfully, but it's waiting for administrator approval. 
+              You'll be able to access the system once an admin approves your account.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>

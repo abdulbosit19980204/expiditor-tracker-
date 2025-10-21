@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send, Clock, Home, ArrowLeft, Key } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send, Clock, Home, ArrowLeft, Key, LogOut, User } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { MapComponent } from "@/components/map-component"
 import { DatePickerWithRange } from "@/components/date-range-picker"
@@ -420,13 +421,24 @@ export default function ExpeditorTracker() {
               Expeditor Tracker
             </h1>
             <div className="flex items-center gap-3">
-              {/* User info and logout */}
-              <div className="text-sm text-gray-600">
-                {user?.first_name} {user?.last_name}
-              </div>
-              <Button variant="outline" size="sm" onClick={logout} title="Logout">
-                Logout
-              </Button>
+              {/* User Profile with Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto p-2">
+                    <User className="h-5 w-5 text-gray-600" />
+                    <span className="text-xs text-gray-600 leading-tight">
+                      {user?.first_name} {user?.last_name}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               {/* Inline small progress with message */}
               {isUpdating && (
                 <div className="hidden sm:flex items-center gap-2 min-w-[200px]">
@@ -471,6 +483,27 @@ export default function ExpeditorTracker() {
                       <Users className="h-5 w-5" />
                       Expeditor Tracker
                     </h1>
+                    
+                    {/* User Profile */}
+                    <div className="mb-3 flex flex-col items-center gap-2 px-3 py-3 bg-gray-100 rounded-md">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto p-2">
+                            <User className="h-6 w-6 text-gray-600" />
+                            <span className="text-xs text-gray-700 font-medium leading-tight text-center">
+                              {user?.first_name} {user?.last_name}
+                            </span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="center" className="w-48">
+                          <DropdownMenuItem onClick={logout} className="text-red-600">
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Logout
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    
                     <div className="mb-3 flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
                         {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
@@ -703,6 +736,27 @@ export default function ExpeditorTracker() {
                   <Users className="h-5 w-5" />
                   Expeditor Tracker
                 </h1>
+                
+                {/* User Profile */}
+                <div className="mb-3 flex flex-col items-center gap-2 px-3 py-3 bg-gray-100 rounded-md">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto p-2">
+                        <User className="h-6 w-6 text-gray-600" />
+                        <span className="text-xs text-gray-700 font-medium leading-tight text-center">
+                          {user?.first_name} {user?.last_name}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="center" className="w-48">
+                      <DropdownMenuItem onClick={logout} className="text-red-600">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
                 <div className="mb-2 flex items-center gap-2">
                   <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
                     {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}

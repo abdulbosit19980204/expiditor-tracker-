@@ -77,6 +77,11 @@ export default function RegisterPage() {
           description: "Your account is pending admin approval. You will be notified once approved.",
           variant: "default",
         })
+        
+        // Redirect to login page with pending approval message
+        setTimeout(() => {
+          router.push('/login?message=pending_approval')
+        }, 2000)
       } else {
         if (data.username) {
           setError(data.username[0])

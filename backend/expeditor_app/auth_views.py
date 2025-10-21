@@ -94,6 +94,12 @@ def login_user(request):
                     'error': 'Your account is deactivated. Please contact administrator.'
                 }, status=status.HTTP_403_FORBIDDEN)
             
+            # Check if user needs admin approval (not superuser/staff)
+            if not (user.is_superuser or user.is_staff):
+                return Response({
+                    'error': 'Your account is pending admin approval. Please wait for administrator to approve your access.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
             # Create or get token
             token, created = Token.objects.get_or_create(user=user)
             logger.info(f"Token created: {token.key}")

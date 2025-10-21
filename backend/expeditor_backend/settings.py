@@ -5,6 +5,10 @@ Django settings for expeditor_backend project.
 from pathlib import Path
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+# Load environment variables from production.env
+load_dotenv(os.path.join(os.path.dirname(__file__), 'production.env'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,35 +76,37 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'expeditor_backend.wsgi.application'
 
-# Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME', 'expeditor_db'),
-#         'USER': os.environ.get('DB_USER', 'postgres'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD', 'password'),
-#         'HOST': os.environ.get('DB_HOST', 'localhost'),
-#         'PORT': os.environ.get('DB_PORT', '5432'),
+# Database - PostgreSQL only (using production.env)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'expiditor-tracker-real'),
+        'USER': os.environ.get('DB_USER', 'expiditor'),  # Use expeditor user
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'Baccardi2020'),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
+    }
+}
+
+# SQLite configuration (commented out)
+# if os.environ.get('DB_ENGINE', 'sqlite') == 'postgres':
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': os.environ.get('DB_NAME', 'expiditor-tracker-real'),
+#             'USER': os.environ.get('DB_USER', 'postgres'),
+#             'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+#             'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+#             'PORT': os.environ.get('DB_PORT', '5432'),
+#         }
 #     }
-# }
-if os.environ.get('DB_ENGINE', 'sqlite') == 'postgres':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'expiditor-tracker-real'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
