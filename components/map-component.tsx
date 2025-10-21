@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, memo } from "react"
-import { Navigation, Clock, AlertCircle } from "lucide-react"
+import { Navigation, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ interface MapComponentProps {
   selectedExpeditor: Expeditor | null
   loading: boolean
   onCheckClick?: (check: Check) => void
-  focusLocation?: { lat: number; lng: number } | null
+  focusLocation?: { lat: number; lng: number; checkId?: string } | null
 }
 
 declare global {
@@ -70,6 +70,14 @@ export const MapComponent = memo(function MapComponent({
 
   const [status, setStatus] = useState<"loading" | "ready" | "fallback" | "error">("loading")
   const [errMsg, setErrMsg] = useState("")
+  const [isLegendOpen, setIsLegendOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('map_legend_open')
+      return saved ? JSON.parse(saved) : true
+    }
+    return true
+  })
+  const [highlightedCheckId, setHighlightedCheckId] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -178,6 +186,9 @@ export const MapComponent = memo(function MapComponent({
 
       const dKey = dayKeyOf(new Date(c.check_date))
       const iconColor = dayToColor.get(dKey) || "#22c55e"
+      
+      // Check if this marker should be highlighted
+      const isHighlighted = highlightedCheckId === c.check_id
 
       const placemark = new window.ymaps.Placemark(
         [c.check_lat, c.check_lon],
@@ -197,9 +208,9 @@ export const MapComponent = memo(function MapComponent({
           balloonContentFooter: `KKM ${c.kkm_number ?? "-"}`,
         },
         {
-          // Use a neutral preset and set iconColor to match the day's polyline color
-          preset: "islands#dotIcon",
-          iconColor,
+          // Highlighted markers are bigger and have pulsing animation
+          preset: isHighlighted ? "islands#redStretchyIcon" : "islands#dotIcon",
+          iconColor: isHighlighted ? "#ef4444" : iconColor,
         },
       )
 
@@ -239,11 +250,19 @@ export const MapComponent = memo(function MapComponent({
       const found = checks.find((c) => c.check_id === id)
       found && onCheckClick?.(found)
     }
-  }, [status, checks, selectedExpeditor])
+  }, [status, checks, selectedExpeditor, highlightedCheckId])
 
   useEffect(() => {
     if (status !== "ready" || !focusLocation || !mapRef.current) return
     mapRef.current.setCenter([focusLocation.lat, focusLocation.lng], 15)
+    
+    // Highlight the selected check marker
+    if (focusLocation.checkId) {
+      setHighlightedCheckId(focusLocation.checkId)
+      // Auto-hide highlight after 3 seconds
+      const timer = setTimeout(() => setHighlightedCheckId(null), 5000)
+      return () => clearTimeout(timer)
+    }
   }, [status, focusLocation])
 
   if (status === "error") {
@@ -294,26 +313,44 @@ export const MapComponent = memo(function MapComponent({
         </div>
       )}
 
-      {status === "ready" && (
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-3 space-y-2 z-10">
-          <div className="mt-2">
-            <div className="flex flex-wrap gap-2">
-              {selectedExpeditor &&
-                (() => {
+      {status === "ready" && selectedExpeditor && (
+        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg z-10 max-w-md">
+          <div className="flex items-center justify-between px-3 py-2 border-b">
+            <span className="text-sm font-medium text-gray-700">Kunlik yo'nalishlar</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => {
+                const newState = !isLegendOpen
+                setIsLegendOpen(newState)
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('map_legend_open', JSON.stringify(newState))
+                }
+              }}
+            >
+              {isLegendOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+          </div>
+          {isLegendOpen && (
+            <div className="p-3">
+              <div className="flex flex-wrap gap-2">
+                {(() => {
                   const expChecks = checks.filter(
                     (c) => c.ekispiditor === selectedExpeditor.name && c.check_lat && c.check_lon,
                   )
                   const grouped = groupChecksByDay(expChecks)
                   const days = Object.keys(grouped).sort()
                   return days.map((day, idx) => (
-                    <div key={day} className="flex items-center gap-1">
+                    <div key={day} className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded">
                       <div className="w-4 h-1.5 rounded" style={{ background: getPathColor(idx) }} />
-                      <span className="text-xs">{new Date(day).toLocaleDateString("uz-UZ")}</span>
+                      <span className="text-xs font-medium">{new Date(day).toLocaleDateString("uz-UZ")}</span>
                     </div>
                   ))
                 })()}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 

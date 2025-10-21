@@ -57,7 +57,7 @@ export default function ExpeditorTracker() {
   const [selectedCheck, setSelectedCheck] = useState<Check | null>(null)
   const [selectedExpeditor, setSelectedExpeditor] = useState<Expeditor | null>(null)
   const [isCheckModalOpen, setIsCheckModalOpen] = useState(false)
-  const [focusLocation, setFocusLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [focusLocation, setFocusLocation] = useState<{ lat: number; lng: number; checkId?: string } | null>(null)
   const [isLoadingInitial, setIsLoadingInitial] = useState(true)
   const [isLoadingChecks, setIsLoadingChecks] = useState(false)
   const [isLoadingExpeditors, setIsLoadingExpeditors] = useState(false)
@@ -267,7 +267,7 @@ export default function ExpeditorTracker() {
   // Handle show location
   const handleShowLocation = useCallback((check: Check) => {
     if (check.check_lat && check.check_lon) {
-      setFocusLocation({ lat: check.check_lat, lng: check.check_lon })
+      setFocusLocation({ lat: check.check_lat, lng: check.check_lon, checkId: check.check_id })
     }
   }, [])
 
