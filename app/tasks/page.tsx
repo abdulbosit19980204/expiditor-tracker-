@@ -96,7 +96,19 @@ export default function TaskManagement() {
 
   const loadTasks = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tasks/`)
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+
+      const response = await fetch(`${API_BASE_URL}/tasks/`, {
+        headers
+      })
+      
       if (response.ok) {
         const data = await response.json()
         setTasks(data.results || data)
@@ -120,7 +132,19 @@ export default function TaskManagement() {
 
   const loadTaskRuns = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/task-runs/`)
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+
+      const response = await fetch(`${API_BASE_URL}/task-runs/`, {
+        headers
+      })
+      
       if (response.ok) {
         const data = await response.json()
         setTaskRuns(data.results || data)

@@ -10,8 +10,8 @@ function getAuthToken(): string | null {
   return null
 }
 
-// Request configuration
-function getRequestConfig(): RequestInit {
+// Request configuration with optimized caching
+function getRequestConfig(cacheTime: number = 60): RequestInit {
   const token = getAuthToken()
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -24,8 +24,8 @@ function getRequestConfig(): RequestInit {
   
   return {
     headers,
-    cache: "default" as RequestCache,
-    next: { revalidate: 60 } // Cache for 60 seconds
+    cache: "force-cache" as RequestCache, // Use force-cache for better performance
+    next: { revalidate: cacheTime } // Configurable cache time
   }
 }
 
@@ -35,7 +35,7 @@ async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | nul
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, getRequestConfig())
+      const res = await fetch(url, getRequestConfig(30)) // Shorter cache for dynamic data
 
       if (!res.ok) {
         console.warn(`API request failed for ${endpoint}: ${res.status} ${res.statusText}`)
@@ -50,6 +50,37 @@ async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | nul
     } catch (err) {
       if (attempt === retries) {
         console.error(`API request failed for ${endpoint} after ${retries + 1} attempts:`, err)
+        return null
+      }
+      // Wait before retry
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+    }
+  }
+
+  return null
+}
+
+// Static data request helper with longer cache
+async function apiRequestStatic<T>(endpoint: string, retries = 1): Promise<T | null> {
+  const url = `${API_BASE_URL}${endpoint}`
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, getRequestConfig(300)) // 5 minutes cache for static data
+
+      if (!res.ok) {
+        console.warn(`Static API request failed for ${endpoint}: ${res.status} ${res.statusText}`)
+        if (res.status >= 500) {
+          throw new Error(`Server error: ${res.status}`)
+        }
+        return null
+      }
+
+      const data = await res.json()
+      return data as T
+    } catch (err) {
+      if (attempt === retries) {
+        console.error(`Static API request failed for ${endpoint} after ${retries + 1} attempts:`, err)
         return null
       }
       // Wait before retry
@@ -105,7 +136,7 @@ function transformCheck(item: any): Check {
 
 // Projects API
 export async function getProjects(): Promise<Project[]> {
-  const data = await apiRequestSafe<Project[] | { results: any[] }>("/projects/")
+  const data = await apiRequestStatic<Project[] | { results: any[] }>("/projects/")
 
   if (!data) return []
 
@@ -159,7 +190,7 @@ export async function getCities(): Promise<City[]> {
 
 // Filials API
 export async function getFilials(): Promise<Filial[]> {
-  const data = await apiRequestSafe<Filial[] | { results: any[] }>("/filial/")
+  const data = await apiRequestStatic<Filial[] | { results: any[] }>("/filial/")
 
   if (!data) return []
 

@@ -20,9 +20,13 @@ import {
   RefreshCw,
   Settings,
   Eye,
-  EyeOff
+  EyeOff,
+  LogOut,
+  User
 } from "lucide-react"
 import Link from "next/link"
+import { AuthGuard } from "@/components/auth-guard"
+import { useAuth } from "@/lib/auth-context"
 import type { Statistics, Project, Sklad, City, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -97,6 +101,7 @@ interface FilterState {
 }
 
 function EnhancedStatsPageContent() {
+  const { user, logout } = useAuth()
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
@@ -283,6 +288,14 @@ function EnhancedStatsPageContent() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* User Profile */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {user?.first_name} {user?.last_name}
+              </span>
+            </div>
+            
             <Link
               href="/violation-analytics"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-700 border-blue-200"
@@ -303,8 +316,8 @@ function EnhancedStatsPageContent() {
               <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="outline" onClick={handleExportAll} disabled={!statistics}>
-              <Download className="h-4 w-4 mr-1" /> Export All
+            <Button variant="outline" onClick={logout} title="Logout">
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -520,17 +533,19 @@ function EnhancedStatsPageContent() {
 
 export default function EnhancedStatsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="py-20 flex items-center justify-center">
-            <LoadingSpinner size="lg" />
-            <span className="ml-2 text-gray-600">Loading enhanced statistics page...</span>
+    <AuthGuard>
+      <Suspense fallback={
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="py-20 flex items-center justify-center">
+              <LoadingSpinner size="lg" />
+              <span className="ml-2 text-gray-600">Loading enhanced statistics page...</span>
+            </div>
           </div>
         </div>
-      </div>
-    }>
-      <EnhancedStatsPageContent />
-    </Suspense>
+      }>
+        <EnhancedStatsPageContent />
+      </Suspense>
+    </AuthGuard>
   )
 }

@@ -42,6 +42,7 @@ interface YandexToken {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 export default function YandexTokenManagement() {
+  const { user, logout } = useAuth()
   const [tokens, setTokens] = useState<YandexToken[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddDialog, setShowAddDialog] = useState(false)
@@ -282,6 +283,14 @@ export default function YandexTokenManagement() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* User Profile */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
+            <User className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">
+              {user?.first_name} {user?.last_name}
+            </span>
+          </div>
+          
           <Button onClick={loadTokens} variant="outline" title="Refresh">
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -290,6 +299,9 @@ export default function YandexTokenManagement() {
               <Home className="h-4 w-4" />
             </Button>
           </Link>
+          <Button variant="outline" onClick={logout} title="Logout">
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -442,7 +454,22 @@ export default function YandexTokenManagement() {
                   </div>
                   <div className="text-sm text-gray-500">
                     <div>Keyword: {token.keyword}</div>
-                    <div>API Key: {token.api_key_preview}</div>
+                    <div className="flex items-center gap-2">
+                      API Key: {token.api_key_preview}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowApiKey(showApiKey === token.id ? null : token.id)}
+                        title={showApiKey === token.id ? "Hide API Key" : "Show API Key"}
+                      >
+                        {showApiKey === token.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    {showApiKey === token.id && (
+                      <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono break-all">
+                        {token.api_key}
+                      </div>
+                    )}
                   </div>
                 </div>
                 

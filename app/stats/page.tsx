@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import { Home, TrendingUp, Download, Search } from "lucide-react"
+import { Home, TrendingUp, Download, Search, LogOut, User } from "lucide-react"
 import type { Statistics, Project, Sklad, City } from "@/lib/types"
 import { api } from "@/lib/api"
 import { useState, useCallback, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { Suspense } from "react"
+import { AuthGuard } from "@/components/auth-guard"
+import { useAuth } from "@/lib/auth-context"
 
 function getCurrentMonthRange() {
   const now = new Date()
@@ -80,6 +82,7 @@ const exportToCSV = (stats: Statistics, filters: any) => {
 }
 
 const StatsPageContent = () => {
+  const { user, logout } = useAuth()
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>(getCurrentMonthRange())
   const [project, setProject] = useState("")
   const [sklad, setSklad] = useState("")
@@ -160,6 +163,14 @@ const StatsPageContent = () => {
             <TrendingUp className="h-5 w-5" /> Global Statistics
           </h1>
           <div className="flex items-center gap-2">
+            {/* User Profile */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {user?.first_name} {user?.last_name}
+              </span>
+            </div>
+            
             <Link
               href="/"
               className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
@@ -171,6 +182,9 @@ const StatsPageContent = () => {
             </Button>
             <Button variant="outline" onClick={handleExport} disabled={!stats}>
               <Download className="h-4 w-4 mr-1" /> Export CSV
+            </Button>
+            <Button variant="outline" onClick={logout} title="Logout">
+              <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -438,17 +452,19 @@ function dowLabel(dow: number) {
 
 export default function StatsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="py-20 flex items-center justify-center">
-            <LoadingSpinner size="lg" />
-            <span className="ml-2 text-gray-600">Loading statistics page...</span>
+    <AuthGuard>
+      <Suspense fallback={
+        <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="py-20 flex items-center justify-center">
+              <LoadingSpinner size="lg" />
+              <span className="ml-2 text-gray-600">Loading statistics page...</span>
+            </div>
           </div>
         </div>
-      </div>
-    }>
-      <StatsPageContent />
-    </Suspense>
+      }>
+        <StatsPageContent />
+      </Suspense>
+    </AuthGuard>
   )
 }

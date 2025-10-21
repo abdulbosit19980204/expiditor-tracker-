@@ -8,6 +8,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
 from expeditor_app.models import ScheduledTask, TaskRun
 from expeditor_app.task_serializers import ScheduledTaskSerializer, TaskRunSerializer
@@ -21,6 +22,7 @@ class ScheduledTaskViewSet(viewsets.ModelViewSet):
     """ViewSet for managing scheduled tasks."""
     queryset = ScheduledTask.objects.all()
     serializer_class = ScheduledTaskSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     @action(detail=True, methods=['post'])
     def run_now(self, request, pk=None):
@@ -88,6 +90,7 @@ class TaskRunViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for viewing task runs."""
     queryset = TaskRun.objects.all().order_by('-started_at')
     serializer_class = TaskRunSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     @action(detail=False, methods=['get'])
     def running(self, request):
@@ -107,6 +110,7 @@ class TaskRunViewSet(viewsets.ReadOnlyModelViewSet):
 
 class TaskStatusView(APIView):
     """API view for getting overall task system status."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
     
     def get(self, request):
         """Get task system status."""

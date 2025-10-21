@@ -106,7 +106,20 @@ export const MapComponent = memo(function MapComponent({
 
     const init = async () => {
       try {
-        const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || process.env.NEXT_PUBLIC_YM_KEY || ""
+        // Get API key from environment or fallback
+        const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY || 
+                      process.env.NEXT_PUBLIC_YM_KEY || 
+                      "60bf1ed7-7273-4bf6-af8a-bb77a1f0c129" // Real API key fallback
+        
+        console.log("[Map] Loading Yandex Maps with API key:", apiKey ? `${apiKey.substring(0, 8)}...` : "empty")
+        
+        if (!apiKey) {
+          console.error("[Map] No Yandex Maps API key found")
+          setStatus("error")
+          setErrMsg("Yandex Maps API key is not configured")
+          return
+        }
+
         await loadScript(`https://api-maps.yandex.ru/2.1/?apikey=${apiKey}&lang=en_US`)
 
         const wasmOk = await canUseWasm()

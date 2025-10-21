@@ -442,11 +442,13 @@ export default function ExpeditorTracker() {
                   <BarChart3 className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/tasks" className="inline-flex">
-                <Button variant="outline" size="sm" title="Task Management">
-                  <Clock className="h-4 w-4" />
-                </Button>
-              </Link>
+              {user?.is_superuser && (
+                <Link href="/tasks" className="inline-flex">
+                  <Button variant="outline" size="sm" title="Task Management">
+                    <Clock className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" size="sm" onClick={handleOpenTelegram} title="Telegram">
                 <Send className="h-4 w-4" />
               </Button>
@@ -744,11 +746,13 @@ export default function ExpeditorTracker() {
                       <BarChart3 className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link href="/tasks" className="inline-flex">
-                    <Button variant="outline" size="icon" title="Task Management">
-                      <Clock className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  {user?.is_superuser && (
+                    <Link href="/tasks" className="inline-flex">
+                      <Button variant="outline" size="icon" title="Task Management">
+                        <Clock className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  )}
                   <Button variant="outline" size="icon" onClick={handleOpenTelegram} title="Contact via Telegram" className="ml-2">
                     <Send className="h-4 w-4" />
                   </Button>
