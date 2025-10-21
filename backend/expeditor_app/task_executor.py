@@ -427,7 +427,8 @@ class TaskExecutor:
                     cluster.append(other_check)
                     processed_checks.add(other_check.id)
             
-            if len(cluster) > 0:
+            # Only create cluster if 3+ checks (violation criteria)
+            if len(cluster) >= 3:
                 clusters.append(cluster)
         
         return clusters

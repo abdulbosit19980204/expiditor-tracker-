@@ -156,6 +156,8 @@ class FilialViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['filial_name', 'filial_code']
     ordering_fields = ['filial_name']
     ordering = ['filial_name']
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
 class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EkispiditorSerializer

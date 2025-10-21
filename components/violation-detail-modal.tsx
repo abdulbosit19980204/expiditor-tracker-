@@ -92,13 +92,30 @@ export function ViolationDetailModal({
 
   useEffect(() => {
     if (open && expeditor && token) {
+      // Reset map state when opening
+      setMapLoaded(false)
+      setMapInstance(null)
       fetchViolationDetail()
     }
   }, [open, expeditor, token, dateFrom, dateTo])
 
   useEffect(() => {
-    if (open && data && !mapLoaded) {
-      initializeMap()
+    if (open && data && !mapLoaded && data.all_check_locations.length > 0) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        initializeMap()
+      }, 500)
+    }
+    
+    // Cleanup on close
+    return () => {
+      if (mapInstance) {
+        try {
+          mapInstance.destroy()
+        } catch (e) {
+          console.error('Error destroying map:', e)
+        }
+      }
     }
   }, [open, data, mapLoaded])
 
@@ -133,7 +150,17 @@ export function ViolationDetailModal({
   }
 
   const initializeMap = async () => {
-    if (!data || !data.all_check_locations.length) return
+    if (!data || !data.all_check_locations.length) {
+      console.log('No data or locations for map')
+      return
+    }
+
+    // Check if map container exists
+    const mapContainer = document.getElementById('yandex-map')
+    if (!mapContainer) {
+      console.log('Map container not found')
+      return
+    }
 
     try {
       // Load Yandex Maps script
@@ -151,6 +178,9 @@ export function ViolationDetailModal({
       await (window as any).ymaps.ready(() => {
         const ymaps = (window as any).ymaps
 
+        // Clear existing map if any
+        mapContainer.innerHTML = ''
+
         // Create map centered on first location
         const firstLocation = data.all_check_locations[0]
         const map = new ymaps.Map('yandex-map', {
@@ -161,19 +191,21 @@ export function ViolationDetailModal({
 
         // Add markers for all check locations
         data.all_check_locations.forEach((location) => {
+          if (!location.lat || !location.lng) return
+          
           const placemark = new ymaps.Placemark(
             [location.lat, location.lng],
             {
               balloonContent: `
                 <div style="padding: 10px;">
-                  <strong>${location.client_name}</strong><br/>
+                  <strong>${location.client_name || 'Unknown'}</strong><br/>
                   Check ID: ${location.check_id}<br/>
-                  Time: ${new Date(location.time).toLocaleString()}<br/>
-                  Status: ${location.status}<br/>
+                  Time: ${location.time ? new Date(location.time).toLocaleString() : 'N/A'}<br/>
+                  Status: ${location.status || 'Unknown'}<br/>
                   ${location.address ? `Address: ${location.address}` : ''}
                 </div>
               `,
-              hintContent: location.client_name
+              hintContent: location.client_name || 'Check Location'
             },
             {
               preset: location.status === 'delivered' 
@@ -189,9 +221,11 @@ export function ViolationDetailModal({
 
         setMapInstance(map)
         setMapLoaded(true)
+        console.log(`Map loaded with ${data.all_check_locations.length} locations`)
       })
     } catch (error) {
       console.error('Error loading Yandex Maps:', error)
+      setMapLoaded(false)
     }
   }
 
