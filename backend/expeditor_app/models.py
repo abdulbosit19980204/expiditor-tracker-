@@ -107,7 +107,6 @@ class Check(models.Model):
         ('failed', 'Muvaffaqiyatsiz'),
         ('pending', 'Kutilmoqda')
     ], default='pending', db_index=True)
-    check_detail = models.ForeignKey('CheckDetail', on_delete=models.CASCADE, related_name='checks', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -119,7 +118,8 @@ class Check(models.Model):
         return f"Check {self.check_id} by {self.ekispiditor} on {self.kkm_number}"
     
     @property
-    def check_detail(self):
+    def check_detail_data(self):
+        """Get related CheckDetail object by check_id"""
         try:
             return CheckDetail.objects.get(check_id=self.check_id)
         except CheckDetail.DoesNotExist:

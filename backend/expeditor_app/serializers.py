@@ -56,9 +56,14 @@ class CheckSerializer(serializers.ModelSerializer):
     check_detail = serializers.SerializerMethodField()
     
     def get_check_detail(self, obj):
-        # Optimized: Use select_related if available, otherwise fetch efficiently
+        # Optimized: Use cached property to avoid N+1 queries
+        # Note: For optimal performance, prefetch CheckDetail in the viewset queryset
+        if hasattr(obj, '_prefetched_check_detail'):
+            # If prefetched, use the cached data
+            return CheckDetailSerializer(obj._prefetched_check_detail).data if obj._prefetched_check_detail else None
+        
+        # Fallback: fetch individually (less optimal)
         try:
-            # Try to get check detail if it exists
             check_detail = CheckDetail.objects.get(check_id=obj.check_id)
             return CheckDetailSerializer(check_detail).data
         except CheckDetail.DoesNotExist:

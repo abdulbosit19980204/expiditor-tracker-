@@ -646,31 +646,38 @@ class AnalyticsSummaryView(APIView):
                 return (c.yetkazilgan_vaqti.date().isoformat() if c.yetkazilgan_vaqti else '—')
             return c.project or '—'
 
-        # Aggregate in Python for flexibility
+        # Aggregate in Python for flexibility (with iterator to prevent loading all into memory)
         buckets = {}
-        for c in checks_qs:
-            k = key_for(c)
-            b = buckets.setdefault(k, {
-                'dimension': k,
-                'checks': 0,
-                'delivered': 0,
-                'failed': 0,
-                'pending': 0,
-                'total_sum': 0.0,
-                'nalichniy': 0.0,
-                'uzcard': 0.0,
-                'humo': 0.0,
-                'click': 0.0,
-            })
-            b['checks'] += 1
-            b[c.status or 'pending'] = b.get(c.status or 'pending', 0) + 1
-            d = details_map.get(c.check_id)
-            if d:
-                b['total_sum'] += d['total_sum']
-                b['nalichniy'] += d['nalichniy']
-                b['uzcard'] += d['uzcard']
-                b['humo'] += d['humo']
-                b['click'] += d['click']
+        
+        # Use iterator() to prevent loading entire queryset into memory at once
+        # Process in chunks for better memory management
+        chunk_size = 1000
+        for i in range(0, checks_qs.count(), chunk_size):
+            chunk = checks_qs[i:i + chunk_size]
+            
+            for c in chunk:
+                k = key_for(c)
+                b = buckets.setdefault(k, {
+                    'dimension': k,
+                    'checks': 0,
+                    'delivered': 0,
+                    'failed': 0,
+                    'pending': 0,
+                    'total_sum': 0.0,
+                    'nalichniy': 0.0,
+                    'uzcard': 0.0,
+                    'humo': 0.0,
+                    'click': 0.0,
+                })
+                b['checks'] += 1
+                b[c.status or 'pending'] = b.get(c.status or 'pending', 0) + 1
+                d = details_map.get(c.check_id)
+                if d:
+                    b['total_sum'] += d['total_sum']
+                    b['nalichniy'] += d['nalichniy']
+                    b['uzcard'] += d['uzcard']
+                    b['humo'] += d['humo']
+                    b['click'] += d['click']
 
         # Sort by checks desc
         items = sorted(buckets.values(), key=lambda x: (-x['checks'], x['dimension']))

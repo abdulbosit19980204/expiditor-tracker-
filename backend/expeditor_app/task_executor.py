@@ -185,40 +185,57 @@ class TaskExecutor:
                         issues_found.append('NO_EXPEDITOR')
                         problem_stats['no_expeditor'] += 1
                     
-                    # 3. Check for zero or missing total sum
-                    if check.total_sum is None:
-                        ProblemCheck.objects.update_or_create(
-                            check_id=check.check_id,
-                            issue_code='MISSING_SUM',
-                            defaults={
-                                'issue_message': 'Total sum is NULL (missing)',
-                                'resolved': False,
-                            }
-                        )
-                        issues_found.append('MISSING_SUM')
-                        problem_stats['missing_sum'] += 1
-                    elif check.total_sum == 0:
-                        ProblemCheck.objects.update_or_create(
-                            check_id=check.check_id,
-                            issue_code='ZERO_SUM',
-                            defaults={
-                                'issue_message': 'Total sum is zero (0)',
-                                'resolved': False,
-                            }
-                        )
-                        issues_found.append('ZERO_SUM')
-                        problem_stats['zero_sum'] += 1
-                    elif check.total_sum < 0:
-                        ProblemCheck.objects.update_or_create(
-                            check_id=check.check_id,
-                            issue_code='NEGATIVE_SUM',
-                            defaults={
-                                'issue_message': f'Total sum is negative: {check.total_sum}',
-                                'resolved': False,
-                            }
-                        )
-                        issues_found.append('NEGATIVE_SUM')
-                        problem_stats['negative_sum'] += 1
+                    # 3. Check for zero or missing total sum (from CheckDetail)
+                    try:
+                        check_detail = check.check_detail_data
+                        if check_detail:
+                            if check_detail.total_sum is None:
+                                ProblemCheck.objects.update_or_create(
+                                    check_id=check.check_id,
+                                    issue_code='MISSING_SUM',
+                                    defaults={
+                                        'issue_message': 'Total sum is NULL (missing)',
+                                        'resolved': False,
+                                    }
+                                )
+                                issues_found.append('MISSING_SUM')
+                                problem_stats['missing_sum'] += 1
+                            elif check_detail.total_sum == 0:
+                                ProblemCheck.objects.update_or_create(
+                                    check_id=check.check_id,
+                                    issue_code='ZERO_SUM',
+                                    defaults={
+                                        'issue_message': 'Total sum is zero (0)',
+                                        'resolved': False,
+                                    }
+                                )
+                                issues_found.append('ZERO_SUM')
+                                problem_stats['zero_sum'] += 1
+                            elif check_detail.total_sum < 0:
+                                ProblemCheck.objects.update_or_create(
+                                    check_id=check.check_id,
+                                    issue_code='NEGATIVE_SUM',
+                                    defaults={
+                                        'issue_message': f'Total sum is negative: {check_detail.total_sum}',
+                                        'resolved': False,
+                                    }
+                                )
+                                issues_found.append('NEGATIVE_SUM')
+                                problem_stats['negative_sum'] += 1
+                        else:
+                            # No CheckDetail found at all
+                            ProblemCheck.objects.update_or_create(
+                                check_id=check.check_id,
+                                issue_code='MISSING_SUM',
+                                defaults={
+                                    'issue_message': 'CheckDetail not found (total sum missing)',
+                                    'resolved': False,
+                                }
+                            )
+                            issues_found.append('MISSING_SUM')
+                            problem_stats['missing_sum'] += 1
+                    except Exception as e:
+                        logger.error(f"Error checking total_sum for check {check.check_id}: {e}")
                     
                     # 4. Check for missing client name
                     if not check.client_name or check.client_name.strip() == '':
@@ -246,13 +263,13 @@ class TaskExecutor:
                         issues_found.append('NO_KKM')
                         problem_stats['no_kkm'] += 1
                     
-                    # 6. Check for invalid or missing check date
-                    if not check.check_date:
+                    # 6. Check for invalid or missing check date (use yetkazilgan_vaqti or receiptIdDate)
+                    if not check.yetkazilgan_vaqti and not check.receiptIdDate:
                         ProblemCheck.objects.update_or_create(
                             check_id=check.check_id,
                             issue_code='INVALID_DATE',
                             defaults={
-                                'issue_message': 'Missing check date',
+                                'issue_message': 'Missing check date (both yetkazilgan_vaqti and receiptIdDate are null)',
                                 'resolved': False,
                             }
                         )
@@ -445,7 +462,7 @@ class TaskExecutor:
             check_details = {
                 'check_ids': check_ids,
                 'expeditors': list(expeditors),
-                'total_amount': sum(check.check_detail.total_sum or 0 for check in cluster if check.check_detail),
+                'total_amount': sum(check.check_detail_data.total_sum or 0 for check in cluster if check.check_detail_data),
                 'cluster_size': len(cluster)
             }
             

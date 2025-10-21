@@ -17,9 +17,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.109', '178.218.200.120', '*']
+# Fixed: Remove wildcard '*' from ALLOWED_HOSTS for security
+# In production, only allow specific hosts
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    '192.168.0.109', 
+    '178.218.200.120',
+]
+
+# Optionally add wildcard only in development mode
+if DEBUG:
+    ALLOWED_HOSTS.append('*')
 
 # HTTPS/COOP Settings (HTTP-only mode)
 SECURE_PROXY_SSL_HEADER = None

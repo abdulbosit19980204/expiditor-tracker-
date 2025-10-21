@@ -337,12 +337,12 @@ export default function TaskManagement() {
     return `${duration.toFixed(1)}s`
   }
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Running':
         return 'default'
       case 'Completed':
-        return 'success'
+        return 'outline'
       case 'Failed':
         return 'destructive'
       default:
@@ -630,61 +630,61 @@ export default function TaskManagement() {
 
       {/* Task Info Dialog */}
       <Dialog open={selectedTaskInfo !== null} onOpenChange={() => setSelectedTaskInfo(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle className="flex items-center gap-2">
               <Info className="h-5 w-5 text-blue-600" />
               {selectedTaskInfo?.name}
             </DialogTitle>
             <DialogDescription>
-              Task Code: <Badge variant="outline">{selectedTaskInfo?.code}</Badge>
+              Task Code: {selectedTaskInfo?.code}
             </DialogDescription>
           </DialogHeader>
           
-          {selectedTaskInfo && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-sm text-gray-700 mb-2">Description</h3>
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <pre className="text-sm whitespace-pre-wrap font-sans text-gray-700">
+          <div className="overflow-y-auto flex-1 px-6 py-4">
+            {selectedTaskInfo && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-sm text-gray-700 mb-2 sticky top-0 bg-white py-1">Description</h3>
+                  <div className="bg-gray-50 p-3 rounded-md text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {selectedTaskInfo.description}
-                  </pre>
-                </div>
-              </div>
-              
-              {selectedTaskInfo.default_params && (
-                <div>
-                  <h3 className="font-semibold text-sm text-gray-700 mb-2">Default Parameters</h3>
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <pre className="text-xs font-mono text-gray-700">
-                      {JSON.stringify(selectedTaskInfo.default_params, null, 2)}
-                    </pre>
                   </div>
                 </div>
-              )}
-              
-              {selectedTaskInfo.sample_result && (
-                <div>
-                  <h3 className="font-semibold text-sm text-gray-700 mb-2">Sample Result</h3>
-                  <div className="bg-gray-50 p-4 rounded-md">
-                    <pre className="text-xs font-mono text-gray-700">
-                      {selectedTaskInfo.sample_result}
-                    </pre>
+                
+                {selectedTaskInfo.default_params && (
+                  <div>
+                    <h3 className="font-semibold text-sm text-gray-700 mb-2 sticky top-0 bg-white py-1">Default Parameters</h3>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <pre className="text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre">
+{JSON.stringify(selectedTaskInfo.default_params, null, 2)}
+                      </pre>
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between pt-4 border-t">
-                <Badge variant={selectedTaskInfo.is_active ? "default" : "secondary"}>
-                  {selectedTaskInfo.is_active ? "Active" : "Inactive"}
-                </Badge>
-                <Button variant="outline" onClick={() => setSelectedTaskInfo(null)}>
-                  <X className="h-4 w-4 mr-2" />
-                  Close
-                </Button>
+                )}
+                
+                {selectedTaskInfo.sample_result && (
+                  <div>
+                    <h3 className="font-semibold text-sm text-gray-700 mb-2 sticky top-0 bg-white py-1">Sample Result</h3>
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <pre className="text-xs font-mono text-gray-700 overflow-x-auto whitespace-pre">
+{selectedTaskInfo.sample_result}
+                      </pre>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          
+          <div className="px-6 py-4 border-t bg-gray-50/50 flex items-center justify-between">
+            <Badge variant={selectedTaskInfo?.is_active ? "default" : "secondary"}>
+              {selectedTaskInfo?.is_active ? "Active" : "Inactive"}
+            </Badge>
+            <Button variant="outline" size="sm" onClick={() => setSelectedTaskInfo(null)}>
+              <X className="h-4 w-4 mr-2" />
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
