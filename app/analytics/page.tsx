@@ -60,29 +60,42 @@ const SimpleBarChart = ({ data, title }: { data: any[], title: string }) => (
   </Card>
 )
 
-const SimpleLineChart = ({ data, title }: { data: any[], title: string }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <LineChart className="h-5 w-5" />
-        {title}
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="h-64 flex items-end justify-between space-x-1">
-        {data.slice(0, 7).map((item, index) => (
-          <div key={index} className="flex flex-col items-center">
-            <div 
-              className="bg-blue-600 w-8 rounded-t"
-              style={{ height: `${Math.max(20, (item.value / Math.max(...data.map(d => d.value))) * 200)}px` }}
-            />
-            <span className="text-xs mt-2 text-gray-600">{item.label}</span>
-          </div>
-        ))}
-      </div>
-    </CardContent>
-  </Card>
-)
+const SimpleLineChart = ({ data, title }: { data: any[], title: string }) => {
+  const maxValue = Math.max(...data.map(d => d.value))
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <LineChart className="h-5 w-5" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-64 flex items-end justify-between space-x-1">
+          {data.slice(0, 7).map((item, index) => {
+            const barHeight = Math.max(20, (item.value / maxValue) * 200)
+            return (
+              <div key={index} className="flex flex-col items-center flex-1">
+                <div className="relative flex flex-col items-center w-full">
+                  {/* Raqam ustida */}
+                  <span className="text-xs font-bold text-gray-700 mb-1">{item.value}</span>
+                  {/* Bar */}
+                  <div 
+                    className="bg-blue-600 w-full rounded-t transition-all hover:bg-blue-700"
+                    style={{ height: `${barHeight}px` }}
+                  />
+                </div>
+                {/* Sana pastida */}
+                <span className="text-xs mt-2 text-gray-600 text-center">{item.label}</span>
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 function getCurrentMonthRange() {
   const now = new Date()

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, memo } from "react"
+import { useEffect, useRef, useState, memo, useCallback } from "react"
 import { Navigation, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -78,6 +78,94 @@ export const MapComponent = memo(function MapComponent({
     return true
   })
   const [highlightedCheckId, setHighlightedCheckId] = useState<string | null>(null)
+  
+  // Draggable legend state
+  const [legendPosition, setLegendPosition] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('map_legend_position')
+      if (saved) {
+        const pos = JSON.parse(saved)
+        // Convert old format (with 'right') to new format (with 'left')
+        if ('right' in pos && !('left' in pos)) {
+          return { top: pos.top || 16, left: window.innerWidth - (pos.right || 16) - 300 }
+        }
+        return pos
+      }
+    }
+    return { top: 16, left: 16 }
+  })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const legendRef = useRef<HTMLDivElement>(null)
+
+  // Drag handlers
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!legendRef.current) return
+    // Get the current position from the element's style
+    const currentLeft = legendRef.current.offsetLeft
+    const currentTop = legendRef.current.offsetTop
+    
+    setIsDragging(true)
+    setDragOffset({
+      x: e.clientX - currentLeft,
+      y: e.clientY - currentTop
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!legendRef.current) return
+      
+      // Calculate new position based on mouse position and offset
+      let newLeft = e.clientX - dragOffset.x
+      let newTop = e.clientY - dragOffset.y
+      
+      // Get map container bounds to keep panel inside
+      const mapContainer = legendRef.current.parentElement
+      if (mapContainer) {
+        const containerRect = mapContainer.getBoundingClientRect()
+        const legendWidth = legendRef.current.offsetWidth
+        const legendHeight = legendRef.current.offsetHeight
+        
+        // Keep within map container bounds
+        const minLeft = 0
+        const maxLeft = containerRect.width - legendWidth
+        const minTop = 0
+        const maxTop = containerRect.height - legendHeight
+        
+        newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft))
+        newTop = Math.max(minTop, Math.min(newTop, maxTop))
+      }
+      
+      // Update position
+      setLegendPosition({
+        left: newLeft,
+        top: newTop
+      })
+    }
+
+    const handleMouseUp = () => {
+      setIsDragging(false)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDragging, dragOffset])
+
+  // Save position to localStorage when it changes and dragging stops
+  useEffect(() => {
+    if (!isDragging && typeof window !== 'undefined') {
+      localStorage.setItem('map_legend_position', JSON.stringify(legendPosition))
+    }
+  }, [isDragging, legendPosition])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -314,14 +402,27 @@ export const MapComponent = memo(function MapComponent({
       )}
 
       {status === "ready" && selectedExpeditor && (
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg z-10 max-w-md">
-          <div className="flex items-center justify-between px-3 py-2 border-b">
+        <div 
+          ref={legendRef}
+          className="absolute bg-white rounded-lg shadow-lg z-10 max-w-md pointer-events-auto"
+          style={{
+            top: `${legendPosition.top}px`,
+            left: `${legendPosition.left}px`,
+            userSelect: isDragging ? 'none' : 'auto'
+          }}
+        >
+          <div 
+            className={`flex items-center justify-between px-3 py-2 border-b ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} hover:bg-gray-50`}
+            onMouseDown={handleMouseDown}
+          >
             <span className="text-sm font-medium text-gray-700">Kunlik yo'nalishlar</span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
-              onClick={() => {
+              className="h-6 w-6 p-0 cursor-pointer"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
                 const newState = !isLegendOpen
                 setIsLegendOpen(newState)
                 if (typeof window !== 'undefined') {
