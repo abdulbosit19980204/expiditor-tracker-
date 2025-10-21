@@ -56,12 +56,10 @@ class TaskExecutor:
             result = handler(scheduled_task, task_run)
             
             # Mark as completed
-            task_run.is_running = False
-            task_run.finished_at = timezone.now()
             task_run.status_message = f"Completed successfully. {result.get('message', '')}"
             task_run.total = result.get('total', 0)
             task_run.processed = result.get('processed', 0)
-            task_run.save()
+            task_run.mark_completed()
             
             # Update scheduled task
             scheduled_task.last_run_at = timezone.now()
@@ -74,10 +72,7 @@ class TaskExecutor:
             logger.error(f"Task execution failed: {scheduled_task.task_type} - {str(e)}")
             
             if task_run:
-                task_run.is_running = False
-                task_run.finished_at = timezone.now()
-                task_run.status_message = f"Failed: {str(e)}"
-                task_run.save()
+                task_run.mark_failed(error_message=f"Failed: {str(e)}")
             
             raise
         
@@ -118,54 +113,192 @@ class TaskExecutor:
             raise
     
     def _execute_scan_problems(self, scheduled_task: ScheduledTask, task_run: TaskRun) -> dict:
-        """Execute problem checks scanning task."""
+        """Execute problem checks scanning task - comprehensive data quality check."""
         try:
             from expeditor_app.models import ProblemCheck
+            from django.db.models import Q
             
-            # Scan for checks with missing data
+            params = scheduled_task.params or {}
+            window_size = params.get('window_size', 24)  # hours
+            threshold = params.get('threshold', 0.8)
+            analyze_all = params.get('analyze_all', False)
+            
+            # Determine time range
+            if analyze_all:
+                # Scan all checks
+                checks_queryset = Check.objects.all()
+            else:
+                # Scan recent checks only
+                since = timezone.now() - timedelta(hours=window_size)
+                checks_queryset = Check.objects.filter(check_date__gte=since)
+            
+            total_checks = checks_queryset.count()
             problem_checks = []
+            problem_stats = {
+                'no_coords': 0,
+                'no_expeditor': 0,
+                'zero_sum': 0,
+                'missing_sum': 0,
+                'no_client': 0,
+                'no_kkm': 0,
+                'invalid_date': 0,
+                'negative_sum': 0,
+            }
             
-            # Find checks without coordinates
-            checks_without_coords = Check.objects.filter(
-                check_lat__isnull=True,
-                check_lon__isnull=True
-            )
+            task_run.total = total_checks
+            task_run.save()
             
-            for check in checks_without_coords:
-                ProblemCheck.objects.update_or_create(
-                    check_id=check.check_id,
-                    issue_code='NO_COORDS',
-                    defaults={
-                        'issue_message': 'Missing GPS coordinates',
-                        'resolved': False,
-                    }
-                )
-                problem_checks.append(check.check_id)
+            # Update progress counter
+            processed = 0
+            batch_size = params.get('batch_size', 1000)
             
-            # Find checks without expeditor
-            checks_without_expeditor = Check.objects.filter(
-                ekispiditor__isnull=True
-            )
+            # Process checks in batches for better performance
+            for i in range(0, total_checks, batch_size):
+                batch_checks = checks_queryset[i:i + batch_size]
+                
+                for check in batch_checks:
+                    issues_found = []
+                    
+                    # 1. Check for missing GPS coordinates
+                    if not check.check_lat or not check.check_lon:
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='NO_COORDS',
+                            defaults={
+                                'issue_message': 'Missing GPS coordinates (lat or lon)',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('NO_COORDS')
+                        problem_stats['no_coords'] += 1
+                    
+                    # 2. Check for missing expeditor
+                    if not check.ekispiditor or check.ekispiditor.strip() == '':
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='NO_EXPEDITOR',
+                            defaults={
+                                'issue_message': 'Missing expeditor (ekispiditor) information',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('NO_EXPEDITOR')
+                        problem_stats['no_expeditor'] += 1
+                    
+                    # 3. Check for zero or missing total sum
+                    if check.total_sum is None:
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='MISSING_SUM',
+                            defaults={
+                                'issue_message': 'Total sum is NULL (missing)',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('MISSING_SUM')
+                        problem_stats['missing_sum'] += 1
+                    elif check.total_sum == 0:
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='ZERO_SUM',
+                            defaults={
+                                'issue_message': 'Total sum is zero (0)',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('ZERO_SUM')
+                        problem_stats['zero_sum'] += 1
+                    elif check.total_sum < 0:
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='NEGATIVE_SUM',
+                            defaults={
+                                'issue_message': f'Total sum is negative: {check.total_sum}',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('NEGATIVE_SUM')
+                        problem_stats['negative_sum'] += 1
+                    
+                    # 4. Check for missing client name
+                    if not check.client_name or check.client_name.strip() == '':
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='NO_CLIENT',
+                            defaults={
+                                'issue_message': 'Missing client name',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('NO_CLIENT')
+                        problem_stats['no_client'] += 1
+                    
+                    # 5. Check for missing KKM number
+                    if not check.kkm_number or check.kkm_number.strip() == '':
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='NO_KKM',
+                            defaults={
+                                'issue_message': 'Missing KKM (cash register) number',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('NO_KKM')
+                        problem_stats['no_kkm'] += 1
+                    
+                    # 6. Check for invalid or missing check date
+                    if not check.check_date:
+                        ProblemCheck.objects.update_or_create(
+                            check_id=check.check_id,
+                            issue_code='INVALID_DATE',
+                            defaults={
+                                'issue_message': 'Missing check date',
+                                'resolved': False,
+                            }
+                        )
+                        issues_found.append('INVALID_DATE')
+                        problem_stats['invalid_date'] += 1
+                    
+                    if issues_found:
+                        problem_checks.append(check.check_id)
+                    
+                    processed += 1
+                    
+                    # Update progress every 100 checks
+                    if processed % 100 == 0:
+                        task_run.processed = processed
+                        task_run.status_message = f"Scanning... {processed}/{total_checks} ({len(problem_checks)} problems found)"
+                        task_run.save()
             
-            for check in checks_without_expeditor:
-                ProblemCheck.objects.update_or_create(
-                    check_id=check.check_id,
-                    issue_code='NO_EXPEDITOR',
-                    defaults={
-                        'issue_message': 'Missing expeditor information',
-                        'resolved': False,
-                    }
-                )
-                problem_checks.append(check.check_id)
+            # Final update
+            task_run.processed = processed
+            task_run.save()
+            
+            # Build detailed message
+            message_parts = [
+                f"Scanned {total_checks} checks, found {len(problem_checks)} with issues.",
+                f"Details: No coords: {problem_stats['no_coords']}, "
+                f"No expeditor: {problem_stats['no_expeditor']}, "
+                f"Zero sum: {problem_stats['zero_sum']}, "
+                f"Missing sum: {problem_stats['missing_sum']}, "
+                f"Negative sum: {problem_stats['negative_sum']}, "
+                f"No client: {problem_stats['no_client']}, "
+                f"No KKM: {problem_stats['no_kkm']}, "
+                f"Invalid date: {problem_stats['invalid_date']}"
+            ]
             
             return {
-                'message': f"Scanned {len(problem_checks)} problem checks",
-                'total': len(problem_checks),
-                'processed': len(problem_checks)
+                'message': ' '.join(message_parts),
+                'total': total_checks,
+                'processed': processed,
+                'problems_found': len(problem_checks),
+                'stats': problem_stats
             }
             
         except Exception as e:
             logger.error(f"Scan problems failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise
     
     def _execute_send_analytics(self, scheduled_task: ScheduledTask, task_run: TaskRun) -> dict:

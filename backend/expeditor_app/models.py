@@ -230,8 +230,21 @@ class EmailRecipient(models.Model):
 
 
 class TaskRun(models.Model):
+    STATUS_RUNNING = 'running'
+    STATUS_COMPLETED = 'completed'
+    STATUS_FAILED = 'failed'
+    STATUS_CANCELLED = 'cancelled'
+    
+    STATUS_CHOICES = [
+        (STATUS_RUNNING, 'Running'),
+        (STATUS_COMPLETED, 'Completed'),
+        (STATUS_FAILED, 'Failed'),
+        (STATUS_CANCELLED, 'Cancelled'),
+    ]
+    
     TASK_CHOICES = ScheduledTask.TASK_CHOICES
     task_type = models.CharField(max_length=50, choices=TASK_CHOICES, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_RUNNING, db_index=True)
     is_running = models.BooleanField(default=True, db_index=True)
     status_message = models.CharField(max_length=255, blank=True, null=True)
     total = models.IntegerField(default=0)
@@ -243,10 +256,29 @@ class TaskRun(models.Model):
         verbose_name_plural = "Tasks — Runs"
         indexes = [
             models.Index(fields=["task_type", "is_running", "started_at"]),
+            models.Index(fields=["status", "started_at"]),
         ]
 
     def __str__(self):
         return f"{self.task_type} run at {self.started_at:%Y-%m-%d %H:%M}"
+    
+    def mark_completed(self):
+        """Mark task run as completed."""
+        from django.utils import timezone
+        self.is_running = False
+        self.status = self.STATUS_COMPLETED
+        self.finished_at = timezone.now()
+        self.save()
+    
+    def mark_failed(self, error_message=None):
+        """Mark task run as failed."""
+        from django.utils import timezone
+        self.is_running = False
+        self.status = self.STATUS_FAILED
+        if error_message:
+            self.status_message = error_message
+        self.finished_at = timezone.now()
+        self.save()
 
 
 class TaskList(models.Model):

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { 
   Play, 
   Pause, 
@@ -26,7 +27,9 @@ import {
   ArrowLeft,
   Key,
   LogOut,
-  User
+  User,
+  Info,
+  X
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -59,12 +62,24 @@ interface TaskRun {
   status_display: string
 }
 
+interface TaskInfo {
+  id: number
+  code: string
+  name: string
+  description: string
+  default_params: any
+  sample_result: string | null
+  is_active: boolean
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 export default function TaskManagement() {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState<ScheduledTask[]>([])
   const [taskRuns, setTaskRuns] = useState<TaskRun[]>([])
+  const [taskInfoList, setTaskInfoList] = useState<TaskInfo[]>([])
+  const [selectedTaskInfo, setSelectedTaskInfo] = useState<TaskInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [runningTasks, setRunningTasks] = useState<Set<number>>(new Set())
   const [showScrollTop, setShowScrollTop] = useState(false)
@@ -72,6 +87,7 @@ export default function TaskManagement() {
   useEffect(() => {
     loadTasks()
     loadTaskRuns()
+    loadTaskInfo()
     
     // Refresh every 10 seconds
     const interval = setInterval(() => {
@@ -158,6 +174,32 @@ export default function TaskManagement() {
     }
   }, [])
 
+  const loadTaskInfo = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+
+      const response = await fetch(`${API_BASE_URL}/task-list/`, {
+        headers
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setTaskInfoList(data.results || data)
+      } else {
+        console.error('Failed to load task info:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Failed to load task info:', error)
+    }
+  }, [])
+
   const runTaskNow = async (taskId: number) => {
     try {
       setRunningTasks(prev => new Set(prev).add(taskId))
@@ -209,11 +251,18 @@ export default function TaskManagement() {
 
   const toggleTask = async (taskId: number, enabled: boolean) => {
     try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({ is_enabled: enabled }),
       })
       
@@ -221,7 +270,6 @@ export default function TaskManagement() {
         toast({
           title: "Success",
           description: `Task ${enabled ? 'enabled' : 'disabled'}`,
-          variant: "success",
         })
         loadTasks()
       } else {
@@ -460,6 +508,17 @@ export default function TaskManagement() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const taskInfo = taskInfoList.find(t => t.code === task.task_type)
+                            if (taskInfo) setSelectedTaskInfo(taskInfo)
+                          }}
+                          title="Task Info"
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                        <Button
                           variant="outline"
                           size="sm"
                           onClick={() => toggleTask(task.id, !task.is_enabled)}
@@ -568,6 +627,66 @@ export default function TaskManagement() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Task Info Dialog */}
+      <Dialog open={selectedTaskInfo !== null} onOpenChange={() => setSelectedTaskInfo(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="h-5 w-5 text-blue-600" />
+              {selectedTaskInfo?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Task Code: <Badge variant="outline">{selectedTaskInfo?.code}</Badge>
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedTaskInfo && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold text-sm text-gray-700 mb-2">Description</h3>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <pre className="text-sm whitespace-pre-wrap font-sans text-gray-700">
+                    {selectedTaskInfo.description}
+                  </pre>
+                </div>
+              </div>
+              
+              {selectedTaskInfo.default_params && (
+                <div>
+                  <h3 className="font-semibold text-sm text-gray-700 mb-2">Default Parameters</h3>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <pre className="text-xs font-mono text-gray-700">
+                      {JSON.stringify(selectedTaskInfo.default_params, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+              
+              {selectedTaskInfo.sample_result && (
+                <div>
+                  <h3 className="font-semibold text-sm text-gray-700 mb-2">Sample Result</h3>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <pre className="text-xs font-mono text-gray-700">
+                      {selectedTaskInfo.sample_result}
+                    </pre>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between pt-4 border-t">
+                <Badge variant={selectedTaskInfo.is_active ? "default" : "secondary"}>
+                  {selectedTaskInfo.is_active ? "Active" : "Inactive"}
+                </Badge>
+                <Button variant="outline" onClick={() => setSelectedTaskInfo(null)}>
+                  <X className="h-4 w-4 mr-2" />
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Scroll to Top Button */}
       {showScrollTop && (

@@ -5,7 +5,7 @@ from .views import (
     SkladViewSet, CityViewSet, EkispiditorViewSet, CheckViewSet, FilialViewSet,
     AnalyticsSummaryView, TelegramTargetView, CheckAnalyticsViewSet, CheckAnalyticsAPIView,
 )
-from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView
+from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView, TaskListViewSet, TaskAnalyticsView
 from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
 from .auth_views import register_user, login_user, logout_user, get_user_profile, check_auth_status
 from .integration import UpdateChecksView
@@ -22,6 +22,7 @@ router.register(r'check', CheckViewSet, basename='check')
 router.register(r'analytics', CheckAnalyticsViewSet, basename='analytics')
 router.register(r'tasks', ScheduledTaskViewSet, basename='tasks')
 router.register(r'task-runs', TaskRunViewSet, basename='task-runs')
+router.register(r'task-list', TaskListViewSet, basename='task-list')
 router.register(r'yandex-tokens', YandexTokenViewSet, basename='yandex-tokens')
 
 # The API URLs are now determined automatically by the router.
@@ -34,6 +35,7 @@ urlpatterns = [
     path('telegram/target/', TelegramTargetView.as_view(), name='telegram-target'),
     path('update-checks/', UpdateChecksView.as_view(), name='update-checks'),
     path('task-status/', TaskStatusView.as_view(), name='task-status'),
+    path('task-analytics/', TaskAnalyticsView.as_view(), name='task-analytics'),
     path('yandex-token-status/', YandexTokenStatusView.as_view(), name='yandex-token-status'),
     # Authentication endpoints
     path('auth/register/', register_user, name='register'),

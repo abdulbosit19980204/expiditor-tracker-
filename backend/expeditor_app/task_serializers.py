@@ -5,7 +5,7 @@ Provides serializers for ScheduledTask and TaskRun models.
 """
 
 from rest_framework import serializers
-from expeditor_app.models import ScheduledTask, TaskRun
+from expeditor_app.models import ScheduledTask, TaskRun, TaskList
 
 
 class ScheduledTaskSerializer(serializers.ModelSerializer):
@@ -24,15 +24,15 @@ class TaskRunSerializer(serializers.ModelSerializer):
     """Serializer for TaskRun model."""
     
     duration = serializers.SerializerMethodField()
-    status_display = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
     
     class Meta:
         model = TaskRun
         fields = [
-            'id', 'task_type', 'is_running', 'processed', 'total',
+            'id', 'task_type', 'status', 'is_running', 'processed', 'total',
             'status_message', 'started_at', 'finished_at', 'duration', 'status_display'
         ]
-        read_only_fields = ['started_at', 'finished_at']
+        read_only_fields = ['started_at', 'finished_at', 'status_display']
     
     def get_duration(self, obj):
         """Calculate task duration."""
@@ -44,12 +44,15 @@ class TaskRunSerializer(serializers.ModelSerializer):
             duration = timezone.now() - obj.started_at
             return duration.total_seconds()
         return None
+
+
+class TaskListSerializer(serializers.ModelSerializer):
+    """Serializer for TaskList model."""
     
-    def get_status_display(self, obj):
-        """Get human-readable status."""
-        if obj.is_running:
-            return 'Running'
-        elif obj.finished_at:
-            return 'Completed'
-        else:
-            return 'Unknown'
+    class Meta:
+        model = TaskList
+        fields = [
+            'id', 'code', 'name', 'description', 'default_params',
+            'sample_result', 'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
