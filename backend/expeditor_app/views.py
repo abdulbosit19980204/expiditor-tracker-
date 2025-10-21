@@ -700,3 +700,216 @@ class TelegramTargetView(APIView):
             url = f"https://t.me/+{phone}"
 
         return Response({'url': url, 'display_name': account.display_name, 'username': account.username, 'phone_number': account.phone_number})
+
+
+class ViolationAnalyticsDashboardView(APIView):
+    """
+    Comprehensive analytics dashboard for violation patterns.
+    Provides all statistics that update based on filters.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        # Get filter parameters
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        expeditor = request.GET.get('expeditor')
+        min_radius = request.GET.get('min_radius')
+        max_radius = request.GET.get('max_radius')
+        
+        # Base queryset
+        analytics_qs = CheckAnalytics.objects.all()
+        
+        # Apply filters
+        if date_from:
+            try:
+                date_from_obj = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_start__gte=date_from_obj)
+            except:
+                pass
+        
+        if date_to:
+            try:
+                date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_end__lte=date_to_obj)
+            except:
+                pass
+        
+        if expeditor:
+            analytics_qs = analytics_qs.filter(most_active_expiditor__icontains=expeditor)
+        
+        if min_radius:
+            try:
+                analytics_qs = analytics_qs.filter(radius_meters__gte=float(min_radius))
+            except:
+                pass
+        
+        if max_radius:
+            try:
+                analytics_qs = analytics_qs.filter(radius_meters__lte=float(max_radius))
+            except:
+                pass
+        
+        # === 1. OVERVIEW STATISTICS ===
+        total_violations = analytics_qs.count()
+        total_checks_involved = analytics_qs.aggregate(
+            total=Sum('total_checks')
+        )['total'] or 0
+        
+        unique_expeditors = analytics_qs.values('most_active_expiditor').distinct().count()
+        
+        avg_radius = analytics_qs.aggregate(
+            avg=Coalesce(F('radius_meters'), 0.0, output_field=FloatField())
+        )['avg'] or 0
+        
+        # === 2. TOP VIOLATORS ===
+        # Group by expeditor and count violations
+        from django.db.models import Count, Avg, Max
+        
+        top_violators = analytics_qs.values('most_active_expiditor').annotate(
+            violation_count=Count('id'),
+            total_checks=Sum('total_checks'),
+            avg_radius=Avg('radius_meters'),
+            max_radius=Max('radius_meters'),
+            last_violation=Max('window_start')
+        ).order_by('-violation_count')[:10]
+        
+        # === 3. GEOGRAPHIC DISTRIBUTION ===
+        # Get all check locations from analytics
+        location_data = []
+        for analytics in analytics_qs[:100]:  # Limit to prevent overload
+            if analytics.check_locations:
+                for loc in analytics.check_locations:
+                    location_data.append({
+                        'lat': loc.get('lat'),
+                        'lng': loc.get('lng'),
+                        'expeditor': loc.get('expeditor'),
+                        'client': loc.get('client_name'),
+                    })
+        
+        # Group by approximate location (rounded coordinates)
+        from collections import defaultdict
+        location_groups = defaultdict(lambda: {'count': 0, 'expeditors': set()})
+        
+        for loc in location_data:
+            if loc['lat'] and loc['lng']:
+                # Round to 2 decimal places (~1km precision)
+                key = (round(loc['lat'], 2), round(loc['lng'], 2))
+                location_groups[key]['count'] += 1
+                if loc['expeditor']:
+                    location_groups[key]['expeditors'].add(loc['expeditor'])
+        
+        geographic_hotspots = [
+            {
+                'lat': k[0],
+                'lng': k[1],
+                'violation_count': v['count'],
+                'expeditor_count': len(v['expeditors'])
+            }
+            for k, v in sorted(location_groups.items(), key=lambda x: -x[1]['count'])[:20]
+        ]
+        
+        # === 4. TIME ANALYSIS ===
+        # By hour of day
+        hourly_distribution = analytics_qs.annotate(
+            hour=TruncHour('window_start')
+        ).values('hour').annotate(
+            count=Count('id')
+        ).order_by('hour')[:24]
+        
+        # By day of week
+        from django.db.models.functions import ExtractWeekDay
+        daily_distribution = analytics_qs.annotate(
+            day_of_week=ExtractWeekDay('window_start')
+        ).values('day_of_week').annotate(
+            count=Count('id')
+        ).order_by('day_of_week')
+        
+        # Convert to readable format
+        day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        daily_stats = []
+        for item in daily_distribution:
+            day_index = item['day_of_week'] - 1  # Django uses 1-7, we want 0-6
+            if 0 <= day_index < 7:
+                daily_stats.append({
+                    'day': day_names[day_index],
+                    'count': item['count']
+                })
+        
+        # === 5. SEVERITY ANALYSIS ===
+        # Categorize by radius
+        severity_breakdown = {
+            'critical': analytics_qs.filter(radius_meters__gte=1000).count(),  # >1km
+            'warning': analytics_qs.filter(radius_meters__gte=500, radius_meters__lt=1000).count(),  # 500m-1km
+            'minor': analytics_qs.filter(radius_meters__lt=500).count(),  # <500m
+        }
+        
+        # Radius distribution
+        radius_ranges = [
+            {'range': '0-250m', 'min': 0, 'max': 250},
+            {'range': '250-500m', 'min': 250, 'max': 500},
+            {'range': '500-750m', 'min': 500, 'max': 750},
+            {'range': '750-1000m', 'min': 750, 'max': 1000},
+            {'range': '1000m+', 'min': 1000, 'max': 999999},
+        ]
+        
+        radius_distribution = []
+        for r in radius_ranges:
+            count = analytics_qs.filter(
+                radius_meters__gte=r['min'],
+                radius_meters__lt=r['max']
+            ).count()
+            radius_distribution.append({
+                'range': r['range'],
+                'count': count
+            })
+        
+        # === 6. TREND ANALYSIS ===
+        # Last 7 days trend
+        last_7_days = analytics_qs.filter(
+            analysis_date__gte=timezone.now().date() - timedelta(days=7)
+        ).annotate(
+            date=TruncDate('analysis_date')
+        ).values('date').annotate(
+            count=Count('id'),
+            total_checks=Sum('total_checks')
+        ).order_by('date')
+        
+        # === 7. EXPEDITOR PERFORMANCE ===
+        expeditor_stats = analytics_qs.values('most_active_expiditor').annotate(
+            violations=Count('id'),
+            total_checks=Sum('total_checks'),
+            avg_checks_per_violation=Avg('total_checks'),
+            avg_radius=Avg('radius_meters')
+        ).order_by('-violations')[:20]
+        
+        # === COMPILE RESPONSE ===
+        response_data = {
+            'overview': {
+                'total_violations': total_violations,
+                'total_checks_involved': total_checks_involved,
+                'unique_expeditors': unique_expeditors,
+                'avg_radius_meters': round(avg_radius, 2) if avg_radius else 0,
+            },
+            'top_violators': list(top_violators),
+            'geographic_hotspots': geographic_hotspots,
+            'time_analysis': {
+                'hourly': list(hourly_distribution),
+                'daily': daily_stats,
+            },
+            'severity_analysis': {
+                'breakdown': severity_breakdown,
+                'radius_distribution': radius_distribution,
+            },
+            'trend_analysis': list(last_7_days),
+            'expeditor_performance': list(expeditor_stats),
+            'filters_applied': {
+                'date_from': date_from,
+                'date_to': date_to,
+                'expeditor': expeditor,
+                'min_radius': min_radius,
+                'max_radius': max_radius,
+            }
+        }
+        
+        return Response(response_data)
