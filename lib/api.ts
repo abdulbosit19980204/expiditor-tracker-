@@ -5,7 +5,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:
 // Get authentication token from localStorage
 function getAuthToken(): string | null {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('auth_token')
+    // Support both legacy and current storage keys
+    // Some parts of the app (older pages) use 'token',
+    // while the API client originally read 'auth_token'.
+    // Read both to avoid empty lists due to 401.
+    return (
+      localStorage.getItem('auth_token') ||
+      localStorage.getItem('token') ||
+      null
+    )
   }
   return null
 }
