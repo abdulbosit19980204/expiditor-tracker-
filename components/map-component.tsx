@@ -227,14 +227,7 @@ export const MapComponent = memo(function MapComponent({
 
         await new Promise((r) => window.ymaps.ready(r))
 
-        if (mapContainerRef.current) {
-          mapRef.current = new window.ymaps.Map(mapContainerRef.current, {
-            center: [41.2995, 69.2401],
-            zoom: 11,
-            controls: ["zoomControl", "fullscreenControl", "typeSelector", "trafficControl"],
-          })
-        }
-
+        // Mark as ready; the map instance will be (re)created in the next effect
         setStatus("ready")
       } catch (e: unknown) {
         console.error("[Map] init error:", e)
@@ -247,7 +240,20 @@ export const MapComponent = memo(function MapComponent({
   }, [])
 
   useEffect(() => {
-    if (status !== "ready" || !mapRef.current) return
+    if (status !== "ready") return
+
+    // Ensure a map instance exists (covers return navigation when ymaps already loaded)
+    if (!mapRef.current && mapContainerRef.current && (window as any).ymaps) {
+      try {
+        mapRef.current = new (window as any).ymaps.Map(mapContainerRef.current, {
+          center: [41.2995, 69.2401],
+          zoom: 11,
+          controls: ["zoomControl", "fullscreenControl", "typeSelector", "trafficControl"],
+        })
+      } catch {}
+    }
+
+    if (!mapRef.current) return
 
     const map = mapRef.current
     map.geoObjects.removeAll()
