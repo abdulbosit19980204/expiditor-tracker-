@@ -42,6 +42,8 @@ kill_port() {
 echo -e "${YELLOW}🔄 Cleaning up existing processes...${NC}"
 kill_port 7896
 kill_port 4563
+pkill -f "next start" 2>/dev/null || true
+pkill -f "npm run start" 2>/dev/null || true
 
 # Start Backend
 echo -e "${BLUE}🔧 Starting Django Backend...${NC}"
@@ -104,10 +106,14 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Build and start Next.js in production to ensure chunk hashes stay consistent
+echo -e "${YELLOW}🧱 Preparing Next.js build (cleaning old artifacts)...${NC}"
+export NODE_ENV=production
+rm -rf .next
 echo -e "${YELLOW}🧱 Building Next.js...${NC}"
 npm run build > nextjs.log 2>&1 || (echo -e "${RED}❌ Next.js build failed${NC}" && exit 1)
 echo -e "${GREEN}🚀 Starting Next.js on port 4563 (production)...${NC}"
-nohup npm run start -- -p 4563 >> nextjs.log 2>&1 &
+# Bind explicitly to loopback as nginx proxies on 127.0.0.1:4563
+nohup npm run start -- -p 4563 -H 0.0.0.0 >> nextjs.log 2>&1 &
 
 FRONTEND_PID=$!
 echo -e "${GREEN}✅ Frontend started with PID: $FRONTEND_PID${NC}"
@@ -132,7 +138,6 @@ echo -e "${GREEN}🎉 Expeditor Tracker is now running in production mode!${NC}"
 echo -e "${BLUE}📊 Backend API: http://localhost:7896/api/${NC}"
 echo -e "${BLUE}🎨 Frontend: http://localhost:4563/${NC}"
 echo -e "${BLUE}👤 Admin Panel: http://localhost:7896/admin/${NC}"
-echo -e "${BLUE}🔑 Admin Login: admin / 1234${NC}"
 echo ""
 echo -e "${YELLOW}📝 Logs:${NC}"
 echo -e "   Backend: $BACKEND_DIR/gunicorn.log"

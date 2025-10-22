@@ -164,7 +164,8 @@ export default function TaskManagement() {
       }
 
       const response = await fetch(`${API_BASE_URL}/tasks/`, {
-        headers
+        headers,
+        cache: 'no-store',
       })
       
       if (response.ok) {
@@ -200,7 +201,7 @@ export default function TaskManagement() {
       }
 
       const url = `${API_BASE_URL}/task-runs/?page=${currentPage}&page_size=${pageSize}`
-      const response = await fetch(url, { headers })
+      const response = await fetch(url, { headers, cache: 'no-store' })
       
       if (response.ok) {
         const data = await response.json()
@@ -232,7 +233,8 @@ export default function TaskManagement() {
       }
 
       const response = await fetch(`${API_BASE_URL}/task-list/`, {
-        headers
+        headers,
+        cache: 'no-store',
       })
       
       if (response.ok) {
@@ -258,7 +260,8 @@ export default function TaskManagement() {
       }
 
       const response = await fetch(`${API_BASE_URL}/task-analytics/?days=7`, {
-        headers
+        headers,
+        cache: 'no-store',
       })
       
       if (response.ok) {
@@ -288,6 +291,7 @@ export default function TaskManagement() {
       const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/run_now/`, {
         method: 'POST',
         headers,
+        cache: 'no-store',
       })
       
       if (response.ok) {
@@ -336,6 +340,7 @@ export default function TaskManagement() {
         method: 'PATCH',
         headers,
         body: JSON.stringify({ is_enabled: enabled }),
+        cache: 'no-store',
       })
       
       if (response.ok) {
@@ -374,6 +379,7 @@ export default function TaskManagement() {
       const response = await fetch(`${API_BASE_URL}/task-runs/${taskRunId}/cancel/`, {
         method: 'POST',
         headers,
+        cache: 'no-store',
       })
       
       if (response.ok) {

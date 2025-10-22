@@ -7,11 +7,16 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 
-# Load environment variables from production.env
-load_dotenv(os.path.join(os.path.dirname(__file__), 'production.env'))
+# Load environment variables after BASE_DIR is defined (see below)
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from backend root production.env (fallback to .env)
+env_file_path = os.path.join(BASE_DIR, 'production.env')
+if os.path.exists(env_file_path):
+    load_dotenv(env_file_path)
+else:
+    load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here')
@@ -20,13 +25,19 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-secret-key-here'
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Fixed: Remove wildcard '*' from ALLOWED_HOSTS for security
-# In production, only allow specific hosts
-ALLOWED_HOSTS = [
-    'localhost', 
-    '127.0.0.1', 
-    '192.168.0.109', 
+# In production, only allow specific hosts. Allow override via env ALLOWED_HOSTS.
+default_allowed_hosts = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.0.109',
     '178.218.200.120',
 ]
+
+env_allowed_hosts = os.environ.get('ALLOWED_HOSTS')
+if env_allowed_hosts:
+    ALLOWED_HOSTS = [host.strip() for host in env_allowed_hosts.split(',') if host.strip()]
+else:
+    ALLOWED_HOSTS = default_allowed_hosts
 
 # Optionally add wildcard only in development mode
 if DEBUG:
@@ -93,7 +104,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'expiditor-tracker-real'),
         'USER': os.environ.get('DB_USER', 'expiditor'),  # Use expeditor user
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'Baccardi2020'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
@@ -152,18 +163,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+# CORS settings (allow override via env CORS_ALLOWED_ORIGINS)
+default_cors_allowed = [
+    "http://localhost:4563",
+    "http://127.0.0.1:4563",
     "http://178.218.200.120:4563",
     "https://178.218.200.120:4563",
-    "https://178.218.200.120",
-    "https://expiditor.vercel.app",
-    "http://192.168.0.111:7896",
-    "http://178.218.200.120:7896",
-    "https://178.218.200.120:7896"
+    "http://localhost:7896",
+    "http://127.0.0.1:7896",
 ]
+
+env_cors = os.environ.get('CORS_ALLOWED_ORIGINS')
+if env_cors:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in env_cors.split(',') if o.strip()]
+else:
+    CORS_ALLOWED_ORIGINS = default_cors_allowed
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 

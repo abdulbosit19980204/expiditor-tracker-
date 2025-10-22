@@ -59,13 +59,20 @@ class CheckFilter(django_filters.FilterSet):
     
     def filter_date_from_start_of_day(self, queryset, name, value):
         if value:
-            start_of_day = value.replace(hour=0, minute=0, second=0, microsecond=0)
+            # Ensure timezone-aware boundaries to avoid off-by-one-day due to UTC offsets
+            aware = timezone.make_aware(value) if timezone.is_naive(value) else value
+            start_of_day = aware.astimezone(timezone.get_current_timezone()).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
             return queryset.filter(**{f"{name}__gte": start_of_day})
         return queryset
     
     def filter_date_to_end_of_day(self, queryset, name, value):
         if value:
-            end_of_day = value.replace(hour=23, minute=59, second=59, microsecond=999999)
+            aware = timezone.make_aware(value) if timezone.is_naive(value) else value
+            end_of_day = aware.astimezone(timezone.get_current_timezone()).replace(
+                hour=23, minute=59, second=59, microsecond=999999
+            )
             return queryset.filter(**{f"{name}__lte": end_of_day})
         return queryset
     
@@ -309,17 +316,21 @@ class StatisticsView(APIView):
         # Apply filters
         if date_from:
             try:
-                date_from_parsed = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
-                date_from_parsed = date_from_parsed.replace(hour=0, minute=0, second=0, microsecond=0)
-                checks_qs = checks_qs.filter(yetkazilgan_vaqti__gte=date_from_parsed)
+                df = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                # Normalize to local tz and clamp to start-of-day
+                df = timezone.make_aware(df) if timezone.is_naive(df) else df
+                df = df.astimezone(timezone.get_current_timezone()).replace(hour=0, minute=0, second=0, microsecond=0)
+                checks_qs = checks_qs.filter(yetkazilgan_vaqti__gte=df)
             except ValueError:
                 pass
                 
         if date_to:
             try:
-                date_to_parsed = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
-                date_to_parsed = date_to_parsed.replace(hour=23, minute=59, second=59, microsecond=999999)
-                checks_qs = checks_qs.filter(yetkazilgan_vaqti__lte=date_to_parsed)
+                dt = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                # Normalize to local tz and clamp to end-of-day
+                dt = timezone.make_aware(dt) if timezone.is_naive(dt) else dt
+                dt = dt.astimezone(timezone.get_current_timezone()).replace(hour=23, minute=59, second=59, microsecond=999999)
+                checks_qs = checks_qs.filter(yetkazilgan_vaqti__lte=dt)
             except ValueError:
                 pass
         
@@ -489,8 +500,12 @@ class StatisticsView(APIView):
         # Daily statistics - optimized for date range
         if date_from and date_to:
             try:
-                start_date = datetime.fromisoformat(date_from.replace('Z', '+00:00')).date()
-                end_date = datetime.fromisoformat(date_to.replace('Z', '+00:00')).date()
+                df = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                dt = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                df = timezone.make_aware(df) if timezone.is_naive(df) else df
+                dt = timezone.make_aware(dt) if timezone.is_naive(dt) else dt
+                start_date = df.astimezone(timezone.get_current_timezone()).date()
+                end_date = dt.astimezone(timezone.get_current_timezone()).date()
             except ValueError:
                 start_date = today.replace(day=1)
                 end_date = today
@@ -718,6 +733,10 @@ class ViolationAnalyticsDashboardView(APIView):
         expeditor = request.GET.get('expeditor')
         min_radius = request.GET.get('min_radius')
         max_radius = request.GET.get('max_radius')
+        filial = request.GET.get('filial')
+        # Optional exact cluster params
+        window_minutes_param = request.GET.get('window_minutes')
+        radius_meters_param = request.GET.get('radius_meters')
         
         # Base queryset - ONLY violations with 3+ checks
         analytics_qs = CheckAnalytics.objects.filter(total_checks__gte=3)
@@ -740,6 +759,33 @@ class ViolationAnalyticsDashboardView(APIView):
         if expeditor:
             analytics_qs = analytics_qs.filter(most_active_expiditor__icontains=expeditor)
         
+        # Filter by filial via Ekispiditor relation
+        if filial:
+            try:
+                from .models import Ekispiditor, Filial
+                try:
+                    filial_ids = [int(filial)]
+                    filial_qs = Filial.objects.filter(id__in=filial_ids)
+                except ValueError:
+                    filial_qs = Filial.objects.filter(filial_name__icontains=filial)
+                if filial_qs.exists():
+                    exp_names = Ekispiditor.objects.filter(filial__in=filial_qs).values_list('ekispiditor_name', flat=True)
+                    analytics_qs = analytics_qs.filter(most_active_expiditor__in=list(exp_names))
+            except Exception:
+                pass
+
+        # Exact cluster shape filters if provided
+        if window_minutes_param:
+            try:
+                analytics_qs = analytics_qs.filter(window_duration_minutes=int(window_minutes_param))
+            except ValueError:
+                pass
+        if radius_meters_param:
+            try:
+                analytics_qs = analytics_qs.filter(radius_meters=int(radius_meters_param))
+            except ValueError:
+                pass
+
         if min_radius:
             try:
                 analytics_qs = analytics_qs.filter(radius_meters__gte=float(min_radius))
@@ -918,6 +964,9 @@ class ViolationAnalyticsDashboardView(APIView):
                 'date_from': date_from,
                 'date_to': date_to,
                 'expeditor': expeditor,
+                'filial': filial,
+                'window_minutes': window_minutes_param,
+                'radius_meters': radius_meters_param,
                 'min_radius': min_radius,
                 'max_radius': max_radius,
             }
@@ -937,6 +986,9 @@ class ViolationDetailView(APIView):
         expeditor = request.GET.get('expeditor')
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
+        filial = request.GET.get('filial')
+        window_minutes_param = request.GET.get('window_minutes')
+        radius_meters_param = request.GET.get('radius_meters')
         
         if not expeditor:
             return Response({'error': 'expeditor parameter is required'}, status=400)
@@ -962,11 +1014,50 @@ class ViolationDetailView(APIView):
             except:
                 pass
         
+        # Filial filter via Ekispiditor
+        if filial:
+            try:
+                from .models import Ekispiditor, Filial
+                try:
+                    filial_ids = [int(filial)]
+                    filial_qs = Filial.objects.filter(id__in=filial_ids)
+                except ValueError:
+                    filial_qs = Filial.objects.filter(filial_name__icontains=filial)
+                if filial_qs.exists():
+                    exp_names = Ekispiditor.objects.filter(filial__in=filial_qs).values_list('ekispiditor_name', flat=True)
+                    analytics_qs = analytics_qs.filter(most_active_expiditor__in=list(exp_names))
+            except Exception:
+                pass
+
+        if window_minutes_param:
+            try:
+                analytics_qs = analytics_qs.filter(window_duration_minutes=int(window_minutes_param))
+            except ValueError:
+                pass
+        if radius_meters_param:
+            try:
+                analytics_qs = analytics_qs.filter(radius_meters=int(radius_meters_param))
+            except ValueError:
+                pass
+        
         # Get all violations and their details
         violations = []
         all_check_locations = []
         
-        for analytics in analytics_qs.order_by('-window_start')[:100]:  # Limit to 100 most recent
+        # Deduplicate clusters by check_ids set (prefer highest total_checks then latest time)
+        dedup_map = {}
+        for item in analytics_qs.order_by('-window_start')[:200]:
+            key = tuple(sorted(item.check_ids)) if item.check_ids else (
+                round(item.center_lat or 0, 4), round(item.center_lon or 0, 4),
+                (item.window_start.date().isoformat() if item.window_start else 'unknown'), item.radius_meters,
+            )
+            best = dedup_map.get(key)
+            if not best or (item.total_checks or 0) > (best.total_checks or 0) or (
+                (item.total_checks or 0) == (best.total_checks or 0) and (item.window_start or timezone.now()) > (best.window_start or timezone.now())
+            ):
+                dedup_map[key] = item
+
+        for analytics in dedup_map.values():
             # Get check locations for this violation
             check_locations = analytics.get_check_locations()
             
@@ -1013,6 +1104,9 @@ class ViolationDetailView(APIView):
             'filters_applied': {
                 'date_from': date_from,
                 'date_to': date_to,
+                'filial': filial,
+                'window_minutes': window_minutes_param,
+                'radius_meters': radius_meters_param,
             }
         }
         
@@ -1030,6 +1124,9 @@ class ViolationChecksListView(APIView):
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
         expeditor = request.GET.get('expeditor')
+        filial = request.GET.get('filial')
+        window_minutes_param = request.GET.get('window_minutes')
+        radius_meters_param = request.GET.get('radius_meters')
         page = int(request.GET.get('page', 1))
         page_size = int(request.GET.get('page_size', 50))
         
@@ -1053,6 +1150,31 @@ class ViolationChecksListView(APIView):
         
         if expeditor:
             analytics_qs = analytics_qs.filter(most_active_expiditor__icontains=expeditor)
+        
+        if filial:
+            try:
+                from .models import Ekispiditor, Filial
+                try:
+                    filial_ids = [int(filial)]
+                    filial_qs = Filial.objects.filter(id__in=filial_ids)
+                except ValueError:
+                    filial_qs = Filial.objects.filter(filial_name__icontains=filial)
+                if filial_qs.exists():
+                    exp_names = Ekispiditor.objects.filter(filial__in=filial_qs).values_list('ekispiditor_name', flat=True)
+                    analytics_qs = analytics_qs.filter(most_active_expiditor__in=list(exp_names))
+            except Exception:
+                pass
+        
+        if window_minutes_param:
+            try:
+                analytics_qs = analytics_qs.filter(window_duration_minutes=int(window_minutes_param))
+            except ValueError:
+                pass
+        if radius_meters_param:
+            try:
+                analytics_qs = analytics_qs.filter(radius_meters=int(radius_meters_param))
+            except ValueError:
+                pass
         
         # Collect all check IDs from violations
         all_check_ids = []
@@ -1116,6 +1238,9 @@ class ViolationChecksListView(APIView):
                 'date_from': date_from,
                 'date_to': date_to,
                 'expeditor': expeditor,
+                'filial': filial,
+                'window_minutes': window_minutes_param,
+                'radius_meters': radius_meters_param,
             }
         }
         

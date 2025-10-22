@@ -20,6 +20,20 @@ const nextConfig = {
           ],
         },
         {
+          // Runtime critical chunk: webpack
+          source: '/_next/static/chunks/webpack-:hash.js',
+          headers: [
+            { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          ],
+        },
+        {
+          // Runtime critical chunk: main-app
+          source: '/_next/static/chunks/main-app-:hash.js',
+          headers: [
+            { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          ],
+        },
+        {
           // Prevent caching of HTML/doc responses so clients always get the latest build
           source: '/:path*',
           headers: [

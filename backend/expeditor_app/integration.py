@@ -231,15 +231,16 @@ class UpdateChecksView(APIView):
             existing_expeditors = {e.ekispiditor_name: e for e in Ekispiditor.objects.all()}
             existing_sklads = {s.sklad_name: s for s in Sklad.objects.all()}
 
-            with transaction.atomic():  # Ensure data consistency
-                for i in range(0, len(rows), batch_size):
-                    batch = rows[i:i + batch_size]
+            # Commit per batch to avoid long-running transactions
+            for i in range(0, len(rows), batch_size):
+                batch = rows[i:i + batch_size]
+                with transaction.atomic():
                     self._process_batch(
                         batch, existing_check_ids, existing_projects, 
                         existing_cities, existing_expeditors, existing_sklads,
                         counters
                     )
-                    updated_count += len(batch)
+                updated_count += len(batch)
 
                 # Save the last update date
                 last_update_date = getattr(response, 'lastUpdateDateTime', None)

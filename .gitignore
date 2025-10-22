@@ -38,6 +38,8 @@ yarn-error.log*
 
 # env files
 .env*
+backend/production.env
+env.local
 venv
 .venv
 

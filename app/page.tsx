@@ -101,7 +101,7 @@ export default function ExpeditorTracker() {
       if (v) setLastUpdatedAt(v)
     } catch {}
     // Also fetch from server-side persisted file in case localStorage is empty
-    fetch("/api/last-updated")
+    fetch("/api/last-updated", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (j && j.timestamp && !lastUpdatedAt) setLastUpdatedAt(j.timestamp)
@@ -362,7 +362,7 @@ export default function ExpeditorTracker() {
       setLastUpdatedAt(ts)
       // Persist to a txt file via a lightweight API route
       try {
-        fetch("/api/last-updated", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timestamp: ts }) })
+        fetch("/api/last-updated", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ timestamp: ts }), cache: "no-store" })
       } catch {}
       toast({ title: "Success", description: "Checks, details, expeditors updated", variant: "success" as any })
       // Force-refresh data without user interaction so the page shows fresh info
@@ -1041,16 +1041,13 @@ export default function ExpeditorTracker() {
                 <StatisticsPanel 
                   statistics={statistics} 
                   onMonthChange={(month) => {
-                    // Oy o'zgartirilganda yangi ma'lumotlar olish
-                    const year = 2025
+                    const now = new Date()
+                    const year = now.getFullYear()
                     const startDate = new Date(year, month, 1)
                     const endDate = new Date(year, month + 1, 0, 23, 59, 59)
-                    
-                    // Filters ni yangilash
                     setFilters(prev => ({
                       ...prev,
-                      dateFrom: startDate.toISOString(),
-                      dateTo: endDate.toISOString()
+                      dateRange: { from: startDate, to: endDate },
                     }))
                   }}
                 />

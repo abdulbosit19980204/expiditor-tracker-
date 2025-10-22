@@ -77,7 +77,7 @@ curl http://178.218.200.120:7896/admin/
 - **Port**: 7896
 - **Workers**: 3 ta
 - **Timeout**: 120s
-- **Database**: SQLite
+- **Database**: PostgreSQL
 - **Static Files**: WhiteNoise orqali
 
 #### **Frontend (Next.js)**
@@ -114,7 +114,7 @@ python3 manage.py collectstatic --noinput
 ```bash
 cd /home/administrator/Documents/expiditor-tracker-
 rm -rf .next
-npm run dev -- -p 4563
+ npm run start -- -p 4563
 ```
 
 ### 📁 **Muhim Fayllar**
@@ -159,7 +159,7 @@ Keyin quyidagi manzillar orqali kirish mumkin:
 
 Loyiha endi to'liq production rejimida ishlamoqda va tashqi IP orqali kirish mumkin. Barcha xizmatlar ishlamoqda va admin panel to'g'ri ishlamoqda!
 
-**Admin Panel**: http://178.218.200.120:7896/admin/ (admin/1234)
+**Admin Panel**: http://178.218.200.120:7896/admin/
 **Frontend**: http://178.218.200.120:4563
 **API**: http://178.218.200.120:7896/api/
 

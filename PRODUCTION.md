@@ -69,7 +69,8 @@ gunicorn --bind 0.0.0.0:7896 --workers 3 --timeout 120 --keep-alive 2 --max-requ
 ```bash
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-npm run dev -- -p 4563
+npm run build
+npm run start -- -p 4563
 ```
 
 ## 🌐 Nginx Sozlash

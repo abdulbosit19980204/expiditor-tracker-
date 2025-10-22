@@ -24,8 +24,8 @@ function getRequestConfig(cacheTime: number = 60): RequestInit {
   
   return {
     headers,
-    cache: "force-cache" as RequestCache, // Use force-cache for better performance
-    next: { revalidate: cacheTime } // Configurable cache time
+    cache: cacheTime > 0 ? ("force-cache" as RequestCache) : ("no-store" as RequestCache),
+    next: cacheTime > 0 ? { revalidate: cacheTime } : undefined,
   }
 }
 
@@ -35,7 +35,7 @@ async function apiRequestSafe<T>(endpoint: string, retries = 2): Promise<T | nul
 
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const res = await fetch(url, getRequestConfig(30)) // Shorter cache for dynamic data
+      const res = await fetch(url, getRequestConfig(0)) // no-store for dynamic data
 
       if (!res.ok) {
         console.warn(`API request failed for ${endpoint}: ${res.status} ${res.statusText}`)
@@ -190,7 +190,11 @@ export async function getCities(): Promise<City[]> {
 
 // Filials API
 export async function getFilials(): Promise<Filial[]> {
-  const data = await apiRequestStatic<Filial[] | { results: any[] }>("/filial/")
+  // Use short-lived cache to ensure updated filial list appears immediately
+  const url = `${API_BASE_URL}/filial/`
+  const res = await fetch(url, getRequestConfig(30))
+  if (!res.ok) return []
+  const data = await res.json() as any
 
   if (!data) return []
 
@@ -293,10 +297,14 @@ export async function getStatistics(filters?: any): Promise<Statistics> {
     }
 
     if (filters.dateRange?.from) {
-      queryParams.append("date_from", filters.dateRange.from.toISOString())
+      const from = new Date(filters.dateRange.from)
+      from.setHours(0, 0, 0, 0)
+      queryParams.append("date_from", from.toISOString())
     }
     if (filters.dateRange?.to) {
-      queryParams.append("date_to", filters.dateRange.to.toISOString())
+      const to = new Date(filters.dateRange.to)
+      to.setHours(23, 59, 59, 999)
+      queryParams.append("date_to", to.toISOString())
     }
 
     if (filters.project) queryParams.append("project", filters.project)
