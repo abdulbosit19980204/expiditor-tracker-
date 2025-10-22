@@ -463,8 +463,24 @@ class TaskExecutor:
             
             # Store check IDs and details
             check_ids = [check.check_id for check in cluster]
+            
+            # Create detailed check information for the frontend
+            checks_info = []
+            for check in cluster:
+                check_detail = check.check_detail_data
+                checks_info.append({
+                    'id': check.check_id,
+                    'client_name': check.client_name or 'Unknown',
+                    'time': check.yetkazilgan_vaqti.strftime('%H:%M') if check.yetkazilgan_vaqti else '',
+                    'expeditor': check.ekispiditor or 'Unknown',
+                    'lat': float(check.check_lat) if check.check_lat else 0,
+                    'lon': float(check.check_lon) if check.check_lon else 0,
+                    'status': check.status or 'Unknown',
+                    'total_sum': check_detail.total_sum if check_detail else 0
+                })
+            
             check_details = {
-                'check_ids': check_ids,
+                'checks': checks_info,
                 'expeditors': list(expeditors),
                 'total_amount': sum(check.check_detail_data.total_sum or 0 for check in cluster if check.check_detail_data),
                 'cluster_size': len(cluster)

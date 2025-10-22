@@ -135,6 +135,12 @@ export function AppNavigation({
       icon: Home,
     },
     {
+      name: 'Telegram (Contact Dev)',
+      href: '/yandex-tokens',
+      icon: Send,
+      badge: undefined,
+    },
+    {
       name: 'Enhanced Analytics',
       href: '/enhanced-stats',
       icon: BarChart3,
@@ -271,47 +277,7 @@ export function AppNavigation({
                   )}
                 </div>
               )}
-
-              {/* Quick Actions Row */}
-              <div className="grid grid-cols-2 gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => {
-                    // Scroll to top and trigger filter toggle on main page
-                    window.scrollTo({ top: 0, behavior: 'smooth' })
-                    setTimeout(() => {
-                      const filterBtn = document.querySelector('[data-filter-toggle]') as HTMLElement
-                      if (filterBtn) filterBtn.click()
-                    }, 300)
-                  }}
-                >
-                  <Filter className="h-3.5 w-3.5 mr-1" />
-                  Filter
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="text-xs"
-                  onClick={() => {
-                    if (pathname === '/') {
-                      // On main page: toggle stats panel
-                      const currentState = localStorage.getItem('main_stats_panel_open') === 'true'
-                      localStorage.setItem('main_stats_panel_open', String(!currentState))
-                      window.dispatchEvent(new Event('toggle-main-stats'))
-                    } else {
-                      // On other pages: go to dashboard with stats enabled
-                      localStorage.setItem('main_stats_panel_open', 'true')
-                      window.location.href = '/'
-                    }
-                    setIsOpen(false)
-                  }}
-                >
-                  <BarChart3 className="h-3.5 w-3.5 mr-1" />
-                  Stats
-                </Button>
-              </div>
+              {/* Quick Actions Row removed per request */}
             </div>
             
             {/* Direction Toggle */}

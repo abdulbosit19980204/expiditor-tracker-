@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { YandexMap } from '@/components/yandex-map'
 import { 
   BarChart3, 
   Users, 
@@ -90,6 +91,13 @@ export default function ViolationAnalyticsPage() {
     }
     fetchData()
   }, [user, router])
+
+  // Auto-apply filters on change (no Apply button required)
+  useEffect(() => {
+    if (!user) return
+    const t = setTimeout(() => fetchData(), 150) // debounce a bit for type/select
+    return () => clearTimeout(t)
+  }, [filters])
 
   const fetchData = async () => {
     setLoading(true)
@@ -190,7 +198,7 @@ export default function ViolationAnalyticsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
             <p className="text-sm text-gray-600 mt-1">Check pattern analysis - Time windows and geographic clusters</p>
@@ -233,7 +241,7 @@ export default function ViolationAnalyticsPage() {
         </div>
       </div>
 
-      <div className="px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
         {/* Filters */}
         {showFilters && (
           <Card>
@@ -325,9 +333,6 @@ export default function ViolationAnalyticsPage() {
               <div className="flex items-center gap-3 mt-6">
                 <Button onClick={handleClearFilters} variant="outline">
                   Clear Filters
-                </Button>
-                <Button onClick={handleApplyFilters} className="bg-blue-600 hover:bg-blue-700">
-                  Apply Filters
                 </Button>
               </div>
             </CardContent>
@@ -525,25 +530,42 @@ export default function ViolationAnalyticsPage() {
             {/* Pagination */}
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(p => p - 1)}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(p => p + 1)}
-                >
-                  Next
-                </Button>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">Per page:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -613,19 +635,23 @@ export default function ViolationAnalyticsPage() {
               </Card>
             </div>
 
-            {/* Map Placeholder */}
+            {/* Map View */}
             <Card className="mt-4">
               <CardContent className="pt-6">
-                <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-gray-600">Map View</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Center: {selectedRecord.center_lat.toFixed(6)}, {selectedRecord.center_lon.toFixed(6)}
-                    </p>
-                    <p className="text-sm text-gray-500">Radius: {selectedRecord.radius_meters}m</p>
-                  </div>
-                </div>
+                <h3 className="font-semibold mb-3">Map View</h3>
+                <YandexMap
+                  height="420px"
+                  locations={(selectedRecord.check_details?.checks || []).map((c: any, i: number) => ({
+                    id: i + 1,
+                    lat: Number(c.lat),
+                    lng: Number(c.lon),
+                    expeditor: c.expeditor,
+                    time: c.time,
+                    status: c.status,
+                  }))}
+                  center={{ lat: selectedRecord.center_lat, lng: selectedRecord.center_lon }}
+                  zoom={12}
+                />
               </CardContent>
             </Card>
           </DialogContent>

@@ -388,7 +388,10 @@ export default function TaskManagement() {
           title: "Success",
           description: data.message || "Task cancelled successfully",
         })
-        loadTaskRuns()
+        // Reload task runs to show updated status
+        setTimeout(() => {
+          loadTaskRuns()
+        }, 500)
       } else {
         const error = await response.json()
         toast({
@@ -398,6 +401,7 @@ export default function TaskManagement() {
         })
       }
     } catch (error) {
+      console.error('Cancel task error:', error)
       toast({
         title: "Error",
         description: "Failed to cancel task",
@@ -899,7 +903,7 @@ export default function TaskManagement() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {run.is_running && (
+                      {run.is_running && run.status === 'running' && (
                         <Button
                           variant="destructive"
                           size="sm"
