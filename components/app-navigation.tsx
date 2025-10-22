@@ -294,28 +294,25 @@ export function AppNavigation({
                   variant="outline" 
                   size="sm" 
                   className="text-xs"
-                  onClick={() => setShowStats(!showStats)}
+                  onClick={() => {
+                    if (pathname === '/') {
+                      // On main page: toggle stats panel
+                      const currentState = localStorage.getItem('main_stats_panel_open') === 'true'
+                      localStorage.setItem('main_stats_panel_open', String(!currentState))
+                      window.dispatchEvent(new Event('toggle-main-stats'))
+                    } else {
+                      // On other pages: go to dashboard with stats enabled
+                      localStorage.setItem('main_stats_panel_open', 'true')
+                      window.location.href = '/'
+                    }
+                    setIsOpen(false)
+                  }}
                 >
                   <BarChart3 className="h-3.5 w-3.5 mr-1" />
                   Stats
                 </Button>
               </div>
             </div>
-            
-            {/* Statistics Panel - Redirect to Main Page */}
-            {showStats && pathname !== '/' && (
-              <div className="mx-4 my-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-gray-600 mb-2">Statistics are available on the main dashboard</p>
-                <Link href="/" onClick={() => {
-                  setIsOpen(false)
-                  localStorage.setItem('show_main_stats', 'true')
-                }}>
-                  <Button size="sm" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              </div>
-            )}
             
             {/* Direction Toggle */}
             <div className="mt-3 pt-3 border-t border-gray-200">

@@ -130,6 +130,17 @@ export default function ExpeditorTracker() {
       window.localStorage.setItem("main_stats_panel_open", String(showMainStats))
     } catch {}
   }, [showMainStats])
+  
+  // Listen for toggle event from navigation
+  useEffect(() => {
+    const handleToggleStats = () => {
+      const newState = localStorage.getItem('main_stats_panel_open') === 'true'
+      setShowMainStats(newState)
+    }
+    
+    window.addEventListener('toggle-main-stats', handleToggleStats)
+    return () => window.removeEventListener('toggle-main-stats', handleToggleStats)
+  }, [])
 
   const formatDateTime = useCallback((iso: string) => {
     try {
