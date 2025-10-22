@@ -246,7 +246,7 @@ class TaskRun(models.Model):
     task_type = models.CharField(max_length=50, choices=TASK_CHOICES, db_index=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_RUNNING, db_index=True)
     is_running = models.BooleanField(default=True, db_index=True)
-    status_message = models.CharField(max_length=255, blank=True, null=True)
+    status_message = models.TextField(blank=True, null=True)
     total = models.IntegerField(default=0)
     processed = models.IntegerField(default=0)
     started_at = models.DateTimeField(auto_now_add=True)

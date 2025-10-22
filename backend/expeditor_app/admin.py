@@ -70,11 +70,51 @@ class IntegrationEndpointAdmin(admin.ModelAdmin):
 
 @admin.register(ScheduledTask)
 class ScheduledTaskAdmin(admin.ModelAdmin):
-    list_display = ['name', 'task_type', 'is_enabled', 'interval_minutes', 'next_run_at', 'last_run_at', 'run_now_button']
+    list_display = ['name', 'task_type', 'is_enabled', 'interval_minutes', 'next_run_display', 'last_run_display', 'run_now_button']
     list_filter = ['task_type', 'is_enabled']
     search_fields = ['name']
     autocomplete_fields = ['task']
     actions = ['run_task_now', 'enable_tasks', 'disable_tasks']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'task_type', 'is_enabled', 'interval_minutes')
+        }),
+        ('Task Reference', {
+            'fields': ('task',),
+            'description': 'Optional: Link to TaskList for additional configuration'
+        }),
+        ('Schedule', {
+            'fields': ('last_run_at', 'next_run_at'),
+            'description': 'These are automatically managed by the scheduler'
+        }),
+        ('Parameters', {
+            'fields': ('params',),
+            'classes': ('collapse',),
+            'description': 'JSON parameters for task execution'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def next_run_display(self, obj):
+        """Display next run time in readable format."""
+        if obj.next_run_at:
+            return obj.next_run_at.strftime('%Y-%m-%d %H:%M:%S')
+        return 'Not scheduled'
+    next_run_display.short_description = 'Next Run'
+    next_run_display.admin_order_field = 'next_run_at'
+    
+    def last_run_display(self, obj):
+        """Display last run time in readable format."""
+        if obj.last_run_at:
+            return obj.last_run_at.strftime('%Y-%m-%d %H:%M:%S')
+        return 'Never'
+    last_run_display.short_description = 'Last Run'
+    last_run_display.admin_order_field = 'last_run_at'
     
     def run_now_button(self, obj):
         """Display a run now button for each task."""
@@ -140,11 +180,51 @@ class EmailRecipientAdmin(admin.ModelAdmin):
 
 @admin.register(TaskRun)
 class TaskRunAdmin(admin.ModelAdmin):
-    list_display = ['task_type', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at', 'duration_display']
-    list_filter = ['task_type', 'is_running', 'started_at']
-    readonly_fields = ['task_type', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at']
-    search_fields = ['status_message']
+    list_display = ['task_type', 'status_display', 'progress_display', 'message_preview', 'started_display', 'duration_display']
+    list_filter = ['task_type', 'status', 'is_running', 'started_at']
+    readonly_fields = ['task_type', 'status', 'is_running', 'processed', 'total', 'status_message', 'started_at', 'finished_at']
+    search_fields = ['status_message', 'task_type']
     ordering = ['-started_at']
+    
+    def status_display(self, obj):
+        """Display status with color."""
+        colors = {
+            'running': 'blue',
+            'completed': 'green',
+            'failed': 'red',
+            'cancelled': 'orange',
+        }
+        color = colors.get(obj.status, 'gray')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            obj.get_status_display()
+        )
+    status_display.short_description = 'Status'
+    status_display.admin_order_field = 'status'
+    
+    def progress_display(self, obj):
+        """Display progress as percentage."""
+        if obj.total > 0:
+            percentage = (obj.processed / obj.total) * 100
+            return f'{obj.processed}/{obj.total} ({percentage:.1f}%)'
+        return f'{obj.processed}/0'
+    progress_display.short_description = 'Progress'
+    
+    def message_preview(self, obj):
+        """Display truncated message."""
+        if obj.status_message:
+            return obj.status_message[:100] + '...' if len(obj.status_message) > 100 else obj.status_message
+        return '-'
+    message_preview.short_description = 'Message'
+    
+    def started_display(self, obj):
+        """Display started time in readable format."""
+        if obj.started_at:
+            return obj.started_at.strftime('%Y-%m-%d %H:%M:%S')
+        return '-'
+    started_display.short_description = 'Started At'
+    started_display.admin_order_field = 'started_at'
     
     def duration_display(self, obj):
         """Display task duration."""
@@ -163,6 +243,7 @@ class TaskListAdmin(admin.ModelAdmin):
     list_filter = ['is_active']
     search_fields = ['code', 'name', 'description']
     readonly_fields = ['created_at', 'updated_at', 'description_display']
+    ordering = ['code']
     
     fieldsets = (
         ('Task Information', {

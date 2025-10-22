@@ -105,7 +105,13 @@ const StatsPageContent = () => {
   const loadStats = useCallback(async () => {
     setLoading(true)
     try {
-      const filters = { dateRange, project: debouncedProject, sklad: debouncedSklad, city: debouncedCity, status }
+      const filters = { 
+        dateRange, 
+        project: debouncedProject === 'all' ? '' : debouncedProject, 
+        sklad: debouncedSklad === 'all' ? '' : debouncedSklad, 
+        city: debouncedCity === 'all' ? '' : debouncedCity, 
+        status 
+      }
       const data = await api.getGlobalStatistics(filters)
       setStats(data)
     } catch (e) {
@@ -206,7 +212,7 @@ const StatsPageContent = () => {
                     <SelectValue placeholder="All projects" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All projects</SelectItem>
+                    <SelectItem value="all">All projects</SelectItem>
                     {filteredProjects.map((p) => (
                       <SelectItem key={p.id} value={p.project_name}>
                         {p.project_name}
@@ -222,7 +228,7 @@ const StatsPageContent = () => {
                     <SelectValue placeholder="All warehouses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All warehouses</SelectItem>
+                    <SelectItem value="all">All warehouses</SelectItem>
                     {filteredSklads.map((s) => (
                       <SelectItem key={s.id} value={s.sklad_name}>
                         {s.sklad_name}
@@ -238,7 +244,7 @@ const StatsPageContent = () => {
                     <SelectValue placeholder="All cities" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All cities</SelectItem>
+                    <SelectItem value="all">All cities</SelectItem>
                     {filteredCities.map((c) => (
                       <SelectItem key={c.id} value={c.city_name}>
                         {c.city_name}

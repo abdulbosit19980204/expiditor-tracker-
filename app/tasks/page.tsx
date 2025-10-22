@@ -508,32 +508,10 @@ export default function TaskManagement() {
             Manage scheduled tasks and monitor their execution
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {/* User Profile */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
-            <User className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">
-              {user?.first_name} {user?.last_name}
-            </span>
-          </div>
-          
-          <Button onClick={() => { loadTasks(); loadTaskRuns(); }} variant="outline" title="Refresh">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Link href="/yandex-tokens">
-            <Button variant="outline" title="Yandex Tokens">
-              <Key className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href="/">
-            <Button variant="outline" title="Home">
-              <Home className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Button variant="outline" onClick={logout} title="Logout">
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button onClick={() => { loadTasks(); loadTaskRuns(); }} variant="outline" title="Refresh">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
       </div>
 
       {/* Summary Stats */}

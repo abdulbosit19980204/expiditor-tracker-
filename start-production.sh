@@ -40,10 +40,37 @@ kill_port() {
 
 # Kill existing processes
 echo -e "${YELLOW}🔄 Cleaning up existing processes...${NC}"
+
+# Kill backend processes
+echo -e "${YELLOW}   Stopping backend on port 7896...${NC}"
+pkill -f "gunicorn.*7896" 2>/dev/null || true
 kill_port 7896
-kill_port 4563
+
+# Kill frontend processes  
+echo -e "${YELLOW}   Stopping frontend on port 4563...${NC}"
+pkill -f "next-server" 2>/dev/null || true
 pkill -f "next start" 2>/dev/null || true
 pkill -f "npm run start" 2>/dev/null || true
+kill_port 4563
+
+# Wait to ensure ports are free
+echo -e "${YELLOW}   Waiting for ports to be released...${NC}"
+sleep 3
+
+# Verify ports are free
+if lsof -Pi :7896 -sTCP:LISTEN -t >/dev/null ; then
+    echo -e "${RED}❌ Port 7896 still in use, forcing kill...${NC}"
+    lsof -ti:7896 | xargs kill -9 2>/dev/null || true
+    sleep 2
+fi
+
+if lsof -Pi :4563 -sTCP:LISTEN -t >/dev/null ; then
+    echo -e "${RED}❌ Port 4563 still in use, forcing kill...${NC}"
+    lsof -ti:4563 | xargs kill -9 2>/dev/null || true
+    sleep 2
+fi
+
+echo -e "${GREEN}✅ All ports cleared${NC}"
 
 # Start Backend
 echo -e "${BLUE}🔧 Starting Django Backend...${NC}"

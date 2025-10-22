@@ -246,19 +246,19 @@ function EnhancedStatsPageContent() {
       ['Success Rate (%)', statistics.successRate],
       ['', ''],
       ['Payment Methods', ''],
-      ['Cash', statistics.paymentMethods.nalichniy],
-      ['UzCard', statistics.paymentMethods.uzcard],
-      ['Humo', statistics.paymentMethods.humo],
-      ['Click', statistics.paymentMethods.click],
+      ['Cash', statistics.paymentMethods?.nalichniy || 0],
+      ['UzCard', statistics.paymentMethods?.uzcard || 0],
+      ['Humo', statistics.paymentMethods?.humo || 0],
+      ['Click', statistics.paymentMethods?.click || 0],
       ['', ''],
       ['Top Expeditors', ''],
-      ...statistics.topExpeditors.map(exp => [exp.name, exp.checkCount]),
+      ...(Array.isArray(statistics.topExpeditors) ? statistics.topExpeditors.map(exp => [exp.name, exp.checkCount]) : []),
       ['', ''],
       ['Top Projects', ''],
-      ...statistics.topProjects.map(proj => [proj.name, proj.checkCount]),
+      ...(Array.isArray(statistics.topProjects) ? statistics.topProjects.map(proj => [proj.name, proj.checkCount]) : []),
       ['', ''],
       ['Top Cities', ''],
-      ...statistics.topCities.map(city => [city.name, city.checkCount]),
+      ...(Array.isArray(statistics.topCities) ? statistics.topCities.map(city => [city.name, city.checkCount]) : []),
     ]
 
     const csvContent = csvData.map(row => row.join(',')).join('\n')
@@ -287,9 +287,9 @@ function EnhancedStatsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 pb-20">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+        {/* Simple Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -300,39 +300,14 @@ function EnhancedStatsPageContent() {
               Comprehensive statistics and insights for expeditor performance
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            {/* User Profile */}
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md">
-              <User className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                {user?.first_name} {user?.last_name}
-              </span>
-            </div>
-            
-            <Link
-              href="/violation-analytics"
-              className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50 bg-blue-50 text-blue-700 border-blue-200"
-            >
-              <BarChart3 className="h-4 w-4" /> Violation Analytics
-            </Link>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 text-sm px-3 py-2 border rounded-md hover:bg-gray-50"
-            >
-              <Home className="h-4 w-4" /> Home
-            </Link>
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button variant="outline" onClick={logout} title="Logout">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </div>
 
         {/* Filters */}

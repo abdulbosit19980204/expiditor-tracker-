@@ -8,7 +8,7 @@ managing task runs, and handling task lifecycle.
 import logging
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.db import transaction
+from django.db import transaction, models
 from django.core.management.base import BaseCommand, CommandError
 from expeditor_app.models import ScheduledTask, TaskRun, Check, CheckAnalytics
 from expeditor_app.integration import UpdateChecksView
@@ -130,7 +130,10 @@ class TaskExecutor:
             else:
                 # Scan recent checks only
                 since = timezone.now() - timedelta(hours=window_size)
-                checks_queryset = Check.objects.filter(check_date__gte=since)
+                checks_queryset = Check.objects.filter(
+                    models.Q(yetkazilgan_vaqti__gte=since) | 
+                    models.Q(receiptIdDate__gte=since)
+                )
             
             total_checks = checks_queryset.count()
             problem_checks = []

@@ -69,6 +69,7 @@ export default function ExpeditorTracker() {
   const [updateProgress, setUpdateProgress] = useState(0)
   const [updateMessage, setUpdateMessage] = useState("")
   const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null)
+  const [showMainStats, setShowMainStats] = useState(false)
 
   // Initialize filters with current month as default
   const [filters, setFilters] = useState<FilterState>(() => ({
@@ -99,6 +100,19 @@ export default function ExpeditorTracker() {
     try {
       const v = window.localStorage.getItem("exp_last_updated_at")
       if (v) setLastUpdatedAt(v)
+      
+      // Check if stats should be shown (from navigation)
+      const showStats = window.localStorage.getItem("show_main_stats")
+      if (showStats === "true") {
+        setShowMainStats(true)
+        window.localStorage.removeItem("show_main_stats") // Remove after reading
+      }
+      
+      // Load saved stats panel state
+      const savedStatsState = window.localStorage.getItem("main_stats_panel_open")
+      if (savedStatsState === "true") {
+        setShowMainStats(true)
+      }
     } catch {}
     // Also fetch from server-side persisted file in case localStorage is empty
     fetch("/api/last-updated", { cache: "no-store" })
@@ -108,6 +122,14 @@ export default function ExpeditorTracker() {
       })
       .catch(() => {})
   }, [])
+  
+  // Save stats panel state to localStorage
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      window.localStorage.setItem("main_stats_panel_open", String(showMainStats))
+    } catch {}
+  }, [showMainStats])
 
   const formatDateTime = useCallback((iso: string) => {
     try {
@@ -462,8 +484,13 @@ export default function ExpeditorTracker() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/buzilishlar" className="cursor-pointer">
+                      Buzilishlar Nazorati
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/violation-analytics" className="cursor-pointer">
-                      Violation Analytics
+                      Violation Analytics (Old)
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -492,24 +519,28 @@ export default function ExpeditorTracker() {
               </SheetTrigger>
               <SheetContent side="left" className="w-80 p-0">
                 <div className="h-full flex flex-col">
-                  <div className="p-4 border-b border-gray-200">
-                    <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      Expeditor Tracker
-                    </h1>
-                    
-                    {/* User Profile */}
-                    <div className="mb-3 flex flex-col items-center gap-2 px-3 py-3 bg-gray-100 rounded-md">
+                  <div className="p-3 border-b border-gray-200">
+                    {/* Compact header with title and user */}
+                    <div className="flex items-center justify-between mb-3">
+                      <h1 className="text-lg font-semibold flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Expeditor Tracker
+                      </h1>
+                      
+                      {/* User Profile - compact */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto p-2">
-                            <User className="h-6 w-6 text-gray-600" />
-                            <span className="text-xs text-gray-700 font-medium leading-tight text-center">
-                              {user?.first_name} {user?.last_name}
+                          <Button variant="ghost" size="sm" className="h-8 px-2">
+                            <User className="h-4 w-4 mr-1" />
+                            <span className="text-xs font-medium">
+                              {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
                             </span>
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="center" className="w-48">
+                        <DropdownMenuContent align="end" className="w-48">
+                          <div className="px-2 py-1.5 text-sm font-medium border-b">
+                            {user?.first_name} {user?.last_name}
+                          </div>
                           <DropdownMenuItem onClick={logout} className="text-red-600">
                             <LogOut className="h-4 w-4 mr-2" />
                             Logout
@@ -518,12 +549,43 @@ export default function ExpeditorTracker() {
                       </DropdownMenu>
                     </div>
                     
-                    <div className="mb-3 flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
-                        {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    {/* Update button */}
+                    <div className="mb-3">
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={handleUpdate} 
+                        disabled={isUpdating} 
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        {isUpdating ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                            <span className="text-xs">{updateMessage}</span>
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                            Update Data
+                          </>
+                        )}
                       </Button>
-                      {isUpdating && <div className="flex items-center gap-2"><span className="text-xs text-gray-600">{updateMessage}</span><div className="w-20"><Progress value={updateProgress} className="h-1.5" /></div></div>}
+                      {lastUpdatedAt && !isUpdating && (
+                        <p className="text-xs text-gray-500 text-center mt-1">
+                          Last: {lastUpdatedAt}
+                        </p>
+                      )}
                     </div>
+                    
+                    {/* Update progress - compact */}
+                    {isUpdating && (
+                      <div className="mb-3 p-2 bg-blue-50 rounded-md">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-gray-700 truncate">{updateMessage}</span>
+                        </div>
+                        <Progress value={updateProgress} className="h-1.5" />
+                      </div>
+                    )}
 
                     {/* Date Range Filter */}
                     <div className="mb-4">
@@ -745,24 +807,28 @@ export default function ExpeditorTracker() {
         <div className={`flex ${isMobile ? "flex-col" : "h-screen"}`}>
           {!isMobile && (
             <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-              <div className="p-4 border-b border-gray-200">
-                <h1 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Expeditor Tracker
-                </h1>
-                
-                {/* User Profile */}
-                <div className="mb-3 flex flex-col items-center gap-2 px-3 py-3 bg-gray-100 rounded-md">
+              <div className="p-3 border-b border-gray-200">
+                {/* Compact header with title and user */}
+                <div className="flex items-center justify-between mb-3">
+                  <h1 className="text-lg font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Expeditor Tracker
+                  </h1>
+                  
+                  {/* User Profile - compact */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="flex flex-col items-center gap-1 h-auto p-2">
-                        <User className="h-6 w-6 text-gray-600" />
-                        <span className="text-xs text-gray-700 font-medium leading-tight text-center">
-                          {user?.first_name} {user?.last_name}
+                      <Button variant="ghost" size="sm" className="h-8 px-2">
+                        <User className="h-4 w-4 mr-1" />
+                        <span className="text-xs font-medium">
+                          {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="center" className="w-48">
+                    <DropdownMenuContent align="end" className="w-48">
+                      <div className="px-2 py-1.5 text-sm font-medium border-b">
+                        {user?.first_name} {user?.last_name}
+                      </div>
                       <DropdownMenuItem onClick={logout} className="text-red-600">
                         <LogOut className="h-4 w-4 mr-2" />
                         Logout
@@ -771,72 +837,63 @@ export default function ExpeditorTracker() {
                   </DropdownMenu>
                 </div>
                 
-                <div className="mb-2 flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
-                    {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {/* Update button */}
+                <div className="mb-3">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={handleUpdate} 
+                    disabled={isUpdating} 
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    {isUpdating ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                        <span className="text-xs">{updateMessage}</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 mr-2" />
+                        Update Data
+                      </>
+                    )}
                   </Button>
-                  {isUpdating && <div className="flex items-center gap-2"><span className="text-xs text-gray-600">{updateMessage}</span><div className="w-24"><Progress value={updateProgress} className="h-1.5" /></div></div>}
+                  {lastUpdatedAt && !isUpdating && (
+                    <p className="text-xs text-gray-500 text-center mt-1">
+                      Last: {formatDateTime(lastUpdatedAt)}
+                    </p>
+                  )}
+                  {isUpdating && (
+                    <Progress value={updateProgress} className="h-1.5 mt-2" />
+                  )}
                 </div>
-                {lastUpdatedAt && (
-                  <div className="mb-4 text-xs text-gray-500">
-                    Last update: <span className="font-medium">{formatDateTime(lastUpdatedAt)}</span>
-                  </div>
-                )}
 
                 {/* Date Range Filter */}
-                <div className="mb-4">
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+                <div className="mb-3">
+                  <label className="text-xs font-medium text-gray-700 mb-1.5 block">Date Range</label>
                   <DatePickerWithRange
                     dateRange={filters.dateRange}
                     onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
                   />
                 </div>
 
-                {/* Advanced Filters Header with actions */}
-                <div className="mb-2 flex items-center justify-between">
+                {/* Advanced Filters Toggle */}
+                <div className="mb-3">
                   <Button
                     variant="outline"
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                    className="flex-1 justify-start mr-2"
+                    className="w-full justify-between"
                   >
-                    <Filter className="h-4 w-4 mr-2" />
-                    <span className="text-xs font-medium">Filter</span>
-                    {activeFiltersCount > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {activeFiltersCount}
-                      </Badge>
-                    )}
-                    <div className="ml-auto" />
-                    {isFiltersOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" title="Analytics">
-                        <BarChart3 className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem asChild>
-                        <Link href="/analytics" className="cursor-pointer">
-                          Enhanced Analytics
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/violation-analytics" className="cursor-pointer">
-                          Violation Analytics
-                        </Link>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  {user?.is_superuser && (
-                    <Link href="/tasks" className="inline-flex">
-                      <Button variant="outline" size="icon" title="Task Management">
-                        <Clock className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  )}
-                  <Button variant="outline" size="icon" onClick={handleOpenTelegram} title="Contact via Telegram" className="ml-2">
-                    <Send className="h-4 w-4" />
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-4 w-4" />
+                      Filter
+                      {activeFiltersCount > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {activeFiltersCount}
+                        </Badge>
+                      )}
+                    </div>
+                    {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
                 </div>
 
