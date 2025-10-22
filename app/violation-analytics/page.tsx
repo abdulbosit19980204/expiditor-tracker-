@@ -37,6 +37,7 @@ import Link from 'next/link'
 import { LoadingSpinner } from '@/components/loading-spinner'
 import { toast } from '@/hooks/use-toast'
 import { ViolationDetailModal } from '@/components/violation-detail-modal'
+import { PageHeader } from '@/components/page-header'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7896/api'
 
@@ -325,75 +326,15 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-red-500 to-red-600 p-3 rounded-xl shadow-lg">
-                <AlertTriangle className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  Violation Analytics
-                </h1>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  Real-time pattern detection and analysis
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* User Profile */}
-              {user && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {user.first_name} {user.last_name}
-                  </span>
-                </div>
-              )}
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="hidden md:flex"
-              >
-                <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExport}
-                className="hidden md:flex"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-
-              <Link href="/">
-                <Button variant="outline" size="sm">
-                  <Home className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline">Home</span>
-                </Button>
-              </Link>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => logout()}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Violation Analytics"
+        description="Real-time pattern detection and analysis"
+        icon="violation"
+        showRefresh={true}
+        showExport={true}
+        onRefresh={handleRefresh}
+        onExport={handleExport}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Filters Section */}
@@ -797,8 +738,14 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                   <CardDescription>Detailed expeditor statistics</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                  <div className="overflow-hidden">
+                    <table className="w-full text-sm table-fixed">
+                      <colgroup>
+                        <col className="w-[60%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[14%]" />
+                      </colgroup>
                       <thead>
                         <tr className="border-b-2 border-gray-200">
                           <th className="text-left py-3 px-2 font-semibold text-gray-700">Expeditor</th>
@@ -814,12 +761,12 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                             className="border-b border-gray-100 hover:bg-blue-50 transition-colors cursor-pointer"
                             onClick={() => handleExpeditorClick(exp.most_active_expiditor)}
                           >
-                            <td className="py-3 px-2 truncate max-w-[150px] font-medium text-blue-600 hover:text-blue-700" title={exp.most_active_expiditor}>
+                            <td className="py-3 px-2 font-medium text-blue-600 hover:text-blue-700 break-words">
                               {exp.most_active_expiditor || 'Unknown'}
                             </td>
-                            <td className="text-right py-3 px-2 font-semibold text-red-600">{exp.violations}</td>
-                            <td className="text-right py-3 px-2">{exp.total_checks}</td>
-                            <td className="text-right py-3 px-2 text-gray-600">
+                            <td className="text-right py-3 px-2 font-semibold text-red-600 whitespace-nowrap">{exp.violations}</td>
+                            <td className="text-right py-3 px-2 whitespace-nowrap">{exp.total_checks}</td>
+                            <td className="text-right py-3 px-2 text-gray-600 whitespace-nowrap">
                               {exp.avg_checks_per_violation?.toFixed(1) || '0.0'}
                             </td>
                           </tr>

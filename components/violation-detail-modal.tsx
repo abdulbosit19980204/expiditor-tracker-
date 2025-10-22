@@ -280,19 +280,19 @@ ${data.all_check_locations.map(l =>
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-gray-200">
+      <DialogContent className="max-w-6xl max-h-[85vh] p-0 overflow-hidden flex flex-col">
+        <DialogHeader className="px-4 pt-4 pb-3 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <DialogTitle className="text-xl font-semibold text-gray-900">
+              <DialogTitle className="text-lg font-semibold text-gray-900">
                 Violations - {expeditor}
               </DialogTitle>
-              <DialogDescription className="text-sm text-gray-600 mt-1">
+              <DialogDescription className="text-xs text-gray-600 mt-0.5">
                 {data?.summary.total_violations || 0} violations • {data?.summary.total_checks_involved || 0} checks
               </DialogDescription>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
@@ -308,31 +308,31 @@ ${data.all_check_locations.map(l =>
         ) : (
           <div className="flex-1 overflow-hidden flex">
             {/* Left - Violations List */}
-            <div className="w-[30%] border-r border-gray-200 overflow-y-auto p-4">
-              <div className="space-y-2">
+            <div className="w-[28%] border-r border-gray-200 overflow-y-auto p-3">
+              <div className="space-y-1.5">
                 {data.violations.map((violation, idx) => (
                   <div
                     key={violation.id}
                     onClick={() => showViolationOnMap(violation)}
-                    className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    className={`p-2 border rounded cursor-pointer transition-all ${
                       selectedViolation?.id === violation.id
                         ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white hover:bg-gray-50 border-gray-200'
                     }`}
                   >
                     <div className="flex items-start gap-2">
-                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs ${
+                      <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
                         selectedViolation?.id === violation.id ? 'bg-white text-gray-900' : 'bg-gray-900 text-white'
                       }`}>
                         {idx + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold mb-1">
+                        <div className="text-xs font-semibold mb-0.5">
                           {violation.total_checks} checks
                         </div>
-                        <div className={`text-xs ${selectedViolation?.id === violation.id ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <div className={`text-[10px] ${selectedViolation?.id === violation.id ? 'text-gray-300' : 'text-gray-600'}`}>
                           <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="h-2.5 w-2.5" />
                             <span>
                               {new Date(violation.window_start).toLocaleTimeString('en-GB', {
                                 hour: '2-digit',
@@ -349,29 +349,29 @@ ${data.all_check_locations.map(l =>
             </div>
 
             {/* Middle - Checks List */}
-            <div className="w-[35%] border-r border-gray-200 overflow-y-auto p-4 bg-gray-50">
+            <div className="w-[37%] border-r border-gray-200 overflow-y-auto p-3 bg-gray-50">
               {!selectedViolation ? (
                 <div className="h-full flex items-center justify-center text-gray-500">
                   <div className="text-center">
-                    <Target className="h-10 w-10 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm">Select a violation</p>
+                    <Target className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-xs">Select a violation</p>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <div className="mb-4 pb-3 border-b border-gray-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-semibold text-gray-900">
+                  <div className="mb-3 pb-2 border-b border-gray-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="text-xs font-semibold text-gray-900">
                         {selectedViolation.total_checks} Checks
                       </h3>
-                      <Badge className={`${getSeverityColor(selectedViolation.severity)} border text-xs`}>
+                      <Badge className={`${getSeverityColor(selectedViolation.severity)} border text-[10px] px-1.5 py-0`}>
                         {selectedViolation.severity.toUpperCase()}
                       </Badge>
                     </div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-[10px] text-gray-600">
                       <div>Radius: {Math.round(selectedViolation.radius_meters)}m</div>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Clock className="h-3 w-3" />
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Clock className="h-2.5 w-2.5" />
                         {new Date(selectedViolation.window_start).toLocaleString('en-GB', {
                           day: '2-digit',
                           month: '2-digit',
@@ -382,32 +382,32 @@ ${data.all_check_locations.map(l =>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {selectedViolation.check_locations.map((check, idx) => (
                       <div
                         key={check.check_id}
-                        className="p-3 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+                        className="p-2 bg-white border border-gray-200 rounded hover:shadow-sm transition-shadow"
                       >
                         <div className="flex items-start gap-2">
-                          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-xs">
+                          <div className="flex-shrink-0 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center font-bold text-[9px]">
                             {idx + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold text-gray-900 truncate mb-1">
+                            <div className="text-[10px] font-semibold text-gray-900 truncate mb-0.5">
                               {check.client_name || 'N/A'}
                             </div>
-                            <div className="text-xs text-gray-600 space-y-0.5">
+                            <div className="text-[9px] text-gray-600 space-y-0.5">
                               <div className="font-mono truncate">{check.check_id}</div>
                               <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
+                                <Clock className="h-2 w-2" />
                                 {new Date(check.time).toLocaleTimeString('en-GB', {
                                   hour: '2-digit',
                                   minute: '2-digit'
                                 })}
                               </div>
                               <div className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                <span className="font-mono text-[10px]">
+                                <MapPin className="h-2 w-2" />
+                                <span className="font-mono">
                                   {check.lat?.toFixed(4)}, {check.lng?.toFixed(4)}
                                 </span>
                               </div>
@@ -422,17 +422,17 @@ ${data.all_check_locations.map(l =>
             </div>
 
             {/* Right - Map */}
-            <div className="w-[35%] p-4 bg-white">
+            <div className="w-[35%] p-3 bg-white">
               {!selectedViolation ? (
-                <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <div className="h-full flex items-center justify-center text-gray-500 bg-gray-50 rounded border border-dashed border-gray-300">
                   <div className="text-center">
-                    <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                    <p className="text-sm">Select a violation to view on map</p>
+                    <MapPin className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-xs">Select a violation</p>
                   </div>
                 </div>
               ) : (
                 <div className="h-full flex flex-col">
-                  <div className="flex-1 rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="flex-1 rounded border border-gray-200 overflow-hidden">
                     <div 
                       id="violation-map-container" 
                       className="w-full h-full"
