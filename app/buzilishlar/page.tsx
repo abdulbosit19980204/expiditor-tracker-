@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/language-context'
 import { 
   AlertTriangle, 
   TrendingUp, 
@@ -72,6 +73,7 @@ interface FilterOptions {
 export default function BuzilishlarPage() {
   const { token, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  const { t } = useLanguage()
   
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -203,9 +205,9 @@ export default function BuzilishlarPage() {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <Shield className="h-6 w-6 text-red-600" />
-                  Buzilishlar Nazorati
+                  {t('buzilishlar_nazorati')}
                 </h1>
-                <p className="text-sm text-gray-500">Real vaqt tahlili va fraud aniqlash</p>
+                <p className="text-sm text-gray-500">{t('real_time_analysis_fraud_detection')}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

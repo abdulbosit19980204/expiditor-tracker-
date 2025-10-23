@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from '@/lib/language-context'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/loading-spinner'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -65,6 +66,7 @@ interface AnalyticsData {
 export default function ViolationAnalyticsPage() {
   const { user, logout } = useAuth()
   const router = useRouter()
+  const { t } = useLanguage()
   
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<AnalyticsData | null>(null)
@@ -256,8 +258,8 @@ export default function ViolationAnalyticsPage() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="text-sm text-gray-600 mt-1">Check pattern analysis - Time windows and geographic clusters</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('same_location_violations')}</h1>
+            <p className="text-sm text-gray-600 mt-1">{t('check_pattern_analysis')}</p>
           </div>
           <div className="flex items-center gap-3">
             {/* User Profile */}
@@ -271,7 +273,7 @@ export default function ViolationAnalyticsPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={logout} className="text-red-600">
                   <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  {t('logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -279,7 +281,7 @@ export default function ViolationAnalyticsPage() {
             {/* Filters Toggle */}
             <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
               <FilterIcon className="h-4 w-4 mr-2" />
-              Filters
+              {t('filter')}
             </Button>
 
             {/* Refresh */}

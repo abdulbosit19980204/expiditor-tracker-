@@ -795,10 +795,10 @@ export default function ExpeditorTracker() {
                               onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                             >
                               <SelectTrigger className="h-8">
-                                <SelectValue placeholder="All Filials" />
+                                <SelectValue placeholder={t('all_filials')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="all">All Filials</SelectItem>
+                                <SelectItem value="all">{t('all_filials')}</SelectItem>
                                 {filials.map((filial) => (
                                   <SelectItem key={filial.id} value={String(filial.id)}>
                                     {filial.filial_name}
@@ -816,10 +816,10 @@ export default function ExpeditorTracker() {
                               onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                             >
                               <SelectTrigger className="h-8">
-                                <SelectValue placeholder="All Projects" />
+                                <SelectValue placeholder={t('all_projects')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="all">All Projects</SelectItem>
+                                <SelectItem value="all">{t('all_projects')}</SelectItem>
                                 {projects.map((project) => (
                                   <SelectItem key={project.id} value={project.project_name}>
                                     {project.project_name}
@@ -837,10 +837,10 @@ export default function ExpeditorTracker() {
                               onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                             >
                               <SelectTrigger className="h-8">
-                                <SelectValue placeholder="All Warehouses" />
+                                <SelectValue placeholder={t('all_warehouses')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="all">All Warehouses</SelectItem>
+                                <SelectItem value="all">{t('all_warehouses')}</SelectItem>
                                 {sklads.map((sklad) => (
                                   <SelectItem key={sklad.id} value={sklad.sklad_name}>
                                     {sklad.sklad_name}
@@ -858,10 +858,10 @@ export default function ExpeditorTracker() {
                               onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                             >
                               <SelectTrigger className="h-8">
-                                <SelectValue placeholder="All Cities" />
+                                <SelectValue placeholder={t('all_cities')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="all">All Cities</SelectItem>
+                                <SelectItem value="all">{t('all_cities')}</SelectItem>
                                 {cities.map((city) => (
                                   <SelectItem key={city.id} value={city.city_name}>
                                     {city.city_name}
@@ -879,10 +879,10 @@ export default function ExpeditorTracker() {
                               onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                             >
                               <SelectTrigger className="h-8">
-                                <SelectValue placeholder="All Statuses" />
+                                <SelectValue placeholder={t('all_statuses')} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="all">All Statuses</SelectItem>
+                                <SelectItem value="all">{t('all_statuses')}</SelectItem>
                                 <SelectItem value="delivered">Delivered</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="failed">Failed</SelectItem>
@@ -1077,10 +1077,10 @@ placeholder={t('search_expeditors')}
                           onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="All Filials" />
+                            <SelectValue placeholder={t('all_filials')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Filials</SelectItem>
+                            <SelectItem value="all">{t('all_filials')}</SelectItem>
                             {filials.map((filial) => (
                               <SelectItem key={filial.id} value={String(filial.id)}>
                                 {filial.filial_name}
@@ -1098,10 +1098,10 @@ placeholder={t('search_expeditors')}
                           onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="All Projects" />
+                            <SelectValue placeholder={t('all_projects')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Projects</SelectItem>
+                            <SelectItem value="all">{t('all_projects')}</SelectItem>
                             {projects.map((project) => (
                               <SelectItem key={project.id} value={project.project_name}>
                                 {project.project_name}
@@ -1119,10 +1119,10 @@ placeholder={t('search_expeditors')}
                           onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="All Warehouses" />
+                            <SelectValue placeholder={t('all_warehouses')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Warehouses</SelectItem>
+                            <SelectItem value="all">{t('all_warehouses')}</SelectItem>
                             {sklads.map((sklad) => (
                               <SelectItem key={sklad.id} value={sklad.sklad_name}>
                                 {sklad.sklad_name}
@@ -1140,10 +1140,10 @@ placeholder={t('search_expeditors')}
                           onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="All Cities" />
+                            <SelectValue placeholder={t('all_cities')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Cities</SelectItem>
+                            <SelectItem value="all">{t('all_cities')}</SelectItem>
                             {cities.map((city) => (
                               <SelectItem key={city.id} value={city.city_name}>
                                 {city.city_name}
@@ -1161,10 +1161,10 @@ placeholder={t('search_expeditors')}
                           onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="All Statuses" />
+                            <SelectValue placeholder={t('all_statuses')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="all">{t('all_statuses')}</SelectItem>
                             <SelectItem value="delivered">Delivered</SelectItem>
                             <SelectItem value="pending">Pending</SelectItem>
                             <SelectItem value="failed">Failed</SelectItem>

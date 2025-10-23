@@ -200,40 +200,40 @@ export function AppNavigation({
 
   const navigationItems: NavigationItem[] = [
     {
-      name: 'Main Dashboard',
+      name: t('main_dashboard'),
       href: '/',
       icon: Home,
     },
     {
-      name: 'Telegram (Contact Dev)',
+      name: t('telegram_contact_dev'),
       href: '#',
       icon: Send,
       badge: undefined,
     },
     {
-      name: 'Analytics & Violations',
+      name: t('analytics_violations'),
       href: '#',
       icon: BarChart3,
       badge: 'NEW',
       submenu: [
         {
-          name: 'Enhanced Analytics',
+          name: t('enhanced_analytics'),
           href: '/enhanced-stats',
           icon: BarChart3,
         },
         {
-          name: 'Violation Analytics',
+          name: t('violation_analytics'),
           href: '/violation-analytics',
           icon: AlertTriangle,
         },
         {
-          name: 'Same Location Violations',
+          name: t('same_location_violations'),
           href: '/same-location-violations',
           icon: MapPin,
           badge: 'NEW'
         },
         {
-          name: 'Buzilishlar Nazorati',
+          name: t('buzilishlar_nazorati'),
           href: '/buzilishlar',
           icon: Shield,
           badge: 'NEW'
@@ -242,12 +242,12 @@ export function AppNavigation({
     },
     ...(user?.is_superuser ? [
       {
-        name: 'Tasks Management',
+        name: t('tasks_management'),
         href: '/tasks',
         icon: Clock,
       },
       {
-        name: 'Yandex Tokens',
+        name: t('yandex_tokens'),
         href: '/yandex-tokens',
         icon: Settings,
       },
