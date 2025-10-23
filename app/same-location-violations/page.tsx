@@ -403,7 +403,7 @@ export default function ViolationAnalyticsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Records</p>
+                  <p className="text-sm text-gray-600 mb-1">{t('total_records')}</p>
                   <p className="text-3xl font-bold text-gray-900">{data?.total_records || 0}</p>
                 </div>
                 <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -417,7 +417,7 @@ export default function ViolationAnalyticsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Checks</p>
+                  <p className="text-sm text-gray-600 mb-1">{t('total_checks')}</p>
                   <p className="text-3xl font-bold text-gray-900">{data?.total_checks || 0}</p>
                 </div>
                 <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -431,7 +431,7 @@ export default function ViolationAnalyticsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Unique Expiditors</p>
+                  <p className="text-sm text-gray-600 mb-1">{t('unique_expeditors')}</p>
                   <p className="text-3xl font-bold text-gray-900">{data?.unique_expeditors || 0}</p>
                 </div>
                 <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -445,7 +445,7 @@ export default function ViolationAnalyticsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Avg Checks/Window</p>
+                  <p className="text-sm text-gray-600 mb-1">{t('avg_checks_window')}</p>
                   <p className="text-3xl font-bold text-gray-900">{data?.avg_checks_per_window.toFixed(1) || '0.0'}</p>
                 </div>
                 <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -461,9 +461,9 @@ export default function ViolationAnalyticsPage() {
           <CardContent className="p-0">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Analytics Data</h2>
+                <h2 className="text-lg font-semibold">{t('analytics_data')}</h2>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">Per page:</span>
+                  <span className="text-sm text-gray-600">{t('per_page')}:</span>
                   <Select value={itemsPerPage.toString()} onValueChange={(value) => {
                     setItemsPerPage(Number(value))
                     setCurrentPage(1)
@@ -481,7 +481,7 @@ export default function ViolationAnalyticsPage() {
                 </div>
               </div>
               <p className="text-sm text-gray-600 mt-2">
-                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, data?.results.length || 0)} of {data?.results.length || 0} records
+                {t('showing')} {((currentPage - 1) * itemsPerPage) + 1} {t('to')} {Math.min(currentPage * itemsPerPage, data?.results.length || 0)} {t('of')} {data?.results.length || 0} {t('records')}
               </p>
             </div>
 
@@ -494,7 +494,7 @@ export default function ViolationAnalyticsPage() {
                       onClick={() => handleSort('date')}
                     >
                       <div className="flex items-center gap-2">
-                        Date & Time
+                        {t('date_time')}
                         {getSortIcon('date')}
                       </div>
                     </th>
@@ -508,13 +508,13 @@ export default function ViolationAnalyticsPage() {
                       </div>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Location
+                      {t('location')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Most Active Expiditor
+                      {t('most_active_expeditor')}
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Checks
+                      {t('checks')}
                     </th>
                     <th 
                       className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
@@ -539,12 +539,12 @@ export default function ViolationAnalyticsPage() {
                       onClick={() => handleSort('radius')}
                     >
                       <div className="flex items-center gap-2 justify-center">
-                        Area
+                        {t('area')}
                         {getSortIcon('radius')}
                       </div>
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Actions
+                      {t('actions')}
                     </th>
                   </tr>
                 </thead>
@@ -606,7 +606,7 @@ export default function ViolationAnalyticsPage() {
                           className="flex items-center gap-2"
                         >
                           <Eye className="h-4 w-4" />
-                          View Details
+                          {t('view_details')}
                         </Button>
                       </td>
                     </tr>
@@ -619,7 +619,7 @@ export default function ViolationAnalyticsPage() {
             <div className="px-6 py-4 border-t border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">Per page:</span>
+                  <span className="text-sm text-gray-600">{t('per_page')}:</span>
                   <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
                     <SelectTrigger className="w-20">
                       <SelectValue />
@@ -635,7 +635,7 @@ export default function ViolationAnalyticsPage() {
                 
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
+                    {t('page')} {currentPage} {t('of')} {totalPages}
                   </span>
                   <Button 
                     variant="outline" 
@@ -643,7 +643,7 @@ export default function ViolationAnalyticsPage() {
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(p => p - 1)}
                   >
-                    Previous
+                    {t('previous')}
                   </Button>
                   <Button 
                     variant="outline" 
@@ -651,7 +651,7 @@ export default function ViolationAnalyticsPage() {
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(p => p + 1)}
                   >
-                    Next
+                    {t('next')}
                   </Button>
                 </div>
               </div>
