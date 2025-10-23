@@ -353,10 +353,10 @@ function EnhancedStatsPageContent() {
                   onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All projects" />
+                    <SelectValue placeholder={t('all_projects')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All projects</SelectItem>
+                    <SelectItem value="all">{t('all_projects')}</SelectItem>
                     {projects.map((project) => (
                       <SelectItem key={project.id} value={project.project_name}>
                         {project.project_name}
@@ -374,10 +374,10 @@ function EnhancedStatsPageContent() {
                   onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All warehouses" />
+                    <SelectValue placeholder={t('all_warehouses')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All warehouses</SelectItem>
+                    <SelectItem value="all">{t('all_warehouses')}</SelectItem>
                     {sklads.map((sklad) => (
                       <SelectItem key={sklad.id} value={sklad.sklad_name}>
                         {sklad.sklad_name}
@@ -395,10 +395,10 @@ function EnhancedStatsPageContent() {
                   onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All cities" />
+                    <SelectValue placeholder={t('all_cities')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All cities</SelectItem>
+                    <SelectItem value="all">{t('all_cities')}</SelectItem>
                     {cities.map((city) => (
                       <SelectItem key={city.id} value={city.city_name}>
                         {city.city_name}
@@ -416,10 +416,10 @@ function EnhancedStatsPageContent() {
                   onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All filials" />
+                    <SelectValue placeholder={t('all_filials')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All filials</SelectItem>
+                    <SelectItem value="all">{t('all_filials')}</SelectItem>
                     {filials.map((filial) => (
                       <SelectItem key={filial.id} value={String(filial.id)}>
                         {filial.filial_name}
@@ -437,13 +437,13 @@ function EnhancedStatsPageContent() {
                   onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All statuses" />
+                    <SelectValue placeholder={t('all_statuses')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="all">{t('all_statuses')}</SelectItem>
+                    <SelectItem value="delivered">{t('delivered')}</SelectItem>
+                    <SelectItem value="pending">{t('pending')}</SelectItem>
+                    <SelectItem value="failed">{t('failed')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -519,7 +519,7 @@ function EnhancedStatsPageContent() {
                   className="justify-start"
                 >
                   {isVisible ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-                  {t(chart.replace(/([A-Z])/g, '_$1').toLowerCase())}
+                  {t(chart)}
                 </Button>
               ))}
             </div>
