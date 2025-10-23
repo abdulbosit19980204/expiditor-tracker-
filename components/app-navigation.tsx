@@ -216,12 +216,6 @@ export function AppNavigation({
       icon: AlertTriangle,
     },
     {
-      name: 'Violations (New)',
-      href: '/violation-analytics-new',
-      icon: AlertTriangle,
-      badge: 'NEW'
-    },
-    {
       name: 'Same Location Violations',
       href: '/same-location-violations',
       icon: AlertTriangle,

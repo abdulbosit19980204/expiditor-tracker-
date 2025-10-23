@@ -602,8 +602,45 @@ export default function ViolationAnalyticsPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium">Radius:</span>
-                      <span>{selectedRecord.radius_meters}m</span>
+                      <span>{selectedRecord.radius_meters || 0}m</span>
                     </div>
+                  </div>
+                  
+                  {/* Map in Analytics Summary */}
+                  <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+                    <YandexMap
+                      height="300px"
+                      locations={(() => {
+                        // Handle both old and new check_details formats for map
+                        let locations = [];
+                        
+                        if (selectedRecord.check_details?.checks) {
+                          // New format with checks array
+                          locations = selectedRecord.check_details.checks.map((c: any, i: number) => ({
+                            id: i + 1,
+                            lat: Number(c.lat),
+                            lng: Number(c.lon),
+                            expeditor: c.expeditor,
+                            time: c.time,
+                            status: c.status,
+                          }));
+                        } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                          // Old format - create locations from check_ids and center coordinates
+                          locations = selectedRecord.check_details.check_ids.map((checkId: string, i: number) => ({
+                            id: i + 1,
+                            lat: selectedRecord.center_lat || 0,
+                            lng: selectedRecord.center_lon || 0,
+                            expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
+                            time: 'Unknown Time',
+                            status: 'Unknown',
+                          }));
+                        }
+                        
+                        return locations;
+                      })()}
+                      center={{ lat: selectedRecord.center_lat, lng: selectedRecord.center_lon }}
+                      zoom={15}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -700,47 +737,6 @@ export default function ViolationAnalyticsPage() {
               </Card>
             </div>
 
-            {/* Map View */}
-            <Card className="mt-4">
-              <CardContent className="pt-6">
-                <h3 className="font-semibold mb-3">Location Map</h3>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <YandexMap
-                      height="500px"
-                  locations={(() => {
-                    // Handle both old and new check_details formats for map
-                    let locations = [];
-                    
-                    if (selectedRecord.check_details?.checks) {
-                      // New format with checks array
-                      locations = selectedRecord.check_details.checks.map((c: any, i: number) => ({
-                        id: i + 1,
-                        lat: Number(c.lat),
-                        lng: Number(c.lon),
-                        expeditor: c.expeditor,
-                        time: c.time,
-                        status: c.status,
-                      }));
-                    } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
-                      // Old format - create locations from check_ids and center coordinates
-                      locations = selectedRecord.check_details.check_ids.map((checkId: string, i: number) => ({
-                        id: i + 1,
-                        lat: selectedRecord.center_lat || 0,
-                        lng: selectedRecord.center_lon || 0,
-                        expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
-                        time: 'Unknown Time',
-                        status: 'Unknown',
-                      }));
-                    }
-                    
-                    return locations;
-                  })()}
-                  center={{ lat: selectedRecord.center_lat, lng: selectedRecord.center_lon }}
-                      zoom={15}
-                    />
-                  </div>
-              </CardContent>
-            </Card>
           </DialogContent>
         </Dialog>
       )}
