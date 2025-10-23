@@ -110,7 +110,12 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
     const [start, end] = dates
     setStartDate(start)
     setEndDate(end)
-    onDateRangeChange(start || end ? { from: start || undefined, to: end || undefined } : undefined)
+    
+    // Ensure dates are valid Date objects
+    const validStart = start && start instanceof Date ? start : undefined
+    const validEnd = end && end instanceof Date ? end : undefined
+    
+    onDateRangeChange(validStart || validEnd ? { from: validStart, to: validEnd } : undefined)
   }
 
   const handleTodayClick = () => {
@@ -121,9 +126,9 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
   }
 
   const formatDateRange = () => {
-    if (!startDate) return "Pick a date range"
+    if (!startDate || !(startDate instanceof Date)) return "Pick a date range"
     
-    if (endDate && startDate.getTime() !== endDate.getTime()) {
+    if (endDate && endDate instanceof Date && startDate.getTime() !== endDate.getTime()) {
       return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     }
     

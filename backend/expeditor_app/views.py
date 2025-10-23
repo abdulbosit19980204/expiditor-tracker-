@@ -703,6 +703,8 @@ class AnalyticsSummaryView(APIView):
 
 class TelegramTargetView(APIView):
     """Returns preferred Telegram deep-link based on active TelegramAccount."""
+    permission_classes = [AllowAny]
+    
     def get(self, request):
         account = TelegramAccount.objects.filter(is_active=True).order_by('-updated_at', '-id').first()
         if not account:

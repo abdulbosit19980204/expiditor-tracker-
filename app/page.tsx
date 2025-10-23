@@ -113,6 +113,28 @@ export default function ExpeditorTracker() {
       if (savedStatsState === "true") {
         setShowMainStats(true)
       }
+      
+      // Load saved filters for this user
+      const savedFilters = window.localStorage.getItem(`user_filters_${user?.username || 'default'}`)
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters)
+          
+          // Convert date strings back to Date objects
+          if (parsedFilters.dateRange) {
+            if (parsedFilters.dateRange.from && typeof parsedFilters.dateRange.from === 'string') {
+              parsedFilters.dateRange.from = new Date(parsedFilters.dateRange.from)
+            }
+            if (parsedFilters.dateRange.to && typeof parsedFilters.dateRange.to === 'string') {
+              parsedFilters.dateRange.to = new Date(parsedFilters.dateRange.to)
+            }
+          }
+          
+          setFilters(parsedFilters)
+        } catch (error) {
+          console.error('Error parsing saved filters:', error)
+        }
+      }
     } catch {}
     // Also fetch from server-side persisted file in case localStorage is empty
     fetch("/api/last-updated", { cache: "no-store" })
@@ -130,6 +152,16 @@ export default function ExpeditorTracker() {
       window.localStorage.setItem("main_stats_panel_open", String(showMainStats))
     } catch {}
   }, [showMainStats])
+
+  // Save filters to localStorage when they change
+  useEffect(() => {
+    if (typeof window === "undefined" || !user?.username) return
+    try {
+      window.localStorage.setItem(`user_filters_${user.username}`, JSON.stringify(filters))
+    } catch (error) {
+      console.error('Error saving filters:', error)
+    }
+  }, [filters, user?.username])
   
   // Listen for toggle event from navigation
   useEffect(() => {
@@ -142,9 +174,13 @@ export default function ExpeditorTracker() {
     return () => window.removeEventListener('toggle-main-stats', handleToggleStats)
   }, [])
 
-  const formatDateTime = useCallback((iso: string) => {
+  const formatDateTime = useCallback((iso: string | null | undefined) => {
+    if (!iso) return ''
     try {
       const d = new Date(iso)
+      if (isNaN(d.getTime())) {
+        return iso
+      }
       return d.toLocaleString("uz-UZ", {
         year: "numeric",
         month: "2-digit",
@@ -152,7 +188,8 @@ export default function ExpeditorTracker() {
         hour: "2-digit",
         minute: "2-digit",
       })
-    } catch {
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Input:', iso)
       return iso
     }
   }, [])
