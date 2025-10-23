@@ -471,7 +471,7 @@ function EnhancedStatsPageContent() {
             {visibleCharts.dailyStats && (
               <SimpleLineChart 
                 data={statistics.dailyStats.map(d => ({ label: new Date(d.date).toLocaleDateString(), value: d.checks }))}
-                title="Daily Check Distribution"
+                title={t('daily_check_distribution')}
               />
             )}
 
@@ -479,7 +479,7 @@ function EnhancedStatsPageContent() {
             {visibleCharts.topExpeditors && (
               <SimpleBarChart 
                 data={statistics.topExpeditors.map(exp => ({ name: exp.name, value: exp.checkCount }))}
-                title="Top Expeditors by Check Count"
+                title={t('top_expeditors_by_check_count')}
               />
             )}
 
@@ -487,7 +487,7 @@ function EnhancedStatsPageContent() {
             {visibleCharts.topProjects && (
               <SimpleBarChart 
                 data={statistics.topProjects.map(proj => ({ name: proj.name, value: proj.checkCount }))}
-                title="Top Projects by Check Count"
+                title={t('top_projects_by_check_count')}
               />
             )}
 
@@ -495,7 +495,7 @@ function EnhancedStatsPageContent() {
             {visibleCharts.topCities && (
               <SimpleBarChart 
                 data={statistics.topCities.map(city => ({ name: city.name, value: city.checkCount }))}
-                title="Top Cities by Check Count"
+                title={t('top_cities_by_check_count')}
               />
             )}
           </div>
@@ -506,7 +506,7 @@ function EnhancedStatsPageContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              Chart Visibility Settings
+              {t('chart_visibility_settings')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -519,7 +519,7 @@ function EnhancedStatsPageContent() {
                   className="justify-start"
                 >
                   {isVisible ? <Eye className="h-4 w-4 mr-2" /> : <EyeOff className="h-4 w-4 mr-2" />}
-                  {chart.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  {t(chart.replace(/([A-Z])/g, '_$1').toLowerCase())}
                 </Button>
               ))}
             </div>
