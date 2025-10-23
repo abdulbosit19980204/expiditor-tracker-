@@ -98,6 +98,13 @@ const translations = {
     'delivery_success_rate': 'Yetkazish muvaffaqiyat darajasi',
     'todays_checks': 'Bugungi cheklar',
     'checks_today': 'Bugungi cheklar',
+    'top_expeditors': 'Eng yaxshi ekspeditorlar',
+    'top_projects': 'Eng yaxshi loyihalar',
+    'top_cities': 'Eng yaxshi shaharlar',
+    'total_sum_uzs': 'Jami summa (UZS)',
+    'average_check_sum_uzs': 'O\'rtacha check summasi (UZS)',
+    'success_rate_percent': 'Muvaffaqiyat darajasi (%)',
+    'export': 'Eksport qilish',
   },
   ru: {
     // Main page
@@ -183,6 +190,13 @@ const translations = {
     'delivery_success_rate': 'Уровень успеха доставки',
     'todays_checks': 'Чеки сегодня',
     'checks_today': 'Чеки сегодня',
+    'top_expeditors': 'Топ экспедиторы',
+    'top_projects': 'Топ проекты',
+    'top_cities': 'Топ города',
+    'total_sum_uzs': 'Общая сумма (UZS)',
+    'average_check_sum_uzs': 'Средняя сумма чека (UZS)',
+    'success_rate_percent': 'Уровень успеха (%)',
+    'export': 'Экспорт',
   },
   en: {
     // Main page
@@ -268,6 +282,13 @@ const translations = {
     'delivery_success_rate': 'Delivery success rate',
     'todays_checks': 'Today\'s Checks',
     'checks_today': 'Checks today',
+    'top_expeditors': 'Top Expeditors',
+    'top_projects': 'Top Projects',
+    'top_cities': 'Top Cities',
+    'total_sum_uzs': 'Total Sum (UZS)',
+    'average_check_sum_uzs': 'Average Check Sum (UZS)',
+    'success_rate_percent': 'Success Rate (%)',
+    'export': 'Export',
   }
 }
 

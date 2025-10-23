@@ -328,7 +328,7 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
                   className="h-8"
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Export
+                  {t('export')}
                 </Button>
                 {isExpanded ? (
                   <ChevronUp className="h-5 w-5" />
@@ -362,15 +362,15 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
               <div className="mt-6">
                 <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
                   <DollarSign className="h-5 w-5" />
-                  Payment Methods
+                  {t('payment_methods')}
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {Object.entries(statistics.paymentMethods).map(([method, amount]) => (
                     <div key={method} className="p-3 bg-gray-50 rounded-lg">
                       <p className="text-sm font-medium text-gray-600 capitalize">
-                        {method === 'nalichniy' ? 'Cash' : 
-                         method === 'uzcard' ? 'UzCard' :
-                         method === 'humo' ? 'Humo' : 'Click'}
+                        {method === 'nalichniy' ? t('cash') : 
+                         method === 'uzcard' ? t('uzcard') :
+                         method === 'humo' ? t('humo') : t('click')}
                       </p>
                       <p className="text-lg font-bold text-gray-900">
                         {formatCurrency(amount)}
