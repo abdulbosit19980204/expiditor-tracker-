@@ -1,438 +1,718 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect, useMemo } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Calendar, MapPin, Clock, Users, Eye, ArrowUpDown } from 'lucide-react'
-import { format } from 'date-fns'
 import { YandexMap } from '@/components/yandex-map'
+import { 
+  BarChart3, 
+  Users, 
+  MapPin, 
+  Clock,
+  Filter as FilterIcon,
+  Home,
+  RefreshCw,
+  User,
+  LogOut,
+  Eye,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { LoadingSpinner } from '@/components/loading-spinner'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
-interface SameLocationViolation {
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7896/api'
+
+interface CheckAnalytic {
   id: number
   window_start: string
   window_end: string
   window_duration_minutes: number
-  center_lat: number
-  center_lon: number
-  total_checks: number
-  unique_expiditors: number
-  most_active_expiditor: string
-  most_active_count: number
-  avg_checks_per_expiditor: number
-  check_ids: string[]
-  check_details: any
-  analysis_date: string
-  created_at: string
-}
-
-interface PaginationInfo {
-  page: number
-  page_size: number
-  total_count: number
-  total_pages: number
-}
-
-interface SummaryInfo {
-  total_violations: number
   total_checks: number
   unique_expeditors: number
+  most_active_expiditor: string
+  center_lat: number
+  center_lon: number
+  radius_meters: number
+  check_ids: number[]
+  check_details: {
+    checks: Array<{
+      id: string
+      client_name: string
+      time: string
+      expeditor: string
+      lat: number
+      lon: number
+    }>
+  }
 }
 
-export default function SameLocationViolationsPage() {
-  const [violations, setViolations] = useState<SameLocationViolation[]>([])
-  const [pagination, setPagination] = useState<PaginationInfo>({
-    page: 1,
-    page_size: 20,
-    total_count: 0,
-    total_pages: 0
-  })
-  const [summary, setSummary] = useState<SummaryInfo>({
-    total_violations: 0,
-    total_checks: 0,
-    unique_expeditors: 0
-  })
-  const [loading, setLoading] = useState(true)
-  const [selectedRecord, setSelectedRecord] = useState<SameLocationViolation | null>(null)
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+interface AnalyticsData {
+  total_records: number
+  total_checks: number
+  unique_expeditors: number
+  avg_checks_per_window: number
+  results: CheckAnalytic[]
+}
+
+export default function ViolationAnalyticsPage() {
+  const { user, logout } = useAuth()
+  const router = useRouter()
   
-  // Filters
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<AnalyticsData | null>(null)
+  const [selectedRecord, setSelectedRecord] = useState<CheckAnalytic | null>(null)
+  const [showFilters, setShowFilters] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(20)
+  
+  // Filter states
   const [filters, setFilters] = useState({
     dateFrom: '',
     dateTo: '',
     expeditor: '',
-    expeditorSelect: '',
-    checkCount: '',
-    duration: '',
-    riskLevel: '',
-    pageSize: '20'
+    minChecks: '',
+    maxChecks: '',
+    radius: '',
+    windowDuration: ''
   })
-  
-  // Available expeditors for dropdown
-  const [expeditors, setExpeditors] = useState<string[]>([])
 
-  const fetchViolations = useCallback(async () => {
+  useEffect(() => {
+    if (!user) {
+      router.push('/login')
+      return
+    }
+    fetchData()
+  }, [user, router])
+
+  // Auto-apply filters on change (no Apply button required)
+  useEffect(() => {
+    if (!user) return
+    const t = setTimeout(() => fetchData(), 150) // debounce a bit for type/select
+    return () => clearTimeout(t)
+  }, [filters])
+
+  const fetchData = async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (filters.dateFrom) params.append('date_from', filters.dateFrom)
-      if (filters.dateTo) params.append('date_to', filters.dateTo)
-      if (filters.expeditor) params.append('expeditor', filters.expeditor)
-      if (filters.expeditorSelect) params.append('expeditor_select', filters.expeditorSelect)
-      if (filters.checkCount) params.append('check_count', filters.checkCount)
-      if (filters.duration) params.append('duration', filters.duration)
-      if (filters.riskLevel) params.append('risk_level', filters.riskLevel)
-      params.append('page', pagination.page.toString())
-      params.append('page_size', filters.pageSize)
+      const queryParams = new URLSearchParams()
+      if (filters.dateFrom) queryParams.append('date_from', filters.dateFrom)
+      if (filters.dateTo) queryParams.append('date_to', filters.dateTo)
+      if (filters.expeditor && filters.expeditor !== 'all') queryParams.append('expiditor', filters.expeditor)
+      if (filters.minChecks) queryParams.append('min_checks', filters.minChecks)
+      if (filters.maxChecks) queryParams.append('max_checks', filters.maxChecks)
+      if (filters.radius && filters.radius !== 'all') queryParams.append('max_radius', filters.radius)
+      if (filters.windowDuration && filters.windowDuration !== 'all') queryParams.append('window_minutes', filters.windowDuration)
 
-      const response = await fetch(`/api/analytics/same-location-violations/?${params}`, {
-        cache: 'no-store'
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_BASE_URL}/analytics/?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Token ${token}`,
+          'Content-Type': 'application/json',
+        },
       })
+
+      if (!response.ok) throw new Error('Failed to fetch analytics')
+
+      const result = await response.json()
       
-      if (response.ok) {
-        const data = await response.json()
-        setViolations(data.violations || [])
-        setPagination(data.pagination || pagination)
-        setSummary(data.summary || summary)
-        
-        // Update expeditors list for dropdown
-        if (data.expeditors && Array.isArray(data.expeditors)) {
-          setExpeditors(data.expeditors)
-        }
+      // Ensure result is an array
+      const resultsArray = Array.isArray(result) ? result : (result.results || [])
+      
+      // Calculate aggregated stats
+      const analyticsData: AnalyticsData = {
+        total_records: resultsArray.length || 0,
+        total_checks: resultsArray.reduce((sum: number, r: CheckAnalytic) => sum + (r.total_checks || 0), 0),
+        unique_expeditors: new Set(resultsArray.map((r: CheckAnalytic) => r.most_active_expiditor).filter(Boolean)).size,
+        avg_checks_per_window: resultsArray.length > 0 
+          ? resultsArray.reduce((sum: number, r: CheckAnalytic) => sum + (r.total_checks || 0), 0) / resultsArray.length 
+          : 0,
+        results: resultsArray
       }
+      
+      setData(analyticsData)
     } catch (error) {
-      console.error('Error fetching same location violations:', error)
+      console.error('Error fetching analytics:', error)
     } finally {
       setLoading(false)
     }
-  }, [filters, pagination.page])
-
-  useEffect(() => {
-    fetchViolations()
-  }, [fetchViolations])
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
-    setPagination(prev => ({ ...prev, page: 1 }))
   }
 
-  const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }))
+  const handleApplyFilters = () => {
+    setCurrentPage(1)
+    fetchData()
   }
 
-  const handlePageSizeChange = (newPageSize: string) => {
-    setFilters(prev => ({ ...prev, pageSize: newPageSize }))
-    setPagination(prev => ({ ...prev, page: 1 }))
+  const handleClearFilters = () => {
+    setFilters({
+      dateFrom: '',
+      dateTo: '',
+      expeditor: '',
+      minChecks: '',
+      maxChecks: '',
+      radius: '',
+      windowDuration: ''
+    })
+    setCurrentPage(1)
+    fetchData()
   }
 
-  const openDetailModal = (record: SameLocationViolation) => {
-    setSelectedRecord(record)
-    setIsDetailModalOpen(true)
+  // Pagination
+  const paginatedData = useMemo(() => {
+    if (!data) return []
+    const start = (currentPage - 1) * itemsPerPage
+    const end = start + itemsPerPage
+    return data.results.slice(start, end)
+  }, [data, currentPage, itemsPerPage])
+
+  const totalPages = data ? Math.ceil(data.results.length / itemsPerPage) : 0
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
-  const getRiskLevel = (checks: number) => {
-    if (checks >= 10) return { label: 'Critical', color: 'bg-red-500' }
-    if (checks >= 5) return { label: 'High', color: 'bg-orange-500' }
-    return { label: 'Medium', color: 'bg-yellow-500' }
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   }
 
-  const getDurationLevel = (minutes: number) => {
-    if (minutes >= 60) return { label: 'Long', color: 'bg-purple-500' }
-    if (minutes >= 30) return { label: 'Medium', color: 'bg-blue-500' }
-    return { label: 'Short', color: 'bg-green-500' }
+  if (!user) return null
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Same Location Violations</h1>
-        <p className="text-gray-600">Expeditors who issued multiple checks from the same location on the same day</p>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Violations</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.total_violations}</div>
-            <p className="text-xs text-muted-foreground">Same location incidents</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Checks</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.total_checks}</div>
-            <p className="text-xs text-muted-foreground">Checks involved</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unique Expeditors</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.unique_expeditors}</div>
-            <p className="text-xs text-muted-foreground">Expeditors involved</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Date From</label>
-              <Input
-                type="date"
-                value={filters.dateFrom}
-                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Date To</label>
-              <Input
-                type="date"
-                value={filters.dateTo}
-                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Expeditor</label>
-              <Input
-                placeholder="Search expeditor..."
-                value={filters.expeditor}
-                onChange={(e) => handleFilterChange('expeditor', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Per Page</label>
-              <Select value={filters.pageSize} onValueChange={handlePageSizeChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+            <p className="text-sm text-gray-600 mt-1">Check pattern analysis - Time windows and geographic clusters</p>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-3">
+            {/* User Profile */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">{user?.first_name} {user?.last_name}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-      {/* Violations Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Same Location Violations</CardTitle>
-          <CardDescription>
-            Showing {violations.length} of {pagination.total_count} violations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Loading violations...</p>
+            {/* Filters Toggle */}
+            <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+              <FilterIcon className="h-4 w-4 mr-2" />
+              Filters
+            </Button>
+
+            {/* Refresh */}
+            <Button variant="outline" size="sm" onClick={fetchData}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            {/* Home */}
+            <Link href="/">
+              <Button variant="outline" size="sm">
+                <Home className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+        {/* Filters */}
+        {showFilters && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-4">
+                <FilterIcon className="h-5 w-5 text-gray-600" />
+                <h2 className="text-lg font-semibold">Filters</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Date From</label>
+                  <Input
+                    type="datetime-local"
+                    value={filters.dateFrom}
+                    onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Date To</label>
+                  <Input
+                    type="datetime-local"
+                    value={filters.dateTo}
+                    onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Expiditor</label>
+                  <Input
+                    type="text"
+                    placeholder="Search expeditor..."
+                    value={filters.expeditor}
+                    onChange={(e) => setFilters({ ...filters, expeditor: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Min Checks</label>
+                  <Input
+                    type="number"
+                    placeholder="Minimum checks"
+                    value={filters.minChecks}
+                    onChange={(e) => setFilters({ ...filters, minChecks: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Max Checks</label>
+                  <Input
+                    type="number"
+                    placeholder="Maximum checks"
+                    value={filters.maxChecks}
+                    onChange={(e) => setFilters({ ...filters, maxChecks: e.target.value })}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Radius (meters)</label>
+                  <Select value={filters.radius} onValueChange={(value) => setFilters({ ...filters, radius: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select radius" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="50">50m</SelectItem>
+                      <SelectItem value="100">100m</SelectItem>
+                      <SelectItem value="200">200m</SelectItem>
+                      <SelectItem value="500">500m</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Window Duration (min)</label>
+                  <Select value={filters.windowDuration} onValueChange={(value) => setFilters({ ...filters, windowDuration: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="5">5 min</SelectItem>
+                      <SelectItem value="10">10 min</SelectItem>
+                      <SelectItem value="15">15 min</SelectItem>
+                      <SelectItem value="30">30 min</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 mt-6">
+                <Button onClick={handleClearFilters} variant="outline">
+                  Clear Filters
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Records</p>
+                  <p className="text-3xl font-bold text-gray-900">{data?.total_records || 0}</p>
+                </div>
+                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total Checks</p>
+                  <p className="text-3xl font-bold text-gray-900">{data?.total_checks || 0}</p>
+                </div>
+                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Unique Expiditors</p>
+                  <p className="text-3xl font-bold text-gray-900">{data?.unique_expeditors || 0}</p>
+                </div>
+                <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Avg Checks/Window</p>
+                  <p className="text-3xl font-bold text-gray-900">{data?.avg_checks_per_window.toFixed(1) || '0.0'}</p>
+                </div>
+                <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <MapPin className="h-6 w-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Analytics Table */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Analytics Data</h2>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">Per page:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                    setItemsPerPage(Number(value))
+                    setCurrentPage(1)
+                  }}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, data?.results.length || 0)} of {data?.results.length || 0} records
+              </p>
             </div>
-          ) : violations.length === 0 ? (
-            <div className="text-center py-8">
-              <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">No same location violations found</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {violations.map((violation) => {
-                const risk = getRiskLevel(violation.total_checks)
-                return (
-                  <div key={violation.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <Badge className={`${risk.color} text-white`}>
-                          {risk.label}
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Date & Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Time Window
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Location
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Most Active Expiditor
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Checks ↑↓
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Total Checks
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Unique Expiditors
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Area
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedData.map((record) => (
+                    <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {formatDate(record.window_start)}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {formatTime(record.window_start)} - {formatTime(record.window_end)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge variant="secondary" className="text-xs">
+                          {record.window_duration_minutes} min
                         </Badge>
-                        <span className="text-sm text-gray-600">
-                          {format(new Date(violation.window_start), 'MMM dd, yyyy HH:mm')}
-                        </span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDetailModal(violation)}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Details
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Location:</span>
-                        <p className="text-gray-600">
-                          {violation.center_lat.toFixed(4)}, {violation.center_lon.toFixed(4)}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Total Checks:</span>
-                        <p className="text-gray-600">{violation.total_checks}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Expeditor:</span>
-                        <p className="text-gray-600">{violation.most_active_expiditor}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Duration:</span>
-                        <p className="text-gray-600">{violation.window_duration_minutes} min</p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-600">
+                          <div>Lat: {record.center_lat.toFixed(4)}</div>
+                          <div>Lon: {record.center_lon.toFixed(4)}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-blue-600">
+                          {record.most_active_expiditor}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {record.check_details?.checks?.filter(c => c.expeditor === record.most_active_expiditor).length || 0} checks
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge variant="outline" className="text-sm">
+                          {record.check_details?.checks?.length || record.total_checks}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge className="text-sm bg-green-100 text-green-800 hover:bg-green-100">
+                          {record.total_checks}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Badge className="text-sm bg-purple-100 text-purple-800 hover:bg-purple-100">
+                          {record.unique_expeditors}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="text-sm text-gray-900">
+                          Radius: {record.radius_meters}m around ({record.center_lat.toFixed(4)}, {record.center_lon.toFixed(4)})
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setSelectedRecord(record)}
+                          className="flex items-center gap-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          View Details
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
 
-          {/* Pagination */}
-          {pagination.total_pages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-600">
-                Showing {((pagination.page - 1) * pagination.page_size) + 1} to{' '}
-                {Math.min(pagination.page * pagination.page_size, pagination.total_count)} of{' '}
-                {pagination.total_count} results
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                  disabled={pagination.page <= 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm">
-                  Page {pagination.page} of {pagination.total_pages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.total_pages}
-                >
-                  Next
-                </Button>
+            {/* Pagination */}
+            <div className="px-6 py-4 border-t border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">Per page:</span>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Detail Modal */}
-      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Violation Details</DialogTitle>
-          </DialogHeader>
-          
-          {selectedRecord && (
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium mb-2">Time Range</h4>
-                  <p className="text-sm text-gray-600">
-                    {format(new Date(selectedRecord.window_start), 'MMM dd, yyyy HH:mm')} -{' '}
-                    {format(new Date(selectedRecord.window_end), 'MMM dd, yyyy HH:mm')}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Duration</h4>
-                  <p className="text-sm text-gray-600">{selectedRecord.window_duration_minutes} minutes</p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Location</h4>
-                  <p className="text-sm text-gray-600">
-                    {selectedRecord.center_lat.toFixed(6)}, {selectedRecord.center_lon.toFixed(6)}
-                  </p>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Total Checks</h4>
-                  <p className="text-sm text-gray-600">{selectedRecord.total_checks}</p>
-                </div>
-              </div>
+      {selectedRecord && (
+        <Dialog open={!!selectedRecord} onOpenChange={() => setSelectedRecord(null)}>
+          <DialogContent className="max-w-7xl max-h-[95vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Check Locations - {formatTime(selectedRecord.window_start)} - {formatTime(selectedRecord.window_end)}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Analytics Summary */}
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Analytics Summary</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Time Window:</span>
+                      <span>{formatTime(selectedRecord.window_start)} - {formatTime(selectedRecord.window_end)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Total Checks:</span>
+                      <span>{selectedRecord.total_checks}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Most Active:</span>
+                      <span>{selectedRecord.most_active_expiditor}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Radius:</span>
+                      <span>{selectedRecord.radius_meters}m</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Check List */}
-              <div>
-                <h4 className="font-medium mb-3">Check Details</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {(() => {
-                    let checks = []
-                    if (selectedRecord.check_details?.checks) {
-                      checks = selectedRecord.check_details.checks
-                    } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
-                      checks = selectedRecord.check_details.check_ids.map((checkId, idx) => ({
-                        id: checkId,
-                        client_name: 'Unknown Client',
-                        time: 'Unknown Time',
-                        expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
-                        lat: selectedRecord.center_lat || 0,
-                        lon: selectedRecord.center_lon || 0,
-                        status: 'Unknown'
-                      }))
-                    }
-                    return checks.length > 0 ? (
-                      checks.map((check, idx) => (
-                        <div key={idx} className="p-3 bg-gray-50 rounded-lg text-sm">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            <div>
-                              <span className="font-medium">Check ID:</span>
-                              <p className="text-gray-600">{check.id}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium">Client:</span>
-                              <p className="text-gray-600">{check.client_name}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium">Time:</span>
-                              <p className="text-gray-600">{check.time}</p>
-                            </div>
-                            <div>
-                              <span className="font-medium">Expeditor:</span>
-                              <p className="text-gray-600">{check.expeditor}</p>
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Check List</h3>
+                  <div className="max-h-[400px] overflow-y-auto space-y-3">
+                    {(() => {
+                      // Handle both old and new check_details formats
+                      let checks = [];
+                      
+                      if (selectedRecord.check_details?.checks && Array.isArray(selectedRecord.check_details.checks)) {
+                        // New format with checks array
+                        checks = selectedRecord.check_details.checks;
+                      } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                        // Old format - create check objects from check_ids
+                        checks = selectedRecord.check_details.check_ids.map((checkId, idx) => ({
+                          id: checkId,
+                          client_name: 'Loading...',
+                          time: 'Loading...',
+                          expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
+                          lat: selectedRecord.center_lat || 0,
+                          lon: selectedRecord.center_lon || 0,
+                          status: 'Loading...',
+                          total_sum: 0
+                        }));
+                      } else if (selectedRecord.check_ids && Array.isArray(selectedRecord.check_ids)) {
+                        // Fallback - use check_ids directly from record
+                        checks = selectedRecord.check_ids.map((checkId, idx) => ({
+                          id: checkId,
+                          client_name: 'Loading...',
+                          time: 'Loading...',
+                          expeditor: selectedRecord.most_active_expiditor || 'Unknown',
+                          lat: selectedRecord.center_lat || 0,
+                          lon: selectedRecord.center_lon || 0,
+                          status: 'Loading...',
+                          total_sum: 0
+                        }));
+                      }
+                      
+                      return checks.length > 0 ? (
+                        checks.map((check, idx) => (
+                          <div key={idx} className="p-3 bg-gray-50 rounded-lg text-sm">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium text-blue-600">Check ID:</span>
+                                  <span className="text-xs font-mono">{check.id}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium">Client:</span>
+                                  <span>{check.client_name}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">Time:</span>
+                                  <span>{check.time}</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium">Expeditor:</span>
+                                  <span className="text-blue-600">{check.expeditor}</span>
+                                </div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium">Location:</span>
+                                  <span className="text-xs font-mono">{check.lat?.toFixed(6)}, {check.lon?.toFixed(6)}</span>
+                                </div>
+                                {check.total_sum && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Amount:</span>
+                                    <span className="font-medium text-green-600">{check.total_sum} UZS</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 mb-2">
+                            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <p className="text-gray-500">No check details available</p>
+                          <p className="text-gray-400 text-sm mt-1">Check details will be available after running the analysis task</p>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">No check details available</p>
-                    )
-                  })()}
-                </div>
-              </div>
+                      );
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-              {/* Map */}
-              <div>
-                <h4 className="font-medium mb-3">Location Map</h4>
-                <YandexMap
-                  height="420px"
+            {/* Map View */}
+            <Card className="mt-4">
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-3">Location Map</h3>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <YandexMap
+                      height="500px"
                   locations={(() => {
-                    let locations = []
+                    // Handle both old and new check_details formats for map
+                    let locations = [];
+                    
                     if (selectedRecord.check_details?.checks) {
+                      // New format with checks array
                       locations = selectedRecord.check_details.checks.map((c: any, i: number) => ({
                         id: i + 1,
                         lat: Number(c.lat),
@@ -440,8 +720,9 @@ export default function SameLocationViolationsPage() {
                         expeditor: c.expeditor,
                         time: c.time,
                         status: c.status,
-                      }))
+                      }));
                     } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                      // Old format - create locations from check_ids and center coordinates
                       locations = selectedRecord.check_details.check_ids.map((checkId: string, i: number) => ({
                         id: i + 1,
                         lat: selectedRecord.center_lat || 0,
@@ -449,18 +730,21 @@ export default function SameLocationViolationsPage() {
                         expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
                         time: 'Unknown Time',
                         status: 'Unknown',
-                      }))
+                      }));
                     }
-                    return locations
+                    
+                    return locations;
                   })()}
                   center={{ lat: selectedRecord.center_lat, lng: selectedRecord.center_lon }}
-                  zoom={12}
-                />
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                      zoom={15}
+                    />
+                  </div>
+              </CardContent>
+            </Card>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
+

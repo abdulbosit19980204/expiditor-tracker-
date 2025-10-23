@@ -233,6 +233,10 @@ class SameLocationViolationsView(APIView):
         date_from = request.GET.get('date_from')
         date_to = request.GET.get('date_to')
         expeditor = request.GET.get('expeditor')
+        expeditor_select = request.GET.get('expeditor_select')
+        check_count = request.GET.get('check_count')
+        duration = request.GET.get('duration')
+        risk_level = request.GET.get('risk_level')
         
         # Base queryset: same location violations only
         analytics_qs = CheckAnalytics.objects.filter(
@@ -257,6 +261,36 @@ class SameLocationViolationsView(APIView):
         
         if expeditor:
             analytics_qs = analytics_qs.filter(most_active_expiditor__icontains=expeditor)
+        
+        if expeditor_select and expeditor_select != 'all':
+            analytics_qs = analytics_qs.filter(most_active_expiditor=expeditor_select)
+        
+        # Check count filter
+        if check_count and check_count != 'all':
+            if check_count == '3-4':
+                analytics_qs = analytics_qs.filter(total_checks__gte=3, total_checks__lte=4)
+            elif check_count == '5-9':
+                analytics_qs = analytics_qs.filter(total_checks__gte=5, total_checks__lte=9)
+            elif check_count == '10+':
+                analytics_qs = analytics_qs.filter(total_checks__gte=10)
+        
+        # Duration filter
+        if duration and duration != 'all':
+            if duration == 'short':
+                analytics_qs = analytics_qs.filter(window_duration_minutes__lt=30)
+            elif duration == 'medium':
+                analytics_qs = analytics_qs.filter(window_duration_minutes__gte=30, window_duration_minutes__lte=60)
+            elif duration == 'long':
+                analytics_qs = analytics_qs.filter(window_duration_minutes__gt=60)
+        
+        # Risk level filter
+        if risk_level and risk_level != 'all':
+            if risk_level == 'critical':
+                analytics_qs = analytics_qs.filter(total_checks__gte=10)
+            elif risk_level == 'high':
+                analytics_qs = analytics_qs.filter(total_checks__gte=5, total_checks__lt=10)
+            elif risk_level == 'medium':
+                analytics_qs = analytics_qs.filter(total_checks__gte=3, total_checks__lt=5)
         
         # Get pagination parameters
         page = int(request.GET.get('page', 1))
@@ -291,6 +325,12 @@ class SameLocationViolationsView(APIView):
                 'created_at': violation.created_at.isoformat()
             })
         
+        # Get unique expeditors for dropdown
+        unique_expeditors = list(CheckAnalytics.objects.filter(
+            violation_type=CheckAnalytics.VIOLATION_TYPE_SAME_LOCATION,
+            most_active_expiditor__isnull=False
+        ).values_list('most_active_expiditor', flat=True).distinct().order_by('most_active_expiditor'))
+
         response_data = {
             'violations': violations_data,
             'pagination': {
@@ -303,7 +343,8 @@ class SameLocationViolationsView(APIView):
                 'total_violations': total_count,
                 'total_checks': sum(v['total_checks'] for v in violations_data),
                 'unique_expeditors': len(set(v['most_active_expiditor'] for v in violations_data if v['most_active_expiditor']))
-            }
+            },
+            'expeditors': unique_expeditors
         }
         
         return Response(response_data)

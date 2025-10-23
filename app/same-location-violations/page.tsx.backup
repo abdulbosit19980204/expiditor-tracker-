@@ -1,0 +1,691 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Calendar, MapPin, Clock, Users, Eye, ArrowUpDown, Filter } from 'lucide-react'
+import { format } from 'date-fns'
+import { YandexMap } from '@/components/yandex-map'
+
+interface SameLocationViolation {
+  id: number
+  window_start: string
+  window_end: string
+  window_duration_minutes: number
+  center_lat: number
+  center_lon: number
+  total_checks: number
+  unique_expiditors: number
+  most_active_expiditor: string
+  most_active_count: number
+  avg_checks_per_expiditor: number
+  check_ids: string[]
+  check_details: any
+  analysis_date: string
+  created_at: string
+}
+
+interface PaginationInfo {
+  page: number
+  page_size: number
+  total_count: number
+  total_pages: number
+}
+
+interface SummaryInfo {
+  total_violations: number
+  total_checks: number
+  unique_expeditors: number
+}
+
+export default function SameLocationViolationsPage() {
+  const [violations, setViolations] = useState<SameLocationViolation[]>([])
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    page_size: 20,
+    total_count: 0,
+    total_pages: 0
+  })
+  const [summary, setSummary] = useState<SummaryInfo>({
+    total_violations: 0,
+    total_checks: 0,
+    unique_expeditors: 0
+  })
+  const [loading, setLoading] = useState(true)
+  const [selectedRecord, setSelectedRecord] = useState<SameLocationViolation | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  
+  // Filters
+  const [filters, setFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    expeditor: '',
+    expeditorSelect: '',
+    checkCount: '',
+    duration: '',
+    riskLevel: '',
+    pageSize: '20'
+  })
+  
+  // Available expeditors for dropdown
+  const [expeditors, setExpeditors] = useState<string[]>([])
+
+  const fetchViolations = useCallback(async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (filters.dateFrom) params.append('date_from', filters.dateFrom)
+      if (filters.dateTo) params.append('date_to', filters.dateTo)
+      if (filters.expeditor) params.append('expeditor', filters.expeditor)
+      if (filters.expeditorSelect) params.append('expeditor_select', filters.expeditorSelect)
+      if (filters.checkCount) params.append('check_count', filters.checkCount)
+      if (filters.duration) params.append('duration', filters.duration)
+      if (filters.riskLevel) params.append('risk_level', filters.riskLevel)
+      params.append('page', pagination.page.toString())
+      params.append('page_size', filters.pageSize)
+
+      const response = await fetch(`/api/analytics/same-location-violations/?${params}`, {
+        cache: 'no-store'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setViolations(data.violations || [])
+        setPagination(data.pagination || pagination)
+        setSummary(data.summary || summary)
+        
+        // Update expeditors list for dropdown
+        if (data.expeditors && Array.isArray(data.expeditors)) {
+          setExpeditors(data.expeditors)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching same location violations:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, pagination.page])
+
+  useEffect(() => {
+    fetchViolations()
+  }, [fetchViolations])
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }))
+  }
+
+  const handlePageSizeChange = (newPageSize: string) => {
+    setFilters(prev => ({ ...prev, pageSize: newPageSize }))
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
+  const openDetailModal = (record: SameLocationViolation) => {
+    setSelectedRecord(record)
+    setIsDetailModalOpen(true)
+  }
+
+  const getRiskLevel = (checks: number) => {
+    if (checks >= 10) return { label: 'Critical', color: 'bg-red-500' }
+    if (checks >= 5) return { label: 'High', color: 'bg-orange-500' }
+    return { label: 'Medium', color: 'bg-yellow-500' }
+  }
+
+  const getDurationLevel = (minutes: number) => {
+    if (minutes >= 60) return { label: 'Long', color: 'bg-purple-500' }
+    if (minutes >= 30) return { label: 'Medium', color: 'bg-blue-500' }
+    return { label: 'Short', color: 'bg-green-500' }
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Same Location Violations</h1>
+        <p className="text-gray-600">Expeditors who issued multiple checks from the same location on the same day</p>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Violations</CardTitle>
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summary.total_violations}</div>
+            <p className="text-xs text-muted-foreground">Same location incidents</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Checks</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summary.total_checks}</div>
+            <p className="text-xs text-muted-foreground">Checks involved</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unique Expeditors</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{summary.unique_expeditors}</div>
+            <p className="text-xs text-muted-foreground">Expeditors involved</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Advanced Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {/* Date Filters */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date From</label>
+              <Input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date To</label>
+              <Input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {/* Expeditor Filters */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Search Expeditor</label>
+              <Input
+                placeholder="Type expeditor name..."
+                value={filters.expeditor}
+                onChange={(e) => handleFilterChange('expeditor', e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Expeditor</label>
+              <Select value={filters.expeditorSelect} onValueChange={(value) => handleFilterChange('expeditorSelect', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose expeditor..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Expeditors</SelectItem>
+                  {expeditors.map((expeditor) => (
+                    <SelectItem key={expeditor} value={expeditor}>
+                      {expeditor}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Check Count Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Check Count</label>
+              <Select value={filters.checkCount} onValueChange={(value) => handleFilterChange('checkCount', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select range..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Counts</SelectItem>
+                  <SelectItem value="3-4">3-4 checks</SelectItem>
+                  <SelectItem value="5-9">5-9 checks</SelectItem>
+                  <SelectItem value="10+">10+ checks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Duration Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Duration</label>
+              <Select value={filters.duration} onValueChange={(value) => handleFilterChange('duration', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select duration..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Durations</SelectItem>
+                  <SelectItem value="short">Short (< 30 min)</SelectItem>
+                  <SelectItem value="medium">Medium (30-60 min)</SelectItem>
+                  <SelectItem value="long">Long (> 60 min)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Risk Level Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Risk Level</label>
+              <Select value={filters.riskLevel} onValueChange={(value) => handleFilterChange('riskLevel', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select risk level..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Risk Levels</SelectItem>
+                  <SelectItem value="critical">Critical (10+ checks)</SelectItem>
+                  <SelectItem value="high">High (5-9 checks)</SelectItem>
+                  <SelectItem value="medium">Medium (3-4 checks)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Per Page */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Per Page</label>
+              <Select value={filters.pageSize} onValueChange={handlePageSizeChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div className="mt-4 flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setFilters({
+                  dateFrom: '',
+                  dateTo: '',
+                  expeditor: '',
+                  expeditorSelect: '',
+                  checkCount: '',
+                  duration: '',
+                  riskLevel: '',
+                  pageSize: '20'
+                })
+                setPagination(prev => ({ ...prev, page: 1 }))
+              }}
+            >
+              Clear All Filters
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Violations Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Same Location Violations</CardTitle>
+          <CardDescription>
+            Showing {violations.length} of {pagination.total_count} violations
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading violations...</p>
+            </div>
+          ) : violations.length === 0 ? (
+            <div className="text-center py-8">
+              <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No same location violations found</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {violations.map((violation) => {
+                const risk = getRiskLevel(violation.total_checks)
+                return (
+                  <div key={violation.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Badge className={`${risk.color} text-white`}>
+                          {risk.label}
+                        </Badge>
+                        <Badge className={`${getDurationLevel(violation.window_duration_minutes).color} text-white`}>
+                          {getDurationLevel(violation.window_duration_minutes).label}
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          {format(new Date(violation.window_start), 'MMM dd, yyyy HH:mm')}
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openDetailModal(violation)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Location:</span>
+                        <p className="text-gray-600">
+                          {violation.center_lat.toFixed(4)}, {violation.center_lon.toFixed(4)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Total Checks:</span>
+                        <p className="text-gray-600">{violation.total_checks}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Expeditor:</span>
+                        <p className="text-gray-600">{violation.most_active_expiditor}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Duration:</span>
+                        <p className="text-gray-600">{violation.window_duration_minutes} min</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pagination.total_pages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-600">
+                Showing {((pagination.page - 1) * pagination.page_size) + 1} to{' '}
+                {Math.min(pagination.page * pagination.page_size, pagination.total_count)} of{' '}
+                {pagination.total_count} results
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={pagination.page <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {pagination.page} of {pagination.total_pages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={pagination.page >= pagination.total_pages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Detail Modal */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-blue-600" />
+              Same Location Violation Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedRecord && (
+            <div className="space-y-6">
+              {/* Violation Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-blue-900">Time Range</span>
+                    </div>
+                    <p className="text-sm text-blue-800">
+                      {format(new Date(selectedRecord.window_start), 'MMM dd, yyyy')}
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      {format(new Date(selectedRecord.window_start), 'HH:mm')} - {format(new Date(selectedRecord.window_end), 'HH:mm')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-green-600" />
+                      <span className="font-medium text-green-900">Duration</span>
+                    </div>
+                    <p className="text-lg font-bold text-green-800">
+                      {selectedRecord.window_duration_minutes} min
+                    </p>
+                    <p className="text-xs text-green-600">
+                      {getDurationLevel(selectedRecord.window_duration_minutes).label}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-purple-50 border-purple-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium text-purple-900">Location</span>
+                    </div>
+                    <p className="text-sm font-mono text-purple-800">
+                      {selectedRecord.center_lat.toFixed(6)}
+                    </p>
+                    <p className="text-sm font-mono text-purple-800">
+                      {selectedRecord.center_lon.toFixed(6)}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-orange-50 border-orange-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="h-4 w-4 text-orange-600" />
+                      <span className="font-medium text-orange-900">Total Checks</span>
+                    </div>
+                    <p className="text-lg font-bold text-orange-800">
+                      {selectedRecord.total_checks}
+                    </p>
+                    <p className="text-xs text-orange-600">
+                      {getRiskLevel(selectedRecord.total_checks).label} Risk
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Expeditor Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Expeditor Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">{selectedRecord.most_active_expiditor}</p>
+                        <p className="text-sm text-gray-600">
+                          Issued {selectedRecord.most_active_count} out of {selectedRecord.total_checks} checks
+                        </p>
+                      </div>
+                      <Badge className={`${getRiskLevel(selectedRecord.total_checks).color} text-white`}>
+                        {getRiskLevel(selectedRecord.total_checks).label}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Check List */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Check Details ({selectedRecord.total_checks} checks)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg p-4">
+                    {(() => {
+                      let checks = []
+                      if (selectedRecord.check_details?.checks) {
+                        checks = selectedRecord.check_details.checks
+                      } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                        checks = selectedRecord.check_details.check_ids.map((checkId, idx) => ({
+                          id: checkId,
+                          client_name: 'Loading...',
+                          time: 'Loading...',
+                          expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
+                          lat: selectedRecord.center_lat || 0,
+                          lon: selectedRecord.center_lon || 0,
+                          status: 'Loading...',
+                          total_sum: 0
+                        }))
+                      } else if (selectedRecord.check_ids && Array.isArray(selectedRecord.check_ids)) {
+                        checks = selectedRecord.check_ids.map((checkId, idx) => ({
+                          id: checkId,
+                          client_name: 'Loading...',
+                          time: 'Loading...',
+                          expeditor: selectedRecord.most_active_expiditor || 'Unknown',
+                          lat: selectedRecord.center_lat || 0,
+                          lon: selectedRecord.center_lon || 0,
+                          status: 'Loading...',
+                          total_sum: 0
+                        }))
+                      }
+                      
+                      return checks.length > 0 ? (
+                        <div className="space-y-3">
+                          {checks.map((check, idx) => (
+                            <div key={idx} className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    #{idx + 1}
+                                  </Badge>
+                                  <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">
+                                    {check.id}
+                                  </span>
+                                </div>
+                                <Badge variant="secondary" className="text-xs">
+                                  {check.time}
+                                </Badge>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="font-medium text-gray-700 text-sm">Client Name:</span>
+                                    <p className="text-sm text-gray-900">{check.client_name}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-gray-700 text-sm">Expeditor:</span>
+                                    <p className="text-sm text-blue-600">{check.expeditor}</p>
+                                  </div>
+                                </div>
+                                <div className="space-y-2">
+                                  <div>
+                                    <span className="font-medium text-gray-700 text-sm">Location:</span>
+                                    <p className="text-xs font-mono text-gray-600">
+                                      {check.lat?.toFixed(6)}, {check.lon?.toFixed(6)}
+                                    </p>
+                                  </div>
+                                  {check.total_sum && (
+                                    <div>
+                                      <span className="font-medium text-gray-700 text-sm">Amount:</span>
+                                      <p className="text-sm font-medium text-green-600">{check.total_sum} UZS</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 mb-2">
+                            <Calendar className="w-12 h-12 mx-auto" />
+                          </div>
+                          <p className="text-gray-500">No check details available</p>
+                          <p className="text-gray-400 text-sm mt-1">Check details will be available after running the analysis task</p>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Map */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Location Map
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <YandexMap
+                      height="500px"
+                      locations={(() => {
+                        let locations = []
+                        if (selectedRecord.check_details?.checks) {
+                          locations = selectedRecord.check_details.checks.map((c: any, i: number) => ({
+                            id: i + 1,
+                            lat: Number(c.lat),
+                            lng: Number(c.lon),
+                            expeditor: c.expeditor,
+                            time: c.time,
+                            status: c.status,
+                          }))
+                        } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                          locations = selectedRecord.check_details.check_ids.map((checkId: string, i: number) => ({
+                            id: i + 1,
+                            lat: selectedRecord.center_lat || 0,
+                            lng: selectedRecord.center_lon || 0,
+                            expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
+                            time: 'Unknown Time',
+                            status: 'Unknown',
+                          }))
+                        }
+                        return locations
+                      })()}
+                      center={{ lat: selectedRecord.center_lat, lng: selectedRecord.center_lon }}
+                      zoom={15}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
