@@ -55,6 +55,13 @@ const translations = {
     'no_checks_found': 'Cheklar topilmadi',
     'try_adjusting_filters': 'Sana oralig\'i yoki filterlarni o\'zgartiring',
     'loading_expeditors': 'Ekspeditorlar yuklanmoqda...',
+    'success_rate': 'Muvaffaqiyat darajasi',
+    'payment_methods': 'To\'lov usullari',
+    'cash': 'Naqd pul',
+    'uzcard': 'UzCard',
+    'humo': 'Humo',
+    'click': 'Click',
+    'enhanced_analytics_dashboard': 'Kengaytirilgan Analytics Dashboard',
   },
   ru: {
     // Main page
@@ -97,6 +104,13 @@ const translations = {
     'no_checks_found': 'Чеки не найдены',
     'try_adjusting_filters': 'Попробуйте изменить диапазон дат или фильтры',
     'loading_expeditors': 'Загрузка экспедиторов...',
+    'success_rate': 'Уровень успеха',
+    'payment_methods': 'Способы оплаты',
+    'cash': 'Наличные',
+    'uzcard': 'UzCard',
+    'humo': 'Humo',
+    'click': 'Click',
+    'enhanced_analytics_dashboard': 'Расширенная аналитическая панель',
   },
   en: {
     // Main page
@@ -139,6 +153,13 @@ const translations = {
     'no_checks_found': 'No checks found',
     'try_adjusting_filters': 'Try adjusting the date range or filters',
     'loading_expeditors': 'Loading expeditors...',
+    'success_rate': 'Success Rate',
+    'payment_methods': 'Payment Methods',
+    'cash': 'Cash',
+    'uzcard': 'UzCard',
+    'humo': 'Humo',
+    'click': 'Click',
+    'enhanced_analytics_dashboard': 'Enhanced Analytics Dashboard',
   }
 }
 

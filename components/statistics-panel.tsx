@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress"
 import { TrendingUp, Users, MapPin, CreditCard, Calendar, DollarSign } from "lucide-react"
 import type { Statistics } from "@/lib/types"
 import { useState, useEffect, useRef } from "react"
+import { useLanguage } from "@/lib/language-context"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface StatisticsPanelProps {
@@ -14,6 +15,7 @@ interface StatisticsPanelProps {
 }
 
 export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelProps) {
+  const { t } = useLanguage()
   // Joriy oyni aniqlash (0-based index)
   const currentMonth = new Date().getMonth()
   const [selectedMonth, setSelectedMonth] = useState(String(currentMonth))
@@ -116,7 +118,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
     <div className="p-4 space-y-4 h-full overflow-y-auto">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="h-5 w-5 text-blue-600" />
-        <h2 className="text-lg font-semibold">Statistics</h2>
+        <h2 className="text-lg font-semibold">{t('statistics')}</h2>
       </div>
 
       {/* Key Metrics */}
@@ -126,7 +128,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-blue-500" />
               <div>
-                <p className="text-xs text-gray-600">Total Checks</p>
+                <p className="text-xs text-gray-600">{t('total_checks')}</p>
                 <p className="text-lg font-bold">{statistics.totalChecks || 0}</p>
               </div>
             </div>
@@ -138,7 +140,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-green-500" />
               <div>
-                <p className="text-xs text-gray-600">Total Sum</p>
+                <p className="text-xs text-gray-600">{t('total_amount')}</p>
                 <p className="text-sm font-bold">{formatCurrency(statistics.totalSum || 0)}</p>
               </div>
             </div>
@@ -150,7 +152,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-orange-500" />
               <div>
-                <p className="text-xs text-gray-600">Today</p>
+                <p className="text-xs text-gray-600">{t('today')}</p>
                 <p className="text-lg font-bold">{statistics.todayChecks || 0}</p>
               </div>
             </div>
@@ -162,7 +164,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-purple-500" />
               <div>
-                <p className="text-xs text-gray-600">Success Rate</p>
+                <p className="text-xs text-gray-600">{t('success_rate')}</p>
                 <p className="text-lg font-bold">{statistics.successRate || 0}%</p>
               </div>
             </div>
@@ -176,16 +178,16 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
-              Payment Methods
+{t('payment_methods')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {Object.entries(statistics.paymentMethods).map(([method, amount]) => {
               const percentage = totalPayments > 0 ? (amount / totalPayments) * 100 : 0
               const methodLabels: Record<string, string> = {
-                nalichniy: "Cash",
-                uzcard: "UzCard",
-                humo: "Humo",
+                nalichniy: t('cash'),
+                uzcard: t('uzcard'),
+                humo: t('humo'),
                 click: "Click",
               }
 

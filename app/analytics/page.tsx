@@ -27,6 +27,7 @@ import {
 import Link from "next/link"
 import { AuthGuard } from "@/components/auth-guard"
 import { useAuth } from "@/lib/auth-context"
+import { useLanguage } from "@/lib/language-context"
 import type { Statistics, Project, Sklad, City, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -115,6 +116,7 @@ interface FilterState {
 
 function EnhancedStatsPageContent() {
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
@@ -294,7 +296,7 @@ function EnhancedStatsPageContent() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <TrendingUp className="h-8 w-8" />
-              Enhanced Analytics Dashboard
+{t('enhanced_analytics_dashboard')}
             </h1>
             <p className="text-muted-foreground mt-2">
               Comprehensive statistics and insights for expeditor performance
