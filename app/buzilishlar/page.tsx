@@ -141,13 +141,13 @@ export default function BuzilishlarPage() {
       }
       
       if (isRefresh) {
-        toast({ title: "Yangilandi", description: "Ma'lumotlar yangilandi" })
+        toast({ title: t('updated'), description: t('data_updated') })
       }
     } catch (error: any) {
       console.error('Error fetching data:', error)
       toast({
-        title: "Xatolik",
-        description: error.message || "Ma'lumotlarni yuklashda xatolik",
+        title: t('error'),
+        description: error.message || t('failed_to_load_data'),
         variant: "destructive"
       })
     } finally {
@@ -217,7 +217,7 @@ export default function BuzilishlarPage() {
                 size="sm"
               >
                 <Filter className="h-4 w-4 mr-2" />
-                Filtrlar
+                {t('filters')}
                 {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
               </Button>
               <Button
@@ -226,7 +226,7 @@ export default function BuzilishlarPage() {
                 size="sm"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                Yangilash
+                {t('refresh')}
               </Button>
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function BuzilishlarPage() {
             <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
-                  <Label className="text-xs">Sanadan</Label>
+                  <Label className="text-xs">{t('from_date')}</Label>
                   <Input
                     type="date"
                     value={filters.dateFrom}
@@ -245,7 +245,7 @@ export default function BuzilishlarPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Sanagacha</Label>
+                  <Label className="text-xs">{t('to_date')}</Label>
                   <Input
                     type="date"
                     value={filters.dateTo}
@@ -254,16 +254,16 @@ export default function BuzilishlarPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Ekspiditor</Label>
+                  <Label className="text-xs">{t('expeditor')}</Label>
                   <Select
                     value={filters.expeditor}
                     onValueChange={(value) => setFilters(prev => ({ ...prev, expeditor: value === 'all' ? '' : value }))}
                   >
                     <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Barchasi" />
+                      <SelectValue placeholder={t('all')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Barchasi</SelectItem>
+                      <SelectItem value="all">{t('all')}</SelectItem>
                       {filterOptions.expeditors.map((exp, idx) => (
                         <SelectItem key={idx} value={exp}>{exp}</SelectItem>
                       ))}
@@ -271,7 +271,7 @@ export default function BuzilishlarPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Min Cheklar</Label>
+                  <Label className="text-xs">{t('min_checks')}</Label>
                   <Input
                     type="number"
                     value={filters.minChecks}
@@ -286,7 +286,7 @@ export default function BuzilishlarPage() {
                     className="w-full h-9"
                   >
                     <Search className="h-4 w-4 mr-2" />
-                    Qidirish
+                    {t('search')}
                   </Button>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export default function BuzilishlarPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Jami Buzilishlar</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">{t('total_violations')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -315,7 +315,7 @@ export default function BuzilishlarPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Shubhali Holatlar</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">{t('suspicious_patterns')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -329,7 +329,7 @@ export default function BuzilishlarPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Ekspiditorlar</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">{t('unique_expeditors')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -343,7 +343,7 @@ export default function BuzilishlarPage() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Jami Cheklar</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">{t('total_checks')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -361,9 +361,9 @@ export default function BuzilishlarPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-red-600" />
-              Eng Ko'p Buzilish Qilgan Ekspiditorlar (TOP 10)
+              {t('top_violators_by_risk')}
             </CardTitle>
-            <CardDescription>Risk darajasi bo'yicha tartiblangan</CardDescription>
+            <CardDescription>{t('sorted_by_risk_level')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -380,20 +380,20 @@ export default function BuzilishlarPage() {
                       {idx + 1}
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{exp.expeditor || 'Noma\'lum'}</div>
+                      <div className="font-medium text-gray-900">{exp.expeditor || t('unknown')}</div>
                       <div className="text-xs text-gray-500">
-                        {exp.total_checks} chek • {exp.total_violations} buzilish
+                        {exp.total_checks} {t('checks')} • {exp.total_violations} {t('violations')}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <Badge variant={exp.suspicious_patterns > 5 ? 'destructive' : 'secondary'}>
-                        {exp.suspicious_patterns} shubhali
+                        {exp.suspicious_patterns} {t('suspicious')}
                       </Badge>
                       {exp.critical_violations > 0 && (
                         <Badge variant="destructive" className="ml-2">
-                          {exp.critical_violations} kritik
+                          {exp.critical_violations} {t('critical')}
                         </Badge>
                       )}
                     </div>
@@ -412,13 +412,13 @@ export default function BuzilishlarPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-blue-600" />
-              Kunlik Buzilishlar
+              {t('daily_violations')}
             </CardTitle>
-            <CardDescription>Sana bo'yicha gruppalangan buzilishlar</CardDescription>
+            <CardDescription>{t('grouped_by_date')}</CardDescription>
           </CardHeader>
           <CardContent>
             {dailyGroups.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Ma'lumot topilmadi</p>
+              <p className="text-gray-500 text-center py-8">{t('no_data_found')}</p>
             ) : (
               <div className="space-y-3">
                 {dailyGroups.map((day: any, idx: number) => (
@@ -436,16 +436,16 @@ export default function BuzilishlarPage() {
                           {new Date(day.date).toLocaleDateString('uz-UZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {day.violations} buzilish • {day.checks} chek
+                          {day.violations} {t('violations_count')} • {day.checks} {t('checks_count')}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {day.suspicious > 0 && (
-                        <Badge variant="destructive">{day.suspicious} shubhali</Badge>
+                        <Badge variant="destructive">{day.suspicious} {t('suspicious')}</Badge>
                       )}
                       <Button variant="outline" size="sm">
-                        Ko'rish
+                        {t('view')}
                       </Button>
                     </div>
                   </div>
@@ -471,25 +471,25 @@ export default function BuzilishlarPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold text-red-600">{selectedDay.violations}</div>
-                    <div className="text-sm text-gray-600">Buzilishlar</div>
+                    <div className="text-sm text-gray-600">{t('violations')}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold text-blue-600">{selectedDay.checks}</div>
-                    <div className="text-sm text-gray-600">Cheklar</div>
+                    <div className="text-sm text-gray-600">{t('checks')}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold text-orange-600">{selectedDay.suspicious}</div>
-                    <div className="text-sm text-gray-600">Shubhali</div>
+                    <div className="text-sm text-gray-600">{t('suspicious')}</div>
                   </CardContent>
                 </Card>
               </div>
               
               <p className="text-gray-500 text-center py-4">
-                Joylashuv klasterlari keyingi versiyada qo'shiladi
+                {t('location_clusters_next_version')}
               </p>
             </div>
           </DialogContent>
