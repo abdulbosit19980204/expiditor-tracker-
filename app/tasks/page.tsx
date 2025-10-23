@@ -41,6 +41,7 @@ import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { AuthGuard } from "@/components/auth-guard"
 import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
 
 interface ScheduledTask {
   id: number
@@ -104,6 +105,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:
 
 export default function TaskManagement() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [tasks, setTasks] = useState<ScheduledTask[]>([])
   const [taskRuns, setTaskRuns] = useState<TaskRun[]>([])
   const [taskInfoList, setTaskInfoList] = useState<TaskInfo[]>([])
@@ -111,6 +113,14 @@ export default function TaskManagement() {
   const [loading, setLoading] = useState(true)
   const [runningTasks, setRunningTasks] = useState<Set<number>>(new Set())
   const [showScrollTop, setShowScrollTop] = useState(false)
+
+  // Permission check - only superuser can access
+  useEffect(() => {
+    if (user && !user.is_superuser) {
+      router.push('/');
+      return;
+    }
+  }, [user, router]);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)

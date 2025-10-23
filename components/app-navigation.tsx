@@ -238,16 +238,18 @@ export function AppNavigation({
         },
       ]
     },
-    {
-      name: 'Tasks Management',
-      href: '/tasks',
-      icon: Clock,
-    },
-    {
-      name: 'Yandex Tokens',
-      href: '/yandex-tokens',
-      icon: Settings,
-    },
+    ...(user?.is_superuser ? [
+      {
+        name: 'Tasks Management',
+        href: '/tasks',
+        icon: Clock,
+      },
+      {
+        name: 'Yandex Tokens',
+        href: '/yandex-tokens',
+        icon: Settings,
+      },
+    ] : []),
   ]
 
   if (!user) return null

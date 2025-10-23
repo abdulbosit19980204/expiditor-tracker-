@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
 import { 
   Key, 
   Plus, 
@@ -45,12 +46,21 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:
 
 export default function YandexTokenManagement() {
   const { user, logout } = useAuth()
+  const router = useRouter()
   const [tokens, setTokens] = useState<YandexToken[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [editingToken, setEditingToken] = useState<YandexToken | null>(null)
   const [showApiKey, setShowApiKey] = useState<number | null>(null)
+
+  // Permission check - only superuser can access
+  useEffect(() => {
+    if (user && !user.is_superuser) {
+      router.push('/');
+      return;
+    }
+  }, [user, router]);
   
   // Form states
   const [formData, setFormData] = useState({
