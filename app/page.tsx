@@ -19,9 +19,11 @@ import { MapComponent } from "@/components/map-component"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
+import { LanguageSwitcher } from "@/components/language-switcher"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { AuthGuard } from "@/components/auth-guard"
 import { useAuth } from "@/lib/auth-context"
+import { useLanguage } from "@/lib/language-context"
 import type { Check, Expeditor, Project, Sklad, City, Statistics, Filial } from "@/lib/types"
 import { api, analytics } from "@/lib/api"
 
@@ -45,6 +47,7 @@ function getCurrentMonthRange() {
 export default function ExpeditorTracker() {
   const isMobile = useIsMobile()
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
 
   // State management
   const [checks, setChecks] = useState<Check[]>([])
@@ -603,9 +606,11 @@ export default function ExpeditorTracker() {
           <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
             <h1 className="text-lg font-semibold flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Expeditor Tracker
+              {t('expeditor_tracker')}
             </h1>
             <div className="flex items-center gap-3">
+              {/* Language Switcher */}
+              <LanguageSwitcher />
               {/* User Profile with Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -692,8 +697,11 @@ export default function ExpeditorTracker() {
                     <div className="flex items-center justify-between mb-3">
                       <h1 className="text-lg font-semibold flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        Expeditor Tracker
+                        {t('expeditor_tracker')}
                       </h1>
+                      
+                      {/* Language Switcher - compact */}
+                      <LanguageSwitcher size="sm" />
                       
                       {/* User Profile - compact */}
                       <DropdownMenu>
@@ -734,13 +742,13 @@ export default function ExpeditorTracker() {
                         ) : (
                           <>
                             <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                            Update Data
+{t('update_data')}
                           </>
                         )}
                       </Button>
                       {lastUpdatedAt && !isUpdating && (
                         <p className="text-xs text-gray-500 text-center mt-1">
-                          Last: {lastUpdatedAt}
+{t('last_update')}: {lastUpdatedAt}
                         </p>
                       )}
                     </div>
@@ -757,7 +765,7 @@ export default function ExpeditorTracker() {
 
                     {/* Date Range Filter */}
                     <div className="mb-4">
-                      <label className="text-sm font-medium text-gray-700 mb-2 block">Date Range</label>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">{t('date_range')}</label>
                       <DatePickerWithRange
                         dateRange={filters.dateRange}
                         onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
@@ -773,7 +781,7 @@ export default function ExpeditorTracker() {
                       >
                         <div className="flex items-center gap-2">
                           <Filter className="h-4 w-4" />
-                          Filter
+{t('filter')}
                           {activeFiltersCount > 0 && (
                             <Badge variant="secondary" className="ml-2">
                               {activeFiltersCount}
@@ -787,7 +795,7 @@ export default function ExpeditorTracker() {
                         <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
                           {/* Filial Filter */}
                           <div>
-                            <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('filial')}</label>
                             <Select
                               value={filters.filial || "all"}
                               onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
@@ -808,7 +816,7 @@ export default function ExpeditorTracker() {
 
                           {/* Project Filter */}
                           <div>
-                            <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('project')}</label>
                             <Select
                               value={filters.project || "all"}
                               onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
@@ -829,7 +837,7 @@ export default function ExpeditorTracker() {
 
                           {/* Sklad Filter */}
                           <div>
-                            <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('warehouse')}</label>
                             <Select
                               value={filters.sklad || "all"}
                               onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
@@ -850,7 +858,7 @@ export default function ExpeditorTracker() {
 
                           {/* City Filter */}
                           <div>
-                            <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('city')}</label>
                             <Select
                               value={filters.city || "all"}
                               onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
@@ -871,7 +879,7 @@ export default function ExpeditorTracker() {
 
                           {/* Status Filter */}
                           <div>
-                            <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('status')}</label>
                             <Select
                               value={filters.status || "all"}
                               onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
@@ -896,7 +904,7 @@ export default function ExpeditorTracker() {
                               className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <X className="h-3 w-3 mr-1" />
-                              Clear All Filters
+{t('clear_all_filters')}
                             </Button>
                           )}
                         </div>
@@ -909,7 +917,7 @@ export default function ExpeditorTracker() {
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                       <Input
-                        placeholder="Search expeditors..."
+placeholder={t('search_expeditors')}
                         value={expeditorSearchQuery}
                         onChange={(e) => setExpeditorSearchQuery(e.target.value)}
                         className="pl-10"
@@ -927,8 +935,8 @@ export default function ExpeditorTracker() {
                     ) : filteredExpeditors.length === 0 ? (
                       <div className="text-center text-gray-500 mt-8">
                         <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p>No expeditors with checks found</p>
-                        {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
+                        <p>{t('no_expeditors_found')}</p>
+                        {filters.filial && <p className="text-xs mt-2">{t('try_changing_filter')}</p>}
                       </div>
                     ) : (
                       filteredExpeditors.map((expeditor) => (
@@ -980,8 +988,11 @@ export default function ExpeditorTracker() {
                 <div className="flex items-center justify-between mb-3">
                   <h1 className="text-lg font-semibold flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    Expeditor Tracker
+                    {t('expeditor_tracker')}
                   </h1>
+                  
+                  {/* Language Switcher - compact */}
+                  <LanguageSwitcher size="sm" />
                   
                   {/* User Profile - compact */}
                   <DropdownMenu>
@@ -1022,13 +1033,13 @@ export default function ExpeditorTracker() {
                     ) : (
                       <>
                         <RefreshCw className="h-3.5 w-3.5 mr-2" />
-                        Update Data
+{t('update_data')}
                       </>
                     )}
                   </Button>
                   {lastUpdatedAt && !isUpdating && (
                     <p className="text-xs text-gray-500 text-center mt-1">
-                      Last: {formatDateTime(lastUpdatedAt)}
+{t('last_update')}: {formatDateTime(lastUpdatedAt)}
                     </p>
                   )}
                   {isUpdating && (
@@ -1038,7 +1049,7 @@ export default function ExpeditorTracker() {
 
                 {/* Date Range Filter */}
                 <div className="mb-3">
-                  <label className="text-xs font-medium text-gray-700 mb-1.5 block">Date Range</label>
+                  <label className="text-xs font-medium text-gray-700 mb-1.5 block">{t('date_range')}</label>
                   <DatePickerWithRange
                     dateRange={filters.dateRange}
                     onDateRangeChange={(range) => handleFilterChange("dateRange", range || getCurrentMonthRange())}
@@ -1190,7 +1201,7 @@ export default function ExpeditorTracker() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
                   <Input
-                    placeholder="Search expeditors..."
+placeholder={t('search_expeditors')}
                     value={expeditorSearchQuery}
                     onChange={(e) => setExpeditorSearchQuery(e.target.value)}
                     className="pl-10"
@@ -1208,8 +1219,8 @@ export default function ExpeditorTracker() {
                 ) : filteredExpeditors.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
                     <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>No expeditors with checks found</p>
-                    {filters.filial && <p className="text-xs mt-2">Try changing the filial filter</p>}
+                    <p>{t('no_expeditors_found')}</p>
+                    {filters.filial && <p className="text-xs mt-2">{t('try_changing_filter')}</p>}
                   </div>
                 ) : (
                   filteredExpeditors.map((expeditor) => (
@@ -1282,15 +1293,15 @@ export default function ExpeditorTracker() {
                 <div className="p-4 border-b border-gray-200">
                   <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    Checks
-                    {selectedExpeditor && <Badge variant="outline">{checks.length}</Badge>}
+{t('checks')}
+                    {selectedExpeditor && <Badge variant="outline">{checks.length} {t('checks')}</Badge>}
                   </h2>
 
                   {selectedExpeditor && (
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                       <Input
-                        placeholder="Search checks..."
+placeholder={t('search_expeditors')}
                         value={checkSearchQuery}
                         onChange={(e) => setCheckSearchQuery(e.target.value)}
                         className="pl-10"

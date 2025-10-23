@@ -5,6 +5,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/lib/auth-context"
+import { LanguageProvider } from "@/lib/language-context"
 import { AppNavigation } from "@/components/app-navigation"
 import { ScrollToTop } from "@/components/scroll-to-top"
 
@@ -42,12 +43,14 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-            <AppNavigation />
-            {children}
-            <ScrollToTop />
-            <Toaster />
-          </ThemeProvider>
+          <LanguageProvider>
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+              <AppNavigation />
+              {children}
+              <ScrollToTop />
+              <Toaster />
+            </ThemeProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>
