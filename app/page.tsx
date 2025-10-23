@@ -114,27 +114,6 @@ export default function ExpeditorTracker() {
         setShowMainStats(true)
       }
       
-      // Load saved filters for this user
-      const savedFilters = window.localStorage.getItem(`user_filters_${user?.username || 'default'}`)
-      if (savedFilters) {
-        try {
-          const parsedFilters = JSON.parse(savedFilters)
-          
-          // Convert date strings back to Date objects
-          if (parsedFilters.dateRange) {
-            if (parsedFilters.dateRange.from && typeof parsedFilters.dateRange.from === 'string') {
-              parsedFilters.dateRange.from = new Date(parsedFilters.dateRange.from)
-            }
-            if (parsedFilters.dateRange.to && typeof parsedFilters.dateRange.to === 'string') {
-              parsedFilters.dateRange.to = new Date(parsedFilters.dateRange.to)
-            }
-          }
-          
-          setFilters(parsedFilters)
-        } catch (error) {
-          console.error('Error parsing saved filters:', error)
-        }
-      }
     } catch {}
     // Also fetch from server-side persisted file in case localStorage is empty
     fetch("/api/last-updated", { cache: "no-store" })
@@ -162,6 +141,20 @@ export default function ExpeditorTracker() {
       console.error('Error saving filters:', error)
     }
   }, [filters, user?.username])
+
+  // Save selected expeditor to localStorage when it changes
+  useEffect(() => {
+    if (typeof window === "undefined" || !user?.username) return
+    try {
+      if (selectedExpeditor) {
+        window.localStorage.setItem(`user_selected_expeditor_${user.username}`, JSON.stringify(selectedExpeditor))
+      } else {
+        window.localStorage.removeItem(`user_selected_expeditor_${user.username}`)
+      }
+    } catch (error) {
+      console.error('Error saving selected expeditor:', error)
+    }
+  }, [selectedExpeditor, user?.username])
   
   // Listen for toggle event from navigation
   useEffect(() => {
@@ -219,6 +212,128 @@ export default function ExpeditorTracker() {
 
     loadInitialData()
   }, [])
+
+  // Load saved filters when user changes or page loads
+  useEffect(() => {
+    if (!user?.username || isLoadingInitial) return
+
+    const loadSavedFilters = async () => {
+      try {
+        // Load saved filters and selected expeditor for this user
+        const savedFilters = window.localStorage.getItem(`user_filters_${user.username}`)
+        const savedExpeditor = window.localStorage.getItem(`user_selected_expeditor_${user.username}`)
+        
+        if (savedFilters) {
+          const parsedFilters = JSON.parse(savedFilters)
+          
+          // Convert date strings back to Date objects
+          if (parsedFilters.dateRange) {
+            if (parsedFilters.dateRange.from && typeof parsedFilters.dateRange.from === 'string') {
+              parsedFilters.dateRange.from = new Date(parsedFilters.dateRange.from)
+            }
+            if (parsedFilters.dateRange.to && typeof parsedFilters.dateRange.to === 'string') {
+              parsedFilters.dateRange.to = new Date(parsedFilters.dateRange.to)
+            }
+          }
+          
+          setFilters(parsedFilters)
+          
+          // Load saved expeditor if available
+          if (savedExpeditor) {
+            try {
+              const parsedExpeditor = JSON.parse(savedExpeditor)
+              setSelectedExpeditor(parsedExpeditor)
+            } catch (error) {
+              console.error('Error parsing saved expeditor:', error)
+            }
+          }
+          
+          // Load expeditors for the saved filial and restore data
+          if (parsedFilters.filial) {
+            try {
+              const expeditorsData = await api.getExpeditors(parsedFilters.filial, true)
+              setExpeditors(expeditorsData)
+              
+              // If we have a saved expeditor, try to find it in the loaded expeditors
+              if (savedExpeditor) {
+                try {
+                  const parsedExpeditor = JSON.parse(savedExpeditor)
+                  const foundExpeditor = expeditorsData.find(e => e.id === parsedExpeditor.id)
+                  if (foundExpeditor) {
+                    setSelectedExpeditor(foundExpeditor)
+                  } else if (expeditorsData.length > 0) {
+                    setSelectedExpeditor(expeditorsData[0])
+                  }
+                } catch (error) {
+                  console.error('Error parsing saved expeditor:', error)
+                  if (expeditorsData.length > 0) {
+                    setSelectedExpeditor(expeditorsData[0])
+                  }
+                }
+              } else if (expeditorsData.length > 0) {
+                setSelectedExpeditor(expeditorsData[0])
+              }
+            } catch (error) {
+              console.error("Error loading expeditors after filter restore:", error)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading saved filters:', error)
+      }
+    }
+
+    loadSavedFilters()
+  }, [user?.username, isLoadingInitial])
+
+  // Reload filters when page becomes visible (handles page refresh, navigation back, etc.)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.username && !isLoadingInitial) {
+        // Reload saved filters when page becomes visible
+        const savedFilters = window.localStorage.getItem(`user_filters_${user.username}`)
+        const savedExpeditor = window.localStorage.getItem(`user_selected_expeditor_${user.username}`)
+        
+        if (savedFilters) {
+          try {
+            const parsedFilters = JSON.parse(savedFilters)
+            
+            // Convert date strings back to Date objects
+            if (parsedFilters.dateRange) {
+              if (parsedFilters.dateRange.from && typeof parsedFilters.dateRange.from === 'string') {
+                parsedFilters.dateRange.from = new Date(parsedFilters.dateRange.from)
+              }
+              if (parsedFilters.dateRange.to && typeof parsedFilters.dateRange.to === 'string') {
+                parsedFilters.dateRange.to = new Date(parsedFilters.dateRange.to)
+              }
+            }
+            
+            setFilters(parsedFilters)
+            
+            // Load saved expeditor if available
+            if (savedExpeditor) {
+              try {
+                const parsedExpeditor = JSON.parse(savedExpeditor)
+                setSelectedExpeditor(parsedExpeditor)
+              } catch (error) {
+                console.error('Error parsing saved expeditor on visibility change:', error)
+              }
+            }
+          } catch (error) {
+            console.error('Error reloading saved filters on visibility change:', error)
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleVisibilityChange)
+    }
+  }, [user?.username, isLoadingInitial])
 
   // Load expeditors when filial filter changes
   useEffect(() => {
