@@ -38,6 +38,7 @@ import { LoadingSpinner } from '@/components/loading-spinner'
 import { toast } from '@/hooks/use-toast'
 import { ViolationDetailModal } from '@/components/violation-detail-modal'
 import { PageHeader } from '@/components/page-header'
+import { useLanguage } from '@/lib/language-context'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7896/api'
 
@@ -108,6 +109,7 @@ interface DashboardData {
 export default function ViolationAnalyticsDashboard() {
   const { token, isLoading: authLoading, user, logout } = useAuth()
   const router = useRouter()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [data, setData] = useState<DashboardData | null>(null)
@@ -168,16 +170,16 @@ export default function ViolationAnalyticsDashboard() {
       
       if (isRefresh) {
         toast({
-          title: "Success",
-          description: "Data refreshed successfully",
+          title: t('success'),
+          description: t('data_refreshed_successfully'),
           variant: "default"
         })
       }
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error)
       toast({
-        title: "Error",
-        description: error.message || "Failed to load analytics data",
+        title: t('error'),
+        description: error.message || t('failed_to_load_analytics_data'),
         variant: "destructive"
       })
     } finally {
@@ -243,8 +245,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
     window.URL.revokeObjectURL(url)
     
     toast({
-      title: "Success",
-      description: "Report exported successfully",
+      title: t('success'),
+      description: t('report_exported_successfully'),
       variant: "default"
     })
   }
@@ -287,8 +289,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
     } catch (error: any) {
       console.error('Error fetching violation checks:', error)
       toast({
-        title: "Error",
-        description: error.message || "Failed to load violation checks",
+        title: t('error'),
+        description: error.message || t('failed_to_load_violation_checks'),
         variant: "destructive"
       })
     } finally {
@@ -301,7 +303,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="text-center space-y-4">
           <LoadingSpinner size="lg" />
-          <p className="text-gray-600 text-lg font-medium">Loading analytics dashboard...</p>
+          <p className="text-gray-600 text-lg font-medium">{t('loading_analytics_dashboard')}</p>
         </div>
       </div>
     )
@@ -313,10 +315,10 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertTriangle className="h-12 w-12 text-yellow-600 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">No analytics data available</p>
+            <p className="text-gray-600 mb-4">{t('no_analytics_data_available')}</p>
             <Button onClick={() => fetchDashboardData()}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
+              {t('retry')}
             </Button>
           </CardContent>
         </Card>
@@ -327,8 +329,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50">
       <PageHeader
-        title="Violation Analytics"
-        description="Real-time pattern detection and analysis"
+        title={t('violation_analytics')}
+        description={t('real_time_pattern_detection_analysis')}
         icon="violation"
         showRefresh={true}
         showExport={true}
@@ -343,9 +345,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Filter className="h-5 w-5 text-blue-600" />
-                Filters
+                {t('filters')}
                 {(filters.date_from || filters.date_to || filters.expeditor || filters.min_radius || filters.max_radius) && (
-                  <Badge variant="default" className="ml-2">Active</Badge>
+                  <Badge variant="default" className="ml-2">{t('active')}</Badge>
                 )}
               </CardTitle>
               <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
@@ -356,7 +358,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="date_from" className="text-sm font-medium">Date From</Label>
+                  <Label htmlFor="date_from" className="text-sm font-medium">{t('date_from')}</Label>
                   <Input
                     id="date_from"
                     type="date"
@@ -367,7 +369,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="date_to" className="text-sm font-medium">Date To</Label>
+                  <Label htmlFor="date_to" className="text-sm font-medium">{t('date_to')}</Label>
                   <Input
                     id="date_to"
                     type="date"
@@ -378,13 +380,13 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="expeditor" className="text-sm font-medium">Expeditor</Label>
+                  <Label htmlFor="expeditor" className="text-sm font-medium">{t('expeditor')}</Label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="expeditor"
                       type="text"
-                      placeholder="Search expeditor..."
+                      placeholder={t('search_expeditor')}
                       value={filters.expeditor}
                       onChange={(e) => setFilters({ ...filters, expeditor: e.target.value })}
                       className="pl-9"
@@ -393,7 +395,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="min_radius" className="text-sm font-medium">Min Radius (m)</Label>
+                  <Label htmlFor="min_radius" className="text-sm font-medium">{t('min_radius')}</Label>
                   <Input
                     id="min_radius"
                     type="number"
@@ -404,7 +406,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="max_radius" className="text-sm font-medium">Max Radius (m)</Label>
+                  <Label htmlFor="max_radius" className="text-sm font-medium">{t('max_radius')}</Label>
                   <Input
                     id="max_radius"
                     type="number"
@@ -418,11 +420,11 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
               <div className="flex gap-2 pt-2">
                 <Button onClick={applyFilters} className="bg-blue-600 hover:bg-blue-700">
                   <Filter className="h-4 w-4 mr-2" />
-                  Apply Filters
+                  {t('apply_filters')}
                 </Button>
                 <Button onClick={clearFilters} variant="outline">
                   <X className="h-4 w-4 mr-2" />
-                  Clear All
+                  {t('clear_all')}
                 </Button>
               </div>
             </CardContent>
@@ -435,7 +437,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">Total Violations</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('total_violations')}</p>
                   <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.total_violations.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-red-500 transition-colors">
@@ -449,7 +451,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">Checks Involved</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('checks_involved')}</p>
                   <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.total_checks_involved.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-blue-500 transition-colors">
@@ -463,7 +465,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">Expeditors</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('expeditors')}</p>
                   <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.unique_expeditors}</p>
                 </div>
                 <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-purple-500 transition-colors">
@@ -477,7 +479,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">Avg Radius</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('avg_radius')}</p>
                   <p className="text-4xl font-bold mt-2 text-gray-900">{Math.round(data.overview.avg_radius_meters)}m</p>
                 </div>
                 <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-orange-500 transition-colors">
@@ -497,33 +499,33 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
           <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto gap-2 bg-white p-2 border border-gray-200">
             <TabsTrigger value="violators" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Users className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Top Violators</span>
-              <span className="sm:hidden">Violators</span>
+              <span className="hidden sm:inline">{t('top_violators')}</span>
+              <span className="sm:hidden">{t('violators')}</span>
             </TabsTrigger>
             <TabsTrigger value="checks" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <CheckCircle className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Violation Checks</span>
-              <span className="sm:hidden">Checks</span>
+              <span className="hidden sm:inline">{t('violation_checks')}</span>
+              <span className="sm:hidden">{t('checks')}</span>
             </TabsTrigger>
             <TabsTrigger value="geography" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <MapPin className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Geography</span>
-              <span className="sm:hidden">Map</span>
+              <span className="hidden sm:inline">{t('geography')}</span>
+              <span className="sm:hidden">{t('map')}</span>
             </TabsTrigger>
             <TabsTrigger value="time" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Clock className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Time</span>
-              <span className="sm:hidden">Time</span>
+              <span className="hidden sm:inline">{t('time')}</span>
+              <span className="sm:hidden">{t('time')}</span>
             </TabsTrigger>
             <TabsTrigger value="severity" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <AlertTriangle className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Severity</span>
-              <span className="sm:hidden">Level</span>
+              <span className="hidden sm:inline">{t('severity')}</span>
+              <span className="sm:hidden">{t('level')}</span>
             </TabsTrigger>
             <TabsTrigger value="trends" className="data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Trends</span>
-              <span className="sm:hidden">Trend</span>
+              <span className="hidden sm:inline">{t('trends')}</span>
+              <span className="sm:hidden">{t('trend')}</span>
             </TabsTrigger>
           </TabsList>
 
