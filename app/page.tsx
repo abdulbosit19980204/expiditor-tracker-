@@ -1071,7 +1071,7 @@ placeholder={t('search_expeditors')}
                     <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
                       {/* Filial Filter */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Filial</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('filial')}</label>
                         <Select
                           value={filters.filial || "all"}
                           onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
@@ -1092,7 +1092,7 @@ placeholder={t('search_expeditors')}
 
                       {/* Project Filter */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Project</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('project')}</label>
                         <Select
                           value={filters.project || "all"}
                           onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
@@ -1113,7 +1113,7 @@ placeholder={t('search_expeditors')}
 
                       {/* Sklad Filter */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Warehouse</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('warehouse')}</label>
                         <Select
                           value={filters.sklad || "all"}
                           onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
@@ -1134,7 +1134,7 @@ placeholder={t('search_expeditors')}
 
                       {/* City Filter */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">City</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('city')}</label>
                         <Select
                           value={filters.city || "all"}
                           onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
@@ -1155,7 +1155,7 @@ placeholder={t('search_expeditors')}
 
                       {/* Status Filter */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Status</label>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">{t('status')}</label>
                         <Select
                           value={filters.status || "all"}
                           onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}

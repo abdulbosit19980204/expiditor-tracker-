@@ -306,11 +306,11 @@ export default function ViolationAnalyticsPage() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-4">
                 <FilterIcon className="h-5 w-5 text-gray-600" />
-                <h2 className="text-lg font-semibold">Filters</h2>
+                <h2 className="text-lg font-semibold">{t('filters')}</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Date From</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('date_from')}</label>
                   <Input
                     type="datetime-local"
                     value={filters.dateFrom}
@@ -319,7 +319,7 @@ export default function ViolationAnalyticsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Date To</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('date_to')}</label>
                   <Input
                     type="datetime-local"
                     value={filters.dateTo}
@@ -328,43 +328,43 @@ export default function ViolationAnalyticsPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Expiditor</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('expeditor')}</label>
                   <Input
                     type="text"
-                    placeholder="Search expeditor..."
+                    placeholder={t('search_expeditors')}
                     value={filters.expeditor}
                     onChange={(e) => setFilters({ ...filters, expeditor: e.target.value })}
                     className="w-full"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Min Checks</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('min_checks')}</label>
                   <Input
                     type="number"
-                    placeholder="Minimum checks"
+                    placeholder={t('minimum_checks')}
                     value={filters.minChecks}
                     onChange={(e) => setFilters({ ...filters, minChecks: e.target.value })}
                     className="w-full"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Max Checks</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('max_checks')}</label>
                   <Input
                     type="number"
-                    placeholder="Maximum checks"
+                    placeholder={t('maximum_checks')}
                     value={filters.maxChecks}
                     onChange={(e) => setFilters({ ...filters, maxChecks: e.target.value })}
                     className="w-full"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Radius (meters)</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('radius_meters')}</label>
                   <Select value={filters.radius} onValueChange={(value) => setFilters({ ...filters, radius: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select radius" />
+                      <SelectValue placeholder={t('select_radius')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="all">{t('all')}</SelectItem>
                       <SelectItem value="50">50m</SelectItem>
                       <SelectItem value="100">100m</SelectItem>
                       <SelectItem value="200">200m</SelectItem>
@@ -373,13 +373,13 @@ export default function ViolationAnalyticsPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Window Duration (min)</label>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">{t('window_duration_min')}</label>
                   <Select value={filters.windowDuration} onValueChange={(value) => setFilters({ ...filters, windowDuration: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select duration" />
+                      <SelectValue placeholder={t('select_duration')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="all">{t('all')}</SelectItem>
                       <SelectItem value="5">5 min</SelectItem>
                       <SelectItem value="10">10 min</SelectItem>
                       <SelectItem value="15">15 min</SelectItem>
@@ -390,7 +390,7 @@ export default function ViolationAnalyticsPage() {
               </div>
               <div className="flex items-center gap-3 mt-6">
                 <Button onClick={handleClearFilters} variant="outline">
-                  Clear Filters
+                  {t('clear_filters')}
                 </Button>
               </div>
             </CardContent>
@@ -503,7 +503,7 @@ export default function ViolationAnalyticsPage() {
                       onClick={() => handleSort('duration')}
                     >
                       <div className="flex items-center gap-2">
-                        Time Window
+                        {t('time_window')}
                         {getSortIcon('duration')}
                       </div>
                     </th>
@@ -674,22 +674,22 @@ export default function ViolationAnalyticsPage() {
               {/* Analytics Summary */}
               <Card>
                 <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4">Analytics Summary</h3>
+                  <h3 className="font-semibold mb-4">{t('analytics_summary')}</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="font-medium">Time Window:</span>
+                      <span className="font-medium">{t('time_window')}:</span>
                       <span>{formatTime(selectedRecord.window_start)} - {formatTime(selectedRecord.window_end)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Total Checks:</span>
+                      <span className="font-medium">{t('total_checks')}:</span>
                       <span>{selectedRecord.total_checks}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Most Active:</span>
+                      <span className="font-medium">{t('most_active')}:</span>
                       <span>{selectedRecord.most_active_expiditor}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="font-medium">Radius:</span>
+                      <span className="font-medium">{t('radius')}:</span>
                       <span>{selectedRecord.radius_meters || 0}m</span>
                     </div>
                   </div>

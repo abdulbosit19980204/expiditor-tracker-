@@ -239,7 +239,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Users className="h-4 w-4" />
-              Top Expeditors
+              {t('top_expeditors')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -267,7 +267,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              Top Cities
+              {t('top_cities')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -294,7 +294,7 @@ export function StatisticsPanel({ statistics, onMonthChange }: StatisticsPanelPr
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              Kunlik statistika (2025)
+              {t('daily_statistics_2025')}
             </CardTitle>
             <Select value={selectedMonth} onValueChange={(value) => {
               setSelectedMonth(value)
