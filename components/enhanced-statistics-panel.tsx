@@ -22,6 +22,7 @@ import {
   EyeOff
 } from "lucide-react"
 import type { Statistics } from "@/lib/types"
+import { useLanguage } from "@/lib/language-context"
 
 // Katta raqamlarni formatlash funksiyasi
 const formatLargeNumber = (num: number): { main: string; sub: string } => {
@@ -141,6 +142,7 @@ const MetricCard = memo(function MetricCard({
 })
 
 export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStatisticsPanelProps) {
+  const { t } = useLanguage()
   const [isExpanded, setIsExpanded] = useState(true)
   const [visibleMetrics, setVisibleMetrics] = useState({
     totalChecks: true,
@@ -173,66 +175,66 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
     return [
       {
         key: 'totalChecks' as const,
-        title: 'Total Checks',
+        title: t('total_checks'),
         value: statistics.totalChecks,
         icon: <MapPin className="h-5 w-5 text-blue-600" />,
-        description: 'All expeditor checks',
+        description: t('all_expeditor_checks'),
         trend: { value: 12, isPositive: true }
       },
       {
         key: 'deliveredChecks' as const,
-        title: 'Delivered',
+        title: t('delivered'),
         value: statistics.deliveredChecks,
         icon: <CheckCircle className="h-5 w-5 text-green-600" />,
-        description: 'Successfully delivered',
+        description: t('successfully_delivered'),
         trend: { value: 8, isPositive: true }
       },
       {
         key: 'failedChecks' as const,
-        title: 'Failed',
+        title: t('failed'),
         value: statistics.failedChecks,
         icon: <XCircle className="h-5 w-5 text-red-600" />,
-        description: 'Failed deliveries',
+        description: t('failed_deliveries'),
         trend: { value: -5, isPositive: false }
       },
       {
         key: 'pendingChecks' as const,
-        title: 'Pending',
+        title: t('pending'),
         value: statistics.pendingChecks,
         icon: <AlertCircle className="h-5 w-5 text-yellow-600" />,
-        description: 'Awaiting delivery',
+        description: t('awaiting_delivery'),
         trend: { value: 3, isPositive: true }
       },
       {
         key: 'totalSum' as const,
-        title: 'Total Amount',
+        title: t('total_amount'),
         value: statistics.totalSum, // Raqam sifatida yuborish
         icon: <DollarSign className="h-5 w-5 text-green-600" />,
-        description: 'Total check value',
+        description: t('total_check_value'),
         trend: { value: 15, isPositive: true }
       },
       {
         key: 'avgCheckSum' as const,
-        title: 'Average Check',
+        title: t('average_check'),
         value: statistics.avgCheckSum || 0, // Raqam sifatida yuborish
         icon: <TrendingUp className="h-5 w-5 text-blue-600" />,
-        description: 'Per check average',
+        description: t('per_check_average'),
         trend: { value: 7, isPositive: true }
       },
       {
         key: 'successRate' as const,
-        title: 'Success Rate',
+        title: t('success_rate'),
         value: `${statistics.successRate.toFixed(1)}%`,
         icon: <Users className="h-5 w-5 text-purple-600" />,
-        description: 'Delivery success rate',
+        description: t('delivery_success_rate'),
         trend: { value: 2, isPositive: true }
       },
       {
         key: 'todayChecks' as const,
-        title: 'Today\'s Checks',
+        title: t('todays_checks'),
         value: statistics.todayChecks,
         icon: <Clock className="h-5 w-5 text-orange-600" />,
-        description: 'Checks today',
+        description: t('checks_today'),
         trend: { value: 20, isPositive: true }
       }
     ]
@@ -268,7 +270,7 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Statistics
+            {t('statistics')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -288,7 +290,7 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
-            Statistics
+            {t('statistics')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -310,9 +312,9 @@ export function EnhancedStatisticsPanel({ statistics, isLoading }: EnhancedStati
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Statistics
+                {t('statistics')}
                 <Badge variant="outline" className="ml-2">
-                  {metrics.filter(m => visibleMetrics[m.key]).length} visible
+                  {metrics.filter(m => visibleMetrics[m.key]).length} {t('visible')}
                 </Badge>
               </div>
               <div className="flex items-center gap-2">

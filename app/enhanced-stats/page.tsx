@@ -27,6 +27,7 @@ import {
 import Link from "next/link"
 import { AuthGuard } from "@/components/auth-guard"
 import { useAuth } from "@/lib/auth-context"
+import { useLanguage } from "@/lib/language-context"
 import type { Statistics, Project, Sklad, City, Filial } from "@/lib/types"
 import { api } from "@/lib/api"
 
@@ -102,6 +103,7 @@ interface FilterState {
 
 function EnhancedStatsPageContent() {
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [sklads, setSklads] = useState<Sklad[]>([])
@@ -281,10 +283,10 @@ function EnhancedStatsPageContent() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <TrendingUp className="h-8 w-8" />
-              Enhanced Analytics Dashboard
+              {t('enhanced_analytics_dashboard')}
             </h1>
             <p className="text-muted-foreground mt-2">
-              Comprehensive statistics and insights for expeditor performance
+              {t('comprehensive_statistics_insights')}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -308,12 +310,12 @@ function EnhancedStatsPageContent() {
               disabled={isRefreshing}
             >
               <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh
+              {t('refresh')}
             </Button>
             <Button variant="outline" onClick={handleExportAll} disabled={!statistics}>
-              <Download className="h-4 w-4 mr-1" /> Export All
+              <Download className="h-4 w-4 mr-1" /> {t('export_all')}
             </Button>
-            <Button variant="outline" onClick={logout} title="Logout">
+            <Button variant="outline" onClick={logout} title={t('logout')}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -324,10 +326,10 @@ function EnhancedStatsPageContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Advanced Filters
+              {t('advanced_filters')}
               {activeFiltersCount > 0 && (
                 <Badge variant="secondary" className="ml-2">
-                  {activeFiltersCount} active
+                  {activeFiltersCount} {t('active')}
                 </Badge>
               )}
             </CardTitle>
@@ -345,7 +347,7 @@ function EnhancedStatsPageContent() {
 
               {/* Project Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Project</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">{t('project')}</label>
                 <Select
                   value={filters.project || "all"}
                   onValueChange={(value) => handleFilterChange("project", value === "all" ? "" : value)}
@@ -366,7 +368,7 @@ function EnhancedStatsPageContent() {
 
               {/* Warehouse Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Warehouse</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">{t('warehouse')}</label>
                 <Select
                   value={filters.sklad || "all"}
                   onValueChange={(value) => handleFilterChange("sklad", value === "all" ? "" : value)}
@@ -387,7 +389,7 @@ function EnhancedStatsPageContent() {
 
               {/* City Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">City</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">{t('city')}</label>
                 <Select
                   value={filters.city || "all"}
                   onValueChange={(value) => handleFilterChange("city", value === "all" ? "" : value)}
@@ -408,7 +410,7 @@ function EnhancedStatsPageContent() {
 
               {/* Filial Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Filial</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">{t('filial')}</label>
                 <Select
                   value={filters.filial || "all"}
                   onValueChange={(value) => handleFilterChange("filial", value === "all" ? "" : value)}
@@ -429,7 +431,7 @@ function EnhancedStatsPageContent() {
 
               {/* Status Filter */}
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">{t('status')}</label>
                 <Select
                   value={filters.status || "all"}
                   onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
@@ -450,7 +452,7 @@ function EnhancedStatsPageContent() {
             {activeFiltersCount > 0 && (
               <div className="mt-4 flex justify-end">
                 <Button variant="outline" onClick={clearAllFilters}>
-                  Clear All Filters
+                  {t('clear_all_filters')}
                 </Button>
               </div>
             )}
