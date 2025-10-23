@@ -111,6 +111,8 @@ const translations = {
     'topCities': 'Eng yaxshi shaharlar',
     'paymentMethods': 'To\'lov usullari',
     'loading_enhanced_statistics_page': 'Kengaytirilgan statistika sahifasi yuklanmoqda...',
+    'daily_routes': 'Kunlik yo\'nalishlar',
+    'all_filials': 'Barcha filiallar',
   },
   ru: {
     // Main page
@@ -209,6 +211,8 @@ const translations = {
     'topCities': 'Топ города',
     'paymentMethods': 'Способы оплаты',
     'loading_enhanced_statistics_page': 'Загрузка расширенной страницы статистики...',
+    'daily_routes': 'Ежедневные маршруты',
+    'all_filials': 'Все филиалы',
   },
   en: {
     // Main page
@@ -307,6 +311,8 @@ const translations = {
     'topCities': 'Top Cities',
     'paymentMethods': 'Payment Methods',
     'loading_enhanced_statistics_page': 'Loading enhanced statistics page...',
+    'daily_routes': 'Daily Routes',
+    'all_filials': 'All Filials',
   }
 }
 

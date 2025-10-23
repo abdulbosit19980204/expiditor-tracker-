@@ -90,6 +90,7 @@ import "react-datepicker/dist/react-datepicker.css"
 import { CalendarIcon, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/lib/language-context"
 
 interface DatePickerWithRangeProps {
   dateRange: { from: Date | undefined; to: Date | undefined }
@@ -98,6 +99,7 @@ interface DatePickerWithRangeProps {
 }
 
 export function DatePickerWithRange({ dateRange, onDateRangeChange, className }: DatePickerWithRangeProps) {
+  const { t } = useLanguage()
   const [startDate, setStartDate] = React.useState<Date | null>(dateRange.from || null)
   const [endDate, setEndDate] = React.useState<Date | null>(dateRange.to || null)
 
@@ -165,13 +167,13 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
         className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200"
       >
         <Clock className="h-3.5 w-3.5 mr-2" />
-        Today
+        {t('today')}
       </Button>
 
       {/* Display selected range */}
       {(startDate || endDate) && (
         <div className="text-xs text-gray-600 bg-gray-50 rounded-md py-1.5 px-2 border">
-          <span className="font-medium">Selected:</span> {formatDateRange()}
+          <span className="font-medium">{t('selected')}:</span> {formatDateRange()}
         </div>
       )}
 

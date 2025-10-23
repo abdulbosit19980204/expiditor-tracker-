@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, memo, useCallback } from "react"
+import { useLanguage } from "@/lib/language-context"
 import { Navigation, Clock, AlertCircle, ChevronDown, ChevronUp } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -65,6 +66,7 @@ export const MapComponent = memo(function MapComponent({
   onCheckClick,
   focusLocation,
 }: MapComponentProps) {
+  const { t } = useLanguage()
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<any>(null)
 
@@ -421,7 +423,7 @@ export const MapComponent = memo(function MapComponent({
             className={`flex items-center justify-between px-3 py-2 border-b ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} hover:bg-gray-50`}
             onMouseDown={handleMouseDown}
           >
-            <span className="text-sm font-medium text-gray-700">Kunlik yo'nalishlar</span>
+            <span className="text-sm font-medium text-gray-700">{t('daily_routes')}</span>
             <Button
               variant="ghost"
               size="sm"
