@@ -465,7 +465,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 font-medium">{t('expeditors')}</p>
+                  <p className="text-sm text-gray-600 font-medium">{t('expeditors_count')}</p>
                   <p className="text-4xl font-bold mt-2 text-gray-900">{data.overview.unique_expeditors}</p>
                 </div>
                 <div className="bg-gray-100 p-4 rounded-xl group-hover:bg-purple-500 transition-colors">
@@ -534,9 +534,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
             <Card className="shadow-sm border border-gray-200">
               <CardHeader className="bg-white border-b border-gray-200 py-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-semibold text-gray-800">Violation Checks Data</CardTitle>
+                  <CardTitle className="text-xl font-semibold text-gray-800">{t('violation_checks_data')}</CardTitle>
                   <div className="text-sm text-gray-600">
-                    {checksData && `Showing 1 to ${checksData.checks.length} of ${checksData.total} records`}
+                    {checksData && `${t('showing')} 1 ${t('to')} ${checksData.checks.length} ${t('of')} ${checksData.total} ${t('records')}`}
                   </div>
                 </div>
               </CardHeader>
@@ -544,11 +544,11 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 {checksLoading ? (
                   <div className="flex items-center justify-center py-12">
                     <LoadingSpinner size="lg" />
-                    <span className="ml-2 text-gray-600">Loading checks...</span>
+                    <span className="ml-2 text-gray-600">{t('loading_checks')}</span>
                   </div>
                 ) : !checksData ? (
                   <div className="text-center py-12 text-gray-600">
-                    Click to load violation checks
+                    {t('click_to_load_violation_checks')}
                   </div>
                 ) : (
                   <div>
@@ -557,13 +557,13 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-gray-200 bg-white">
-                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Date & Time</th>
-                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Expeditor</th>
-                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Client</th>
-                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Location</th>
-                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">City</th>
-                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">Total Sum</th>
-                            <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">Status</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">{t('date_time')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">{t('expeditor')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">{t('client')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">{t('location')}</th>
+                            <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">{t('city')}</th>
+                            <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">{t('total_sum')}</th>
+                            <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">{t('status')}</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white">
@@ -638,11 +638,11 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                           disabled={currentPage === 1 || checksLoading}
                           className="text-sm"
                         >
-                          Previous
+                          {t('previous')}
                         </Button>
                         
                         <div className="flex items-center gap-1">
-                          <span className="text-sm text-gray-600 mr-2">Page {currentPage} of {checksData.total_pages}</span>
+                          <span className="text-sm text-gray-600 mr-2">{t('page')} {currentPage} {t('of')} {checksData.total_pages}</span>
                           {Array.from({ length: Math.min(5, checksData.total_pages) }, (_, i) => {
                             const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i
                             if (pageNum > checksData.total_pages || pageNum < 1) return null
@@ -668,7 +668,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                           disabled={currentPage === checksData.total_pages || checksLoading}
                           className="text-sm"
                         >
-                          Next
+                          {t('next')}
                         </Button>
                       </div>
                     )}
@@ -686,9 +686,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 <CardHeader className="bg-gradient-to-r from-red-50 to-orange-50">
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-red-600" />
-                    Top 10 Violators
+                    {t('top_10_violators')}
                   </CardTitle>
-                  <CardDescription>Most frequent violation patterns</CardDescription>
+                  <CardDescription>{t('most_frequent_violation_patterns')}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="space-y-3">
@@ -713,15 +713,15 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                               <Target className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </p>
                             <p className="text-sm text-gray-600">
-                              {violator.total_checks} checks • Avg {Math.round(violator.avg_radius)}m
+                              {violator.total_checks} {t('checks_count')} • {t('avg')} {Math.round(violator.avg_radius)}m
                             </p>
                           </div>
                         </div>
                         <div className="text-right ml-4">
                           <p className="text-2xl font-bold text-red-600">{violator.violation_count}</p>
-                          <p className="text-xs text-gray-500 uppercase tracking-wide">violations</p>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">{t('violations_count')}</p>
                           <p className="text-xs text-blue-600 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            Click for details
+                            {t('click_for_details')}
                           </p>
                         </div>
                       </div>
@@ -735,9 +735,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-blue-600" />
-                    Performance Metrics
+                    {t('performance_metrics')}
                   </CardTitle>
-                  <CardDescription>Detailed expeditor statistics</CardDescription>
+                  <CardDescription>{t('detailed_expeditor_statistics')}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="overflow-hidden">
@@ -750,10 +750,10 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                       </colgroup>
                       <thead>
                         <tr className="border-b-2 border-gray-200">
-                          <th className="text-left py-3 px-2 font-semibold text-gray-700">Expeditor</th>
-                          <th className="text-right py-3 px-2 font-semibold text-gray-700">Violations</th>
-                          <th className="text-right py-3 px-2 font-semibold text-gray-700">Checks</th>
-                          <th className="text-right py-3 px-2 font-semibold text-gray-700">Avg/V</th>
+                          <th className="text-left py-3 px-2 font-semibold text-gray-700">{t('expeditor')}</th>
+                          <th className="text-right py-3 px-2 font-semibold text-gray-700">{t('violations')}</th>
+                          <th className="text-right py-3 px-2 font-semibold text-gray-700">{t('checks')}</th>
+                          <th className="text-right py-3 px-2 font-semibold text-gray-700">{t('avg_v')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -787,9 +787,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
               <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50">
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-green-600" />
-                  Geographic Hotspots
+                  {t('geographic_hotspots')}
                 </CardTitle>
-                <CardDescription>Areas with highest violation density</CardDescription>
+                <CardDescription>{t('areas_with_highest_violation_density')}</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -803,7 +803,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                           <MapPin className="h-5 w-5 text-white" />
                         </div>
                         <Badge variant="destructive" className="font-bold">
-                          {hotspot.violation_count} violations
+                          {hotspot.violation_count} {t('violations_count')}
                         </Badge>
                       </div>
                       <p className="text-sm font-mono text-gray-700 font-medium mb-2">
@@ -811,7 +811,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                       </p>
                       <div className="flex items-center gap-2 text-xs text-gray-600">
                         <Users className="h-3 w-3" />
-                        <span>{hotspot.expeditor_count} expeditors</span>
+                        <span>{hotspot.expeditor_count} {t('expeditors_count')}</span>
                       </div>
                     </div>
                   ))}
@@ -828,9 +828,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-purple-600" />
-                    Daily Distribution
+                    {t('daily_distribution')}
                   </CardTitle>
-                  <CardDescription>Violations by day of week</CardDescription>
+                  <CardDescription>{t('violations_by_day_of_week')}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="space-y-3">
@@ -865,9 +865,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50">
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-orange-600" />
-                    Hourly Pattern
+                    {t('hourly_pattern')}
                   </CardTitle>
-                  <CardDescription>Peak violation hours</CardDescription>
+                  <CardDescription>{t('peak_violation_hours')}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
                   <div className="h-64 flex items-end justify-between gap-1">
@@ -882,7 +882,7 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                               style={{ height: `${height * 2}px` }}
                             >
                               <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-2 py-1 rounded text-xs font-bold whitespace-nowrap shadow-lg">
-                                {hour.count} violations
+                                {hour.count} {t('violations_count')}
                               </div>
                             </div>
                           </div>
@@ -908,16 +908,16 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                 <CardHeader className="bg-gradient-to-r from-red-50 to-yellow-50">
                   <CardTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-red-600" />
-                    Severity Levels
+                    {t('severity_levels')}
                   </CardTitle>
-                  <CardDescription>Categorized by violation radius</CardDescription>
+                  <CardDescription>{t('categorized_by_violation_radius')}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="p-5 bg-gradient-to-r from-red-500 to-red-600 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-lg">Critical</p>
-                        <p className="text-sm opacity-90">&gt; 1000 meters</p>
+                        <p className="font-semibold text-lg">{t('critical')}</p>
+                        <p className="text-sm opacity-90">&gt; 1000 {t('meters')}</p>
                       </div>
                       <p className="text-5xl font-bold">{data.severity_analysis.breakdown.critical}</p>
                     </div>
@@ -926,8 +926,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                   <div className="p-5 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-lg">Warning</p>
-                        <p className="text-sm opacity-90">500 - 1000 meters</p>
+                        <p className="font-semibold text-lg">{t('warning')}</p>
+                        <p className="text-sm opacity-90">500 - 1000 {t('meters')}</p>
                       </div>
                       <p className="text-5xl font-bold">{data.severity_analysis.breakdown.warning}</p>
                     </div>
@@ -936,8 +936,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                   <div className="p-5 bg-gradient-to-r from-yellow-500 to-yellow-600 rounded-xl text-white shadow-lg hover:shadow-xl transition-shadow">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-lg">Minor</p>
-                        <p className="text-sm opacity-90">&lt; 500 meters</p>
+                        <p className="font-semibold text-lg">{t('minor')}</p>
+                        <p className="text-sm opacity-90">&lt; 500 {t('meters')}</p>
                       </div>
                       <p className="text-5xl font-bold">{data.severity_analysis.breakdown.minor}</p>
                     </div>
@@ -995,9 +995,9 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
               <CardHeader className="bg-gradient-to-r from-indigo-50 to-purple-50">
                 <CardTitle className="flex items-center gap-2">
                   <TrendingUp className="h-5 w-5 text-indigo-600" />
-                  Daily Trend Analysis
+                  {t('daily_trend_analysis')}
                 </CardTitle>
-                <CardDescription>Violation trends over time</CardDescription>
+                <CardDescription>{t('violation_trends_over_time')}</CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="h-80 flex items-end justify-between gap-2">
@@ -1012,8 +1012,8 @@ ${data.top_violators.map(v => `${v.most_active_expiditor},${v.violation_count},$
                             style={{ height: `${height * 3}px` }}
                           >
                             <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap shadow-xl z-10">
-                              <div>{trend.count} violations</div>
-                              <div className="text-gray-300">{trend.total_checks} checks</div>
+                              <div>{trend.count} {t('violations_count')}</div>
+                              <div className="text-gray-300">{trend.total_checks} {t('checks_count')}</div>
                             </div>
                           </div>
                         </div>
