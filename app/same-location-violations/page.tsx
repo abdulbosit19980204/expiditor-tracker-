@@ -72,6 +72,8 @@ export default function ViolationAnalyticsPage() {
   const [showFilters, setShowFilters] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(20)
+  const [sortField, setSortField] = useState<string>('')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -164,13 +166,67 @@ export default function ViolationAnalyticsPage() {
     fetchData()
   }
 
-  // Pagination
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('desc')
+    }
+  }
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return null
+    return sortDirection === 'asc' ? '↑' : '↓'
+  }
+
+  // Pagination and sorting
   const paginatedData = useMemo(() => {
     if (!data) return []
+    
+    let sortedData = [...data.results]
+    
+    if (sortField) {
+      sortedData.sort((a, b) => {
+        let aValue: any, bValue: any
+        
+        switch (sortField) {
+          case 'date':
+            aValue = new Date(a.window_start).getTime()
+            bValue = new Date(b.window_start).getTime()
+            break
+          case 'duration':
+            aValue = a.window_duration_minutes
+            bValue = b.window_duration_minutes
+            break
+          case 'total_checks':
+            aValue = a.total_checks
+            bValue = b.total_checks
+            break
+          case 'expeditors':
+            aValue = a.unique_expeditors
+            bValue = b.unique_expeditors
+            break
+          case 'radius':
+            aValue = a.radius_meters || 0
+            bValue = b.radius_meters || 0
+            break
+          default:
+            return 0
+        }
+        
+        if (sortDirection === 'asc') {
+          return aValue > bValue ? 1 : -1
+        } else {
+          return aValue < bValue ? 1 : -1
+        }
+      })
+    }
+    
     const start = (currentPage - 1) * itemsPerPage
     const end = start + itemsPerPage
-    return data.results.slice(start, end)
-  }, [data, currentPage, itemsPerPage])
+    return sortedData.slice(start, end)
+  }, [data, currentPage, itemsPerPage, sortField, sortDirection])
 
   const totalPages = data ? Math.ceil(data.results.length / itemsPerPage) : 0
 
@@ -431,11 +487,23 @@ export default function ViolationAnalyticsPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Date & Time
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleSort('date')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Date & Time
+                        {getSortIcon('date')}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Time Window
+                    <th 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleSort('duration')}
+                    >
+                      <div className="flex items-center gap-2">
+                        Time Window
+                        {getSortIcon('duration')}
+                      </div>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Location
@@ -444,16 +512,34 @@ export default function ViolationAnalyticsPage() {
                       Most Active Expiditor
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Checks ↑↓
+                      Checks
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Total Checks
+                    <th 
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleSort('total_checks')}
+                    >
+                      <div className="flex items-center gap-2 justify-center">
+                        Total Checks
+                        {getSortIcon('total_checks')}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Unique Expiditors
+                    <th 
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleSort('expeditors')}
+                    >
+                      <div className="flex items-center gap-2 justify-center">
+                        Unique Expiditors
+                        {getSortIcon('expeditors')}
+                      </div>
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
-                      Area
+                    <th 
+                      className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                      onClick={() => handleSort('radius')}
+                    >
+                      <div className="flex items-center gap-2 justify-center">
+                        Area
+                        {getSortIcon('radius')}
+                      </div>
                     </th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-600 uppercase tracking-wider">
                       Actions

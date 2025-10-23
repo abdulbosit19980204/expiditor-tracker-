@@ -18,6 +18,8 @@ import {
   Filter,
   Send,
   LogOut,
+  MapPin,
+  Shield,
   User,
   Loader2,
   ChevronLeft
@@ -52,6 +54,7 @@ export function AppNavigation({
   const { user, logout } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [direction, setDirection] = useState<'ltr' | 'rtl'>('ltr')
+  const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null)
   const [togglePosition, setTogglePosition] = useState({ top: 50, right: 20 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -206,26 +209,34 @@ export function AppNavigation({
       badge: undefined,
     },
     {
-      name: 'Enhanced Analytics',
-      href: '/enhanced-stats',
+      name: 'Analytics & Violations',
+      href: '#',
       icon: BarChart3,
-    },
-    {
-      name: 'Violation Analytics (Old)',
-      href: '/violation-analytics',
-      icon: AlertTriangle,
-    },
-    {
-      name: 'Same Location Violations',
-      href: '/same-location-violations',
-      icon: AlertTriangle,
-      badge: 'NEW'
-    },
-    {
-      name: 'Buzilishlar Nazorati',
-      href: '/buzilishlar',
-      icon: AlertTriangle,
-      badge: 'NEW'
+      badge: 'NEW',
+      submenu: [
+        {
+          name: 'Enhanced Analytics',
+          href: '/enhanced-stats',
+          icon: BarChart3,
+        },
+        {
+          name: 'Violation Analytics',
+          href: '/violation-analytics',
+          icon: AlertTriangle,
+        },
+        {
+          name: 'Same Location Violations',
+          href: '/same-location-violations',
+          icon: MapPin,
+          badge: 'NEW'
+        },
+        {
+          name: 'Buzilishlar Nazorati',
+          href: '/buzilishlar',
+          icon: Shield,
+          badge: 'NEW'
+        },
+      ]
     },
     {
       name: 'Tasks Management',
@@ -397,6 +408,66 @@ export function AppNavigation({
                         <ChevronRight className="h-3.5 w-3.5 rotate-180 text-gray-400" />
                       )}
                     </button>
+                  )
+                }
+
+                // Handle submenu items
+                if (item.submenu) {
+                  const isSubmenuExpanded = expandedSubmenu === item.name
+                  const hasActiveSubmenu = item.submenu.some(subItem => pathname === subItem.href)
+                  
+                  return (
+                    <div key={item.href}>
+                      <button
+                        onClick={() => setExpandedSubmenu(isSubmenuExpanded ? null : item.name)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all w-full text-left ${
+                          hasActiveSubmenu
+                            ? 'bg-blue-100 text-blue-700 font-medium border border-blue-200'
+                            : 'text-gray-700 hover:bg-white hover:shadow-sm'
+                        }`}
+                      >
+                        <Icon className={`h-4 w-4 ${hasActiveSubmenu ? 'text-blue-600' : 'text-gray-500'}`} />
+                        <span className="flex-1 text-sm">{item.name}</span>
+                        {item.badge && (
+                          <Badge className="bg-green-500 text-white text-[10px] px-1.5 py-0">
+                            {item.badge}
+                          </Badge>
+                        )}
+                        <ChevronRight className={`h-3.5 w-3.5 text-gray-400 transition-transform ${
+                          isSubmenuExpanded ? 'rotate-90' : ''
+                        }`} />
+                      </button>
+                      
+                      {isSubmenuExpanded && (
+                        <div className="ml-4 mt-1 space-y-1">
+                          {item.submenu.map((subItem) => {
+                            const isSubActive = pathname === subItem.href
+                            const SubIcon = subItem.icon
+                            
+                            return (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                onClick={() => setIsOpen(false)}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                                  isSubActive
+                                    ? 'bg-blue-100 text-blue-700 font-medium border border-blue-200'
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                <SubIcon className={`h-3.5 w-3.5 ${isSubActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                                <span className="flex-1 text-xs">{subItem.name}</span>
+                                {subItem.badge && (
+                                  <Badge className="bg-green-500 text-white text-[9px] px-1 py-0">
+                                    {subItem.badge}
+                                  </Badge>
+                                )}
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )
                 }
 
