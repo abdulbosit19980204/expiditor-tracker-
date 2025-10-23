@@ -128,6 +128,71 @@ export function AppNavigation({
     }
   }, [isDragging, dragOffset, togglePosition])
 
+  // Touch handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true)
+    const rect = (e.target as HTMLElement).getBoundingClientRect()
+    const touch = e.touches[0]
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    })
+  }
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      const newTop = touch.clientY - dragOffset.y
+      const newRight = window.innerWidth - touch.clientX - dragOffset.x
+      
+      setTogglePosition({
+        top: Math.max(10, Math.min(window.innerHeight - 60, newTop)),
+        right: Math.max(10, Math.min(window.innerWidth - 60, newRight))
+      })
+    }
+
+    const handleTouchEnd = () => {
+      setIsDragging(false)
+      localStorage.setItem('nav_toggle_position', JSON.stringify(togglePosition))
+    }
+
+    document.addEventListener('touchmove', handleTouchMove, { passive: false })
+    document.addEventListener('touchend', handleTouchEnd)
+
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [isDragging, dragOffset, togglePosition])
+
+  const handleTelegramContact = async () => {
+    try {
+      const response = await fetch('/api/telegram/target/', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.url) {
+          window.open(data.url, '_blank')
+        } else {
+          window.open('https://t.me/', '_blank')
+        }
+      } else {
+        window.open('https://t.me/', '_blank')
+      }
+    } catch (error) {
+      console.error('Failed to get telegram target:', error)
+      window.open('https://t.me/', '_blank')
+    }
+  }
+
   const navigationItems: NavigationItem[] = [
     {
       name: 'Main Dashboard',
@@ -136,7 +201,7 @@ export function AppNavigation({
     },
     {
       name: 'Telegram (Contact Dev)',
-      href: '/yandex-tokens',
+      href: '#',
       icon: Send,
       badge: undefined,
     },
@@ -153,6 +218,12 @@ export function AppNavigation({
     {
       name: 'Violations (New)',
       href: '/violation-analytics-new',
+      icon: AlertTriangle,
+      badge: 'NEW'
+    },
+    {
+      name: 'Same Location Violations',
+      href: '/same-location-violations',
       icon: AlertTriangle,
       badge: 'NEW'
     },
@@ -198,6 +269,7 @@ export function AppNavigation({
           right: `${togglePosition.right}px`,
         }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
       >
         <Button
           onClick={() => setIsOpen(!isOpen)}
@@ -306,6 +378,33 @@ export function AppNavigation({
               {navigationItems.map((item) => {
                 const isActive = pathname === item.href
                 const Icon = item.icon
+
+                // Special handling for Telegram contact
+                if (item.name === 'Telegram (Contact Dev)') {
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => {
+                        handleTelegramContact()
+                        setIsOpen(false)
+                      }}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-gray-700 hover:bg-white hover:shadow-sm w-full text-left"
+                    >
+                      <Icon className="h-4 w-4 text-gray-500" />
+                      <span className="flex-1 text-sm">{item.name}</span>
+                      {item.badge && (
+                        <Badge className="bg-green-500 text-white text-[10px] px-1.5 py-0">
+                          {item.badge}
+                        </Badge>
+                      )}
+                      {direction === 'ltr' ? (
+                        <ChevronRight className="h-3.5 w-3.5 text-gray-400" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 rotate-180 text-gray-400" />
+                      )}
+                    </button>
+                  )
+                }
 
                 return (
                   <Link

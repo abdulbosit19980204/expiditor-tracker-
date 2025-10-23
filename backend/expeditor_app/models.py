@@ -477,6 +477,23 @@ class CheckAnalytics(models.Model):
     within a certain time window and geographic proximity, helping identify
     patterns and the most active expiditors in specific areas.
     """
+    # Violation type
+    VIOLATION_TYPE_TIME_DISTANCE = 'TIME_DISTANCE'
+    VIOLATION_TYPE_SAME_LOCATION = 'SAME_LOCATION'
+    
+    VIOLATION_TYPE_CHOICES = [
+        (VIOLATION_TYPE_TIME_DISTANCE, 'Time and Distance Based'),
+        (VIOLATION_TYPE_SAME_LOCATION, 'Same Location Same Day'),
+    ]
+    
+    violation_type = models.CharField(
+        max_length=20, 
+        choices=VIOLATION_TYPE_CHOICES, 
+        default=VIOLATION_TYPE_TIME_DISTANCE,
+        db_index=True,
+        help_text="Type of violation detected"
+    )
+    
     # Time window information
     window_start = models.DateTimeField(db_index=True, help_text="Start of the time window analyzed")
     window_end = models.DateTimeField(db_index=True, help_text="End of the time window analyzed")
@@ -512,6 +529,7 @@ class CheckAnalytics(models.Model):
     class Meta:
         verbose_name_plural = "Check Analytics"
         indexes = [
+            models.Index(fields=["violation_type", "analysis_date"]),
             models.Index(fields=["window_start", "window_end"]),
             models.Index(fields=["center_lat", "center_lon"]),
             models.Index(fields=["analysis_date"]),

@@ -611,25 +611,92 @@ export default function ViolationAnalyticsPage() {
               {/* Check List */}
               <Card>
                 <CardContent className="pt-6">
-                  <h3 className="font-semibold mb-4">Check List</h3>
-                  <div className="max-h-[400px] overflow-y-auto space-y-3">
-                    {selectedRecord.check_details?.checks?.map((check, idx) => (
-                      <div key={idx} className="p-3 bg-gray-50 rounded-lg text-sm">
-                        <div className="font-medium text-blue-600">{check.id}</div>
-                        <div className="text-gray-900 mt-1">{check.client_name}</div>
-                        <div className="text-gray-600 text-xs mt-1">
-                          <span className="font-medium">Time:</span> {check.time}
+                  <h3 className="font-semibold mb-4">Check List ({selectedRecord.total_checks} checks)</h3>
+                  <div className="max-h-[500px] overflow-y-auto space-y-3 border border-gray-200 rounded-lg p-3">
+                    {(() => {
+                      // Handle both old and new check_details formats
+                      let checks = [];
+                      
+                      if (selectedRecord.check_details?.checks && Array.isArray(selectedRecord.check_details.checks)) {
+                        // New format with checks array
+                        checks = selectedRecord.check_details.checks;
+                      } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                        // Old format - create check objects from check_ids
+                        checks = selectedRecord.check_details.check_ids.map((checkId, idx) => ({
+                          id: checkId,
+                          client_name: 'Loading...',
+                          time: 'Loading...',
+                          expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
+                          lat: selectedRecord.center_lat || 0,
+                          lon: selectedRecord.center_lon || 0,
+                          status: 'Loading...',
+                          total_sum: 0
+                        }));
+                      } else if (selectedRecord.check_ids && Array.isArray(selectedRecord.check_ids)) {
+                        // Fallback - use check_ids directly from record
+                        checks = selectedRecord.check_ids.map((checkId, idx) => ({
+                          id: checkId,
+                          client_name: 'Loading...',
+                          time: 'Loading...',
+                          expeditor: selectedRecord.most_active_expiditor || 'Unknown',
+                          lat: selectedRecord.center_lat || 0,
+                          lon: selectedRecord.center_lon || 0,
+                          status: 'Loading...',
+                          total_sum: 0
+                        }));
+                      }
+                      
+                      return checks.length > 0 ? (
+                        <div className="space-y-2">
+                          {checks.map((check, idx) => (
+                            <div key={idx} className="p-4 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-medium text-blue-600 text-sm">Check ID:</span>
+                                    <span className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{check.id}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-gray-700 text-sm">Client:</span>
+                                    <span className="text-sm">{check.client_name}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-gray-700 text-sm">Time:</span>
+                                    <span className="text-sm">{check.time}</span>
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-gray-700 text-sm">Expeditor:</span>
+                                    <span className="text-sm text-blue-600">{check.expeditor}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-medium text-gray-700 text-sm">Location:</span>
+                                    <span className="text-sm font-mono text-xs">{check.lat?.toFixed(6)}, {check.lon?.toFixed(6)}</span>
+                                  </div>
+                                  {check.total_sum && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-gray-700 text-sm">Amount:</span>
+                                      <span className="text-sm font-medium text-green-600">{check.total_sum} UZS</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        <div className="text-gray-600 text-xs">
-                          <span className="font-medium">Expeditor:</span> {check.expeditor}
+                      ) : (
+                        <div className="text-center py-8">
+                          <div className="text-gray-400 mb-2">
+                            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <p className="text-gray-500">No check details available</p>
+                          <p className="text-gray-400 text-sm mt-1">Check details will be available after running the analysis task</p>
                         </div>
-                        <div className="text-gray-600 text-xs">
-                          <span className="font-medium">Location:</span> {check.lat}, {check.lon}
-                        </div>
-                      </div>
-                    )) || (
-                      <p className="text-gray-500 text-center py-4">No check details available</p>
-                    )}
+                      );
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -641,14 +708,34 @@ export default function ViolationAnalyticsPage() {
                 <h3 className="font-semibold mb-3">Map View</h3>
                 <YandexMap
                   height="420px"
-                  locations={(selectedRecord.check_details?.checks || []).map((c: any, i: number) => ({
-                    id: i + 1,
-                    lat: Number(c.lat),
-                    lng: Number(c.lon),
-                    expeditor: c.expeditor,
-                    time: c.time,
-                    status: c.status,
-                  }))}
+                  locations={(() => {
+                    // Handle both old and new check_details formats for map
+                    let locations = [];
+                    
+                    if (selectedRecord.check_details?.checks) {
+                      // New format with checks array
+                      locations = selectedRecord.check_details.checks.map((c: any, i: number) => ({
+                        id: i + 1,
+                        lat: Number(c.lat),
+                        lng: Number(c.lon),
+                        expeditor: c.expeditor,
+                        time: c.time,
+                        status: c.status,
+                      }));
+                    } else if (selectedRecord.check_details?.check_ids && Array.isArray(selectedRecord.check_details.check_ids)) {
+                      // Old format - create locations from check_ids and center coordinates
+                      locations = selectedRecord.check_details.check_ids.map((checkId: string, i: number) => ({
+                        id: i + 1,
+                        lat: selectedRecord.center_lat || 0,
+                        lng: selectedRecord.center_lon || 0,
+                        expeditor: selectedRecord.check_details.expeditors?.[0] || selectedRecord.most_active_expiditor || 'Unknown',
+                        time: 'Unknown Time',
+                        status: 'Unknown',
+                      }));
+                    }
+                    
+                    return locations;
+                  })()}
                   center={{ lat: selectedRecord.center_lat, lng: selectedRecord.center_lon }}
                   zoom={12}
                 />

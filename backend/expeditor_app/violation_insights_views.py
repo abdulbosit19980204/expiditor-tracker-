@@ -34,6 +34,11 @@ class ViolationInsightsView(APIView):
         # Base queryset: violations with 3+ checks
         analytics_qs = CheckAnalytics.objects.filter(total_checks__gte=3)
         
+        # Filter by violation type if specified
+        violation_type = request.GET.get('violation_type')
+        if violation_type:
+            analytics_qs = analytics_qs.filter(violation_type=violation_type)
+        
         # Apply filters
         if date_from:
             try:
@@ -83,6 +88,9 @@ class ViolationInsightsView(APIView):
             ).count()
             exp['critical_count'] = exp_qs.filter(radius_meters__gte=1000).count()
             exp['warning_count'] = exp_qs.filter(radius_meters__gte=500, radius_meters__lt=1000).count()
+            
+            # Add same location violations count
+            exp['same_location_count'] = exp_qs.filter(violation_type=CheckAnalytics.VIOLATION_TYPE_SAME_LOCATION).count()
         
         # Re-sort by suspicious count
         expeditor_insights = sorted(expeditor_insights_list, key=lambda x: (-x['suspicious_count'], -x['total_violations']))
@@ -208,6 +216,93 @@ class ViolationInsightsView(APIView):
                 'date_from': date_from,
                 'date_to': date_to,
                 'expeditor': expeditor,
+            }
+        }
+        
+        return Response(response_data)
+
+
+class SameLocationViolationsView(APIView):
+    """
+    Dedicated view for same location violations.
+    Shows expeditors who issued multiple checks from the same location on the same day.
+    """
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        expeditor = request.GET.get('expeditor')
+        
+        # Base queryset: same location violations only
+        analytics_qs = CheckAnalytics.objects.filter(
+            total_checks__gte=3,
+            violation_type=CheckAnalytics.VIOLATION_TYPE_SAME_LOCATION
+        )
+        
+        # Apply filters
+        if date_from:
+            try:
+                date_from_obj = datetime.fromisoformat(date_from.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_start__gte=date_from_obj)
+            except:
+                pass
+        
+        if date_to:
+            try:
+                date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
+                analytics_qs = analytics_qs.filter(window_end__lte=date_to_obj)
+            except:
+                pass
+        
+        if expeditor:
+            analytics_qs = analytics_qs.filter(most_active_expiditor__icontains=expeditor)
+        
+        # Get pagination parameters
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 20))
+        
+        # Calculate pagination
+        total_count = analytics_qs.count()
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        
+        # Get paginated results
+        violations = analytics_qs.order_by('-window_start')[start_index:end_index]
+        
+        # Format response data
+        violations_data = []
+        for violation in violations:
+            violations_data.append({
+                'id': violation.id,
+                'window_start': violation.window_start.isoformat(),
+                'window_end': violation.window_end.isoformat(),
+                'window_duration_minutes': violation.window_duration_minutes,
+                'center_lat': violation.center_lat,
+                'center_lon': violation.center_lon,
+                'total_checks': violation.total_checks,
+                'unique_expiditors': violation.unique_expiditors,
+                'most_active_expiditor': violation.most_active_expiditor,
+                'most_active_count': violation.most_active_count,
+                'avg_checks_per_expiditor': violation.avg_checks_per_expiditor,
+                'check_ids': violation.check_ids,
+                'check_details': violation.check_details,
+                'analysis_date': violation.analysis_date.isoformat(),
+                'created_at': violation.created_at.isoformat()
+            })
+        
+        response_data = {
+            'violations': violations_data,
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total_count': total_count,
+                'total_pages': (total_count + page_size - 1) // page_size
+            },
+            'summary': {
+                'total_violations': total_count,
+                'total_checks': sum(v['total_checks'] for v in violations_data),
+                'unique_expeditors': len(set(v['most_active_expiditor'] for v in violations_data if v['most_active_expiditor']))
             }
         }
         

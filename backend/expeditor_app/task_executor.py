@@ -387,17 +387,21 @@ class TaskExecutor:
                     for cluster in clusters:
                         analytics_record = self._create_analytics_record(
                             cluster, current_time, window_end, 
-                            time_window_minutes, distance_meters
+                            time_window_minutes, distance_meters,
+                            violation_type=CheckAnalytics.VIOLATION_TYPE_TIME_DISTANCE
                         )
                         if analytics_record:
                             analytics_created += 1
                 
                 current_time = window_end
             
+            # Also analyze same location violations (same day, same location)
+            same_location_created = self._analyze_same_location_violations(start_time, now)
+            
             return {
-                'message': f"Created {analytics_created} analytics records",
-                'total': analytics_created,
-                'processed': analytics_created
+                'message': f"Created {analytics_created} time-distance analytics records and {same_location_created} same-location violation records",
+                'total': analytics_created + same_location_created,
+                'processed': analytics_created + same_location_created
             }
             
         except Exception as e:
@@ -437,7 +441,7 @@ class TaskExecutor:
         return clusters
     
     def _create_analytics_record(self, cluster, window_start, window_end, 
-                                window_duration_minutes, radius_meters):
+                                window_duration_minutes, radius_meters, violation_type=None):
         """Create CheckAnalytics record from cluster."""
         try:
             # Calculate cluster center
@@ -488,6 +492,7 @@ class TaskExecutor:
             
             # Create analytics record
             analytics = CheckAnalytics.objects.create(
+                violation_type=violation_type or CheckAnalytics.VIOLATION_TYPE_TIME_DISTANCE,
                 window_start=window_start,
                 window_end=window_end,
                 window_duration_minutes=window_duration_minutes,
@@ -508,6 +513,64 @@ class TaskExecutor:
         except Exception as e:
             logger.error(f"Failed to create analytics record: {str(e)}")
             return None
+    
+    def _analyze_same_location_violations(self, start_time, end_time):
+        """Analyze violations where expeditors issue multiple checks from same location on same day."""
+        try:
+            from django.db.models import Count, Q
+            from datetime import timedelta
+            
+            violations_created = 0
+            
+            # Get all checks with coordinates in the time range
+            checks = Check.objects.filter(
+                yetkazilgan_vaqti__gte=start_time,
+                yetkazilgan_vaqti__lte=end_time,
+                check_lat__isnull=False,
+                check_lon__isnull=False,
+                ekispiditor__isnull=False
+            ).order_by('ekispiditor', 'yetkazilgan_vaqti__date', 'check_lat', 'check_lon')
+            
+            # Group by expeditor, date, and location (rounded coordinates)
+            location_groups = {}
+            
+            for check in checks:
+                # Round coordinates to group nearby locations (within ~10 meters)
+                rounded_lat = round(float(check.check_lat), 4)
+                rounded_lon = round(float(check.check_lon), 4)
+                date_key = check.yetkazilgan_vaqti.date()
+                
+                group_key = (check.ekispiditor, date_key, rounded_lat, rounded_lon)
+                
+                if group_key not in location_groups:
+                    location_groups[group_key] = []
+                location_groups[group_key].append(check)
+            
+            # Create violation records for groups with 3+ checks
+            for (expiditor, date, lat, lon), checks_in_group in location_groups.items():
+                if len(checks_in_group) >= 3:  # Same location violation threshold
+                    # Sort checks by time
+                    checks_in_group.sort(key=lambda x: x.yetkazilgan_vaqti)
+                    
+                    window_start = checks_in_group[0].yetkazilgan_vaqti
+                    window_end = checks_in_group[-1].yetkazilgan_vaqti
+                    duration_minutes = int((window_end - window_start).total_seconds() / 60)
+                    
+                    # Create analytics record for same location violation
+                    analytics_record = self._create_analytics_record(
+                        checks_in_group, window_start, window_end,
+                        duration_minutes, 0,  # 0 radius for same location
+                        violation_type=CheckAnalytics.VIOLATION_TYPE_SAME_LOCATION
+                    )
+                    
+                    if analytics_record:
+                        violations_created += 1
+            
+            return violations_created
+            
+        except Exception as e:
+            logger.error(f"Failed to analyze same location violations: {str(e)}")
+            return 0
     
     def _calculate_distance(self, lat1, lon1, lat2, lon2):
         """Calculate distance between two points in meters."""

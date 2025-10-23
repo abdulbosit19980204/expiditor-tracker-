@@ -482,36 +482,41 @@ export default function ExpeditorTracker() {
               <Button variant="outline" size="sm" onClick={handleUpdate} title="Update data" disabled={isUpdating}>
                 {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" title="Analytics">
-                    <BarChart3 className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem asChild>
-                    <Link href="/analytics" className="cursor-pointer">
-                      Enhanced Analytics
+              {/* Hide Analytics and Tasks buttons on mobile */}
+              {!isMobile && (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" title="Analytics">
+                        <BarChart3 className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem asChild>
+                        <Link href="/analytics" className="cursor-pointer">
+                          Enhanced Analytics
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/buzilishlar" className="cursor-pointer">
+                          Buzilishlar Nazorati
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/violation-analytics" className="cursor-pointer">
+                          Violation Analytics (Old)
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  {user?.is_superuser && (
+                    <Link href="/tasks" className="inline-flex">
+                      <Button variant="outline" size="sm" title="Task Management">
+                        <Clock className="h-4 w-4" />
+                      </Button>
                     </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/buzilishlar" className="cursor-pointer">
-                      Buzilishlar Nazorati
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/violation-analytics" className="cursor-pointer">
-                      Violation Analytics (Old)
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {user?.is_superuser && (
-                <Link href="/tasks" className="inline-flex">
-                  <Button variant="outline" size="sm" title="Task Management">
-                    <Clock className="h-4 w-4" />
-                  </Button>
-                </Link>
+                  )}
+                </>
               )}
               <Button variant="outline" size="sm" onClick={handleOpenTelegram} title="Telegram">
                 <Send className="h-4 w-4" />

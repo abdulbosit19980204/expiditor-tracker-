@@ -10,7 +10,7 @@ from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView, Ta
 from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
 from .auth_views import register_user, login_user, logout_user, get_user_profile, check_auth_status
 from .integration import UpdateChecksView
-from .violation_insights_views import ViolationInsightsView
+from .violation_insights_views import ViolationInsightsView, SameLocationViolationsView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -36,6 +36,7 @@ urlpatterns = [
     path('analytics/violation-detail/', ViolationDetailView.as_view(), name='violation-detail'),
     path('analytics/violation-checks/', ViolationChecksListView.as_view(), name='violation-checks'),
     path('analytics/violation-insights/', ViolationInsightsView.as_view(), name='violation-insights'),
+    path('analytics/same-location-violations/', SameLocationViolationsView.as_view(), name='same-location-violations'),
     path('analytics-simple/', CheckAnalyticsAPIView.as_view(), name='analytics-simple'),
     
     # Statistics endpoints
