@@ -49,6 +49,12 @@ const translations = {
     'average_checks': 'O\'rtacha cheklar',
     'show_stats': 'Statistikani ko\'rsatish',
     'hide_stats': 'Statistikani yashirish',
+    'language': 'Til',
+    'select_expeditor_to_view_checks': 'Cheklarni ko\'rish uchun ekspeditor tanlang',
+    'loading_checks': 'Cheklar yuklanmoqda...',
+    'no_checks_found': 'Cheklar topilmadi',
+    'try_adjusting_filters': 'Sana oralig\'i yoki filterlarni o\'zgartiring',
+    'loading_expeditors': 'Ekspeditorlar yuklanmoqda...',
   },
   ru: {
     // Main page
@@ -85,6 +91,12 @@ const translations = {
     'average_checks': 'Средние чеки',
     'show_stats': 'Показать статистику',
     'hide_stats': 'Скрыть статистику',
+    'language': 'Язык',
+    'select_expeditor_to_view_checks': 'Выберите экспедитора для просмотра чеков',
+    'loading_checks': 'Загрузка чеков...',
+    'no_checks_found': 'Чеки не найдены',
+    'try_adjusting_filters': 'Попробуйте изменить диапазон дат или фильтры',
+    'loading_expeditors': 'Загрузка экспедиторов...',
   },
   en: {
     // Main page
@@ -121,6 +133,12 @@ const translations = {
     'average_checks': 'Average Checks',
     'show_stats': 'Show Statistics',
     'hide_stats': 'Hide Statistics',
+    'language': 'Language',
+    'select_expeditor_to_view_checks': 'Select an expeditor to view checks',
+    'loading_checks': 'Loading checks...',
+    'no_checks_found': 'No checks found',
+    'try_adjusting_filters': 'Try adjusting the date range or filters',
+    'loading_expeditors': 'Loading expeditors...',
   }
 }
 

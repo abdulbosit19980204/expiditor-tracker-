@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
+import { useLanguage } from '@/lib/language-context'
 import { 
   Home, 
   BarChart3, 
@@ -52,6 +53,7 @@ export function AppNavigation({
 }: AppNavigationProps) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { language, setLanguage, t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const [direction, setDirection] = useState<'ltr' | 'rtl'>('ltr')
   const [expandedSubmenu, setExpandedSubmenu] = useState<string | null>(null)
@@ -376,6 +378,35 @@ export function AppNavigation({
               <p className="text-[10px] text-gray-500 mt-1">
                 {direction === 'ltr' ? 'Left to Right (Default)' : 'Right to Left'}
               </p>
+            </div>
+          </div>
+
+          {/* Language Switcher */}
+          <div className="px-3 py-2 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-gray-600">{t('language')}</span>
+              <div className="flex items-center gap-1">
+                {[
+                  { code: 'uz', flag: '🇺🇿', name: 'UZ' },
+                  { code: 'ru', flag: '🇷🇺', name: 'RU' },
+                  { code: 'en', flag: '🇺🇸', name: 'EN' }
+                ].map((lang) => (
+                  <Button
+                    key={lang.code}
+                    variant={language === lang.code ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setLanguage(lang.code as any)}
+                    className={`h-7 w-7 p-0 text-xs ${
+                      language === lang.code 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                        : 'hover:bg-gray-100'
+                    }`}
+                    title={lang.name}
+                  >
+                    {lang.flag}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
 

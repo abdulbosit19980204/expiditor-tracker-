@@ -19,7 +19,6 @@ import { MapComponent } from "@/components/map-component"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { CheckModal } from "@/components/check-modal"
 import { StatisticsPanel } from "@/components/statistics-panel"
-import { LanguageSwitcher } from "@/components/language-switcher"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { AuthGuard } from "@/components/auth-guard"
 import { useAuth } from "@/lib/auth-context"
@@ -609,8 +608,6 @@ export default function ExpeditorTracker() {
               {t('expeditor_tracker')}
             </h1>
             <div className="flex items-center gap-3">
-              {/* Language Switcher */}
-              <LanguageSwitcher />
               {/* User Profile with Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -699,9 +696,6 @@ export default function ExpeditorTracker() {
                         <Users className="h-4 w-4" />
                         {t('expeditor_tracker')}
                       </h1>
-                      
-                      {/* Language Switcher - compact */}
-                      <LanguageSwitcher size="sm" />
                       
                       {/* User Profile - compact */}
                       <DropdownMenu>
@@ -930,7 +924,7 @@ placeholder={t('search_expeditors')}
                     {isLoadingExpeditors ? (
                       <div className="text-center py-8">
                         <LoadingSpinner size="sm" />
-                        <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
+                        <p className="text-sm text-gray-500 mt-2">{t('loading_expeditors')}</p>
                       </div>
                     ) : filteredExpeditors.length === 0 ? (
                       <div className="text-center text-gray-500 mt-8">
@@ -990,9 +984,6 @@ placeholder={t('search_expeditors')}
                     <Users className="h-4 w-4" />
                     {t('expeditor_tracker')}
                   </h1>
-                  
-                  {/* Language Switcher - compact */}
-                  <LanguageSwitcher size="sm" />
                   
                   {/* User Profile - compact */}
                   <DropdownMenu>
@@ -1214,7 +1205,7 @@ placeholder={t('search_expeditors')}
                 {isLoadingExpeditors ? (
                   <div className="text-center py-8">
                     <LoadingSpinner size="sm" />
-                    <p className="text-sm text-gray-500 mt-2">Loading expeditors...</p>
+                    <p className="text-sm text-gray-500 mt-2">{t('loading_expeditors')}</p>
                   </div>
                 ) : filteredExpeditors.length === 0 ? (
                   <div className="text-center text-gray-500 mt-8">
@@ -1314,17 +1305,17 @@ placeholder={t('search_expeditors')}
                   {!selectedExpeditor ? (
                     <div className="text-center text-gray-500 mt-8">
                       <MapPin className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                      <p>Select an expeditor to view checks</p>
+                      <p>{t('select_expeditor_to_view_checks')}</p>
                     </div>
                   ) : isLoadingChecks ? (
                     <div className="text-center py-8">
                       <LoadingSpinner size="sm" />
-                      <p className="text-sm text-gray-500 mt-2">Loading checks...</p>
+                      <p className="text-sm text-gray-500 mt-2">{t('loading_checks')}</p>
                     </div>
                   ) : checks.length === 0 ? (
                     <div className="text-center text-gray-500 mt-8">
-                      <p>No checks found</p>
-                      <p className="text-xs mt-2">Try adjusting the date range or filters</p>
+                      <p>{t('no_checks_found')}</p>
+                      <p className="text-xs mt-2">{t('try_adjusting_filters')}</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
