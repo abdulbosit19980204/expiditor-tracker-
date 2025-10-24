@@ -45,7 +45,7 @@ function getCurrentMonthRange() {
 
 export default function ExpeditorTracker() {
   const isMobile = useIsMobile()
-  const { user, logout } = useAuth()
+  const { user, logout, token } = useAuth()
   const { t } = useLanguage()
 
   // State management
@@ -1035,9 +1035,6 @@ placeholder={t('search_expeditors')}
                     <p className="text-xs text-gray-500 text-center mt-1">
 {t('last_update')}: {formatDateTime(lastUpdatedAt)}
                     </p>
-                  )}
-                  {isUpdating && (
-                    <Progress value={updateProgress} className="h-1.5 mt-2" />
                   )}
                 </div>
 
