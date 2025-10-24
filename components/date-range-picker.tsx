@@ -168,8 +168,7 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
           onClick={handleTodayClick}
           className="w-auto px-2 py-1 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200 flex-shrink-0"
         >
-          <Clock className="h-3 w-3 mr-1" />
-          {t('today')}
+        <Clock className="h-3 w-3" />
         </Button>
       </div>
 

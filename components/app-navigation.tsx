@@ -175,7 +175,8 @@ export function AppNavigation({
 
   const handleTelegramContact = async () => {
     try {
-      const response = await fetch('/api/telegram/target/', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
+      const response = await fetch(`${API_BASE_URL}/telegram/target/`, {
         headers: {
           'Content-Type': 'application/json',
         },
