@@ -139,35 +139,38 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
 
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Today button - small and positioned at top */}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleTodayClick}
-        className="w-auto px-2 py-1 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200"
-      >
-        <Clock className="h-3 w-3 mr-1" />
-        {t('today')}
-      </Button>
+      {/* Date picker container with Today button */}
+      <div className="flex items-center gap-2">
+        {/* Modern styled date picker container */}
+        <div className="relative group flex-1">
+          <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none z-10" />
+          <DatePicker
+            selectsRange
+            startDate={startDate}
+            endDate={endDate}
+            onChange={handleChange}
+            isClearable
+            placeholderText="Pick a date range"
+            className="pl-10 w-full border border-gray-200 rounded-lg py-2.5 px-3 text-sm bg-white hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
+            dateFormat="MMM dd, yyyy"
+            popperClassName="modern-datepicker-popper"
+            wrapperClassName="w-full"
+          />
+          {/* Custom overlay for better styling */}
+          <div className="absolute inset-0 pointer-events-none rounded-lg ring-1 ring-transparent group-hover:ring-gray-200 transition-all duration-200" />
+        </div>
 
-      {/* Modern styled date picker container */}
-      <div className="relative group">
-        <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none z-10" />
-        <DatePicker
-          selectsRange
-          startDate={startDate}
-          endDate={endDate}
-          onChange={handleChange}
-          isClearable
-          placeholderText="Pick a date range"
-          className="pl-10 w-full border border-gray-200 rounded-lg py-2.5 px-3 text-sm bg-white hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
-          dateFormat="MMM dd, yyyy"
-          popperClassName="modern-datepicker-popper"
-          wrapperClassName="w-full"
-        />
-        {/* Custom overlay for better styling */}
-        <div className="absolute inset-0 pointer-events-none rounded-lg ring-1 ring-transparent group-hover:ring-gray-200 transition-all duration-200" />
+        {/* Today button - positioned next to date selector */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleTodayClick}
+          className="w-auto px-2 py-1 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200 flex-shrink-0"
+        >
+          <Clock className="h-3 w-3 mr-1" />
+          {t('today')}
+        </Button>
       </div>
 
       {/* Display selected range */}
