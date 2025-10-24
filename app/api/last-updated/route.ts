@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { promises as fs } from "fs"
 
-const FILE_PATH = "/home/administrator/Documents/expiditor-tracker-/backend/last_update.txt"
+const FILE_PATH = "/home/administrator/Documents/expiditor-tracker-/backend/last_refresh.txt"
 
 export async function GET() {
   try {

@@ -5,15 +5,19 @@ from datetime import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from zeep import Client
 from zeep.cache import InMemoryCache
 from zeep.transports import Transport
 from expeditor_app.utils import get_last_update_date, save_last_update_date
+import os
 from expeditor_app.models import Check, CheckDetail, Sklad, City, Ekispiditor, Projects, ProblemCheck, IntegrationEndpoint
 
 logger = logging.getLogger(__name__)
 
 class UpdateChecksView(APIView):
+    permission_classes = [IsAuthenticated]
+    
     # Cache WSDL client to avoid reloading
     _client = None
     _client_lock = None
@@ -64,6 +68,12 @@ class UpdateChecksView(APIView):
                 receipt_date = row.receiptIdDate if (hasattr(row, 'receiptIdDate') and
                                                     row.receiptIdDate and
                                                     row.receiptIdDate.year > 1) else None
+                
+                # Convert naive datetime to timezone-aware if needed
+                if delivery_date and delivery_date.tzinfo is None:
+                    delivery_date = timezone.make_aware(delivery_date)
+                if receipt_date and receipt_date.tzinfo is None:
+                    receipt_date = timezone.make_aware(receipt_date)
 
                 # Prepare check data
                 check_data = {
@@ -130,11 +140,16 @@ class UpdateChecksView(APIView):
                 else:
                     counters['checks_updated'] += 1
 
+                # Prepare receipt_date for CheckDetail
+                detail_receipt_date = receipt_date
+                if detail_receipt_date and detail_receipt_date.tzinfo is None:
+                    detail_receipt_date = timezone.make_aware(detail_receipt_date)
+                
                 detail_obj, created_detail = CheckDetail.objects.update_or_create(
                     check_id=check_id,
                     defaults={
                         'checkURL': getattr(row, 'receiptURL', ''),
-                        'check_date': receipt_date,
+                        'check_date': detail_receipt_date,
                         'check_lat': float(row.latitude) if hasattr(row, 'latitude') and row.latitude else None,
                         'check_lon': float(row.longitude) if hasattr(row, 'longitude') and row.longitude else None,
                         'total_sum': float(row.totalSum) if hasattr(row, 'totalSum') and row.totalSum else None,
@@ -204,11 +219,31 @@ class UpdateChecksView(APIView):
 
             # Get last update date
             last_update = get_last_update_date()
+            # Convert to proper date format for SOAP API
+            if 'T' in last_update:
+                last_update = last_update.split('T')[0]  # Extract only date part
+            logger.info(f"Calling SOAP API with date: {last_update}")
+            print(f"[DEBUG] Calling SOAP API with date: {last_update}")
             response = client.service.GetAllCurierInfo(last_update)
+            logger.info(f"SOAP Response received: {response}")
+            print(f"[DEBUG] SOAP Response received: {response}")
             print("Response: " ,response)
-            if not response or not hasattr(response, 'Rows') or not response.Rows:
-                logger.info("No data received from SOAP service")
-                return Response({'detail': 'No data received'}, status=status.HTTP_204_NO_CONTENT)
+            logger.info(f"Response type: {type(response)}")
+            logger.info(f"Response attributes: {dir(response) if response else 'None'}")
+            
+            if not response:
+                logger.warning("Response is None")
+                return Response({'detail': 'No response from SOAP service'}, status=status.HTTP_204_NO_CONTENT)
+            
+            if not hasattr(response, 'Rows'):
+                logger.warning(f"Response has no 'Rows' attribute. Available attributes: {dir(response)}")
+                return Response({'detail': 'Invalid response structure from SOAP service'}, status=status.HTTP_204_NO_CONTENT)
+            
+            if not response.Rows:
+                logger.info("Response.Rows is empty")
+                return Response({'detail': 'No data rows in SOAP response'}, status=status.HTTP_204_NO_CONTENT)
+            
+            logger.info(f"Found {len(response.Rows)} rows in response")
 
             updated_count = 0
             counters = {
@@ -232,8 +267,10 @@ class UpdateChecksView(APIView):
             existing_sklads = {s.sklad_name: s for s in Sklad.objects.all()}
 
             # Commit per batch to avoid long-running transactions
+            logger.info(f"Processing {len(rows)} rows in batches of {batch_size}")
             for i in range(0, len(rows), batch_size):
                 batch = rows[i:i + batch_size]
+                logger.info(f"Processing batch {i//batch_size + 1}: rows {i} to {i + len(batch) - 1}")
                 with transaction.atomic():
                     self._process_batch(
                         batch, existing_check_ids, existing_projects, 
@@ -241,11 +278,21 @@ class UpdateChecksView(APIView):
                         counters
                     )
                 updated_count += len(batch)
+                logger.info(f"Batch processed. Total updated: {updated_count}")
 
                 # Save the last update date
                 last_update_date = getattr(response, 'lastUpdateDateTime', None)
+                logger.info(f"Last update date from response: {last_update_date}")
                 if last_update_date:
                     save_last_update_date(str(last_update_date))
+                    logger.info(f"Saved last update date: {str(last_update_date)}")
+                
+                # Save the last refresh time
+                current_time = timezone.now().isoformat()
+                last_refresh_path = "/home/administrator/Documents/expiditor-tracker-/backend/last_refresh.txt"
+                with open(last_refresh_path, 'w') as f:
+                    f.write(current_time)
+                logger.info(f"Saved last refresh time: {current_time}")
 
             return Response({
                 'updated': updated_count,
@@ -256,4 +303,8 @@ class UpdateChecksView(APIView):
 
         except Exception as e:
             logger.error(f"[GLOBAL ERROR] {e}")
+            logger.error(f"Exception type: {type(e)}")
+            logger.error(f"Exception details: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

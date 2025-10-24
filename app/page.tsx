@@ -480,7 +480,10 @@ export default function ExpeditorTracker() {
         // Backend accepts GET; we pass a hinting param if ignored it's still safe
         const res = await fetch(`${API_BASE_URL}/update-checks/${i === 0 ? "" : ""}?part=${step.key}`, {
           method: "GET",
-          headers: { "Accept": "application/json" },
+          headers: { 
+            "Accept": "application/json",
+            ...(token && { "Authorization": `Token ${token}` })
+          },
         }).catch(() => {})
 
         // If server returns JSON with counts, show as toast update line-by-line
