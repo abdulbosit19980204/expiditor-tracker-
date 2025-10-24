@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, memo } from "react"
-import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send, Clock, Home, ArrowLeft, Key, LogOut, User } from "lucide-react"
+import { Search, Users, MapPin, Filter, ChevronDown, ChevronUp, X, Menu, BarChart3, RefreshCw, Loader2, Send, Clock, Home, ArrowLeft, Key, LogOut, User, ArrowUpDown } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -64,6 +64,9 @@ export default function ExpeditorTracker() {
   const [isLoadingChecks, setIsLoadingChecks] = useState(false)
   const [isLoadingExpeditors, setIsLoadingExpeditors] = useState(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+  const [isSortOpen, setIsSortOpen] = useState(false)
+  const [sortBy, setSortBy] = useState<string>("name")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [expeditorSearchQuery, setExpeditorSearchQuery] = useState("")
   const [checkSearchQuery, setCheckSearchQuery] = useState("")
@@ -411,18 +414,63 @@ export default function ExpeditorTracker() {
     loadChecksAndStats()
   }, [selectedExpeditor, filters, checkSearchQuery])
 
-  // Optimized filter expeditors by search query with better memoization
+  // Optimized filter and sort expeditors by search query with better memoization
   const filteredExpeditors = useMemo(() => {
-    if (!expeditorSearchQuery.trim()) return expeditors
+    let filtered = expeditors
 
-    const searchLower = expeditorSearchQuery.toLowerCase().trim()
-    return expeditors.filter(
-      (expeditor) =>
-        expeditor.name?.toLowerCase().includes(searchLower) ||
-        expeditor.phone_number?.includes(searchLower) ||
-        expeditor.transport_number?.toLowerCase().includes(searchLower),
-    )
-  }, [expeditors, expeditorSearchQuery])
+    // Apply search filter
+    if (expeditorSearchQuery.trim()) {
+      const searchLower = expeditorSearchQuery.toLowerCase().trim()
+      filtered = expeditors.filter(
+        (expeditor) =>
+          expeditor.name?.toLowerCase().includes(searchLower) ||
+          expeditor.phone_number?.includes(searchLower) ||
+          expeditor.transport_number?.toLowerCase().includes(searchLower),
+      )
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue: any = ""
+      let bValue: any = ""
+
+      switch (sortBy) {
+        case "name":
+          aValue = a.name || ""
+          bValue = b.name || ""
+          break
+        case "phone":
+          aValue = a.phone_number || ""
+          bValue = b.phone_number || ""
+          break
+        case "transport":
+          aValue = a.transport_number || ""
+          bValue = b.transport_number || ""
+          break
+        case "filial":
+          aValue = a.filial || ""
+          bValue = b.filial || ""
+          break
+        case "checks_count":
+          aValue = a.checks_count || 0
+          bValue = b.checks_count || 0
+          break
+        default:
+          aValue = a.name || ""
+          bValue = b.name || ""
+      }
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        const result = aValue.localeCompare(bValue)
+        return sortOrder === "asc" ? result : -result
+      } else {
+        const result = aValue - bValue
+        return sortOrder === "asc" ? result : -result
+      }
+    })
+
+    return filtered
+  }, [expeditors, expeditorSearchQuery, sortBy, sortOrder])
 
   // Count active filters
   const activeFiltersCount = useMemo(() => {
@@ -774,16 +822,16 @@ export default function ExpeditorTracker() {
                       />
                     </div>
 
-                    {/* Advanced Filters Toggle */}
-                    <div className="mb-4">
+                    {/* Advanced Filters and Sort Toggle */}
+                    <div className="mb-4 flex gap-2">
                       <Button
                         variant="outline"
                         onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                        className="w-full justify-between"
+                        className="flex-1 justify-between"
                       >
                         <div className="flex items-center gap-2">
                           <Filter className="h-4 w-4" />
-{t('filter')}
+                          {t('filter')}
                           {activeFiltersCount > 0 && (
                             <Badge variant="secondary" className="ml-2">
                               {activeFiltersCount}
@@ -792,6 +840,19 @@ export default function ExpeditorTracker() {
                         </div>
                         {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsSortOpen(!isSortOpen)}
+                        className="flex-1 justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <ArrowUpDown className="h-4 w-4" />
+                          Sort
+                        </div>
+                        {isSortOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </Button>
+                    </div>
 
                       {isFiltersOpen && (
                         <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
@@ -898,20 +959,60 @@ export default function ExpeditorTracker() {
                             </Select>
                           </div>
 
-                          {activeFiltersCount > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={clearAllFilters}
-                              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <X className="h-3 w-3 mr-1" />
-{t('clear_all_filters')}
-                            </Button>
-                          )}
-                        </div>
+                      {activeFiltersCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          {t('clear_all_filters')}
+                        </Button>
                       )}
                     </div>
+                  )}
+
+                  {isSortOpen && (
+                    <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
+                      {/* Sort By */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Sort by</label>
+                        <Select
+                          value={sortBy}
+                          onValueChange={(value) => setSortBy(value)}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Select field" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="name">Name</SelectItem>
+                            <SelectItem value="phone">Phone</SelectItem>
+                            <SelectItem value="transport">Transport</SelectItem>
+                            <SelectItem value="filial">Filial</SelectItem>
+                            <SelectItem value="checks_count">Checks Count</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Sort Order */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Order</label>
+                        <Select
+                          value={sortOrder}
+                          onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Select order" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="asc">Ascending (A-Z)</SelectItem>
+                            <SelectItem value="desc">Descending (Z-A)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
 
                     <Separator className="my-4" />
 
@@ -1052,12 +1153,12 @@ placeholder={t('search_expeditors')}
                   />
                 </div>
 
-                {/* Advanced Filters Toggle */}
-                <div className="mb-3">
+                {/* Advanced Filters and Sort Toggle */}
+                <div className="mb-3 flex gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                    className="w-full justify-between"
+                    className="flex-1 justify-between"
                   >
                     <div className="flex items-center gap-2">
                       <Filter className="h-4 w-4" />
@@ -1069,6 +1170,18 @@ placeholder={t('search_expeditors')}
                       )}
                     </div>
                     {isFiltersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsSortOpen(!isSortOpen)}
+                    className="flex-1 justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ArrowUpDown className="h-4 w-4" />
+                      Sort
+                    </div>
+                    {isSortOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
                 </div>
 
@@ -1188,6 +1301,47 @@ placeholder={t('search_expeditors')}
                           Clear All Filters
                         </Button>
                       )}
+                    </div>
+                  )}
+
+                  {isSortOpen && (
+                    <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
+                      {/* Sort By */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Sort by</label>
+                        <Select
+                          value={sortBy}
+                          onValueChange={(value) => setSortBy(value)}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Select field" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="name">Name</SelectItem>
+                            <SelectItem value="phone">Phone</SelectItem>
+                            <SelectItem value="transport">Transport</SelectItem>
+                            <SelectItem value="filial">Filial</SelectItem>
+                            <SelectItem value="checks_count">Checks Count</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Sort Order */}
+                      <div>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">Order</label>
+                        <Select
+                          value={sortOrder}
+                          onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="Select order" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="asc">Ascending (A-Z)</SelectItem>
+                            <SelectItem value="desc">Descending (Z-A)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   )}
 
