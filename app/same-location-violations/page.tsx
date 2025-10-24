@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,8 @@ import { useLanguage } from '@/lib/language-context'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/loading-spinner'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Send } from 'lucide-react'
+import { analytics } from '@/lib/api'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7896/api'
 
@@ -87,6 +89,9 @@ export default function ViolationAnalyticsPage() {
     radius: '',
     windowDuration: ''
   })
+  
+  // Debounced filters for API calls
+  const [debouncedFilters, setDebouncedFilters] = useState(filters)
 
   useEffect(() => {
     if (!user) {
@@ -99,7 +104,7 @@ export default function ViolationAnalyticsPage() {
   // Auto-apply filters on change (no Apply button required)
   useEffect(() => {
     if (!user) return
-    const t = setTimeout(() => fetchData(), 150) // debounce a bit for type/select
+    const t = setTimeout(() => fetchData(), 800) // debounce a bit for type/select
     return () => clearTimeout(t)
   }, [filters])
 
@@ -167,6 +172,24 @@ export default function ViolationAnalyticsPage() {
     setCurrentPage(1)
     fetchData()
   }
+
+  const handleOpenTelegram = useCallback(async () => {
+    try {
+      console.log("Getting Telegram target...")
+      const info = await analytics.getTelegramTarget()
+      console.log("Telegram info:", info)
+      if (info && info.url) {
+        console.log("Opening Telegram URL:", info.url)
+        window.open(info.url, "_blank")
+      } else {
+        console.log("No URL found, opening default Telegram")
+        window.open("https://t.me/", "_blank")
+      }
+    } catch (error) {
+      console.error("Failed to get Telegram info:", error)
+      window.open("https://t.me/", "_blank")
+    }
+  }, [])
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -287,6 +310,11 @@ export default function ViolationAnalyticsPage() {
             {/* Refresh */}
             <Button variant="outline" size="sm" onClick={fetchData}>
               <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            {/* Telegram Connect */}
+            <Button variant="outline" size="sm" onClick={handleOpenTelegram} title="Telegram">
+              <Send className="h-4 w-4" />
             </Button>
 
             {/* Home */}
@@ -786,7 +814,7 @@ export default function ViolationAnalyticsPage() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">Time:</span>
-                                  <span>{check.time}</span>
+                                  <span>{formatTime(check.time)}</span>
                                 </div>
                               </div>
                               <div>

@@ -139,6 +139,18 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
 
   return (
     <div className={cn("space-y-2", className)}>
+      {/* Today button - small and positioned at top */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleTodayClick}
+        className="w-auto px-2 py-1 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200"
+      >
+        <Clock className="h-3 w-3 mr-1" />
+        {t('today')}
+      </Button>
+
       {/* Modern styled date picker container */}
       <div className="relative group">
         <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none z-10" />
@@ -157,18 +169,6 @@ export function DatePickerWithRange({ dateRange, onDateRangeChange, className }:
         {/* Custom overlay for better styling */}
         <div className="absolute inset-0 pointer-events-none rounded-lg ring-1 ring-transparent group-hover:ring-gray-200 transition-all duration-200" />
       </div>
-
-      {/* Today button */}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={handleTodayClick}
-        className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all duration-200"
-      >
-        <Clock className="h-3.5 w-3.5 mr-2" />
-        {t('today')}
-      </Button>
 
       {/* Display selected range */}
       {(startDate || endDate) && (
