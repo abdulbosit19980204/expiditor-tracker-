@@ -85,13 +85,18 @@ export default function ExpeditorTracker() {
 
   const handleOpenTelegram = useCallback(async () => {
     try {
+      console.log("Getting Telegram target...")
       const info = await analytics.getTelegramTarget()
+      console.log("Telegram info:", info)
       if (info && info.url) {
+        console.log("Opening Telegram URL:", info.url)
         window.open(info.url, "_blank")
       } else {
+        console.log("No URL found, opening default Telegram")
         window.open("https://t.me/", "_blank")
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to get Telegram info:", error)
       window.open("https://t.me/", "_blank")
     }
   }, [])
