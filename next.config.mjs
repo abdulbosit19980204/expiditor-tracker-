@@ -10,6 +10,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Fix CSS preload warnings
+  experimental: {
+    optimizeCss: false,
+  },
+  // Disable automatic CSS preloading to prevent warnings
+  compiler: {
+    removeConsole: isProd,
+  },
   async headers() {
     if (isProd) {
       return [

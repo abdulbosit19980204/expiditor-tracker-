@@ -11,6 +11,7 @@ from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
 from .auth_views import register_user, login_user, logout_user, get_user_profile, check_auth_status
 from .integration import UpdateChecksView
 from .violation_insights_views import ViolationInsightsView, SameLocationViolationsView
+from .user_analytics_views import UserAnalyticsView, LiveUserDataView, UserSessionListView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -56,6 +57,11 @@ urlpatterns = [
     path('auth/logout/', logout_user, name='logout'),
     path('auth/profile/', get_user_profile, name='profile'),
     path('auth/status/', check_auth_status, name='auth-status'),
+    
+    # User Analytics endpoints (Super User only)
+    path('admin/user-analytics/', UserAnalyticsView.as_view(), name='user-analytics'),
+    path('admin/user-analytics/live/', LiveUserDataView.as_view(), name='live-user-data'),
+    path('admin/user-sessions/', UserSessionListView.as_view(), name='user-sessions'),
     
     # Router URLs (must be LAST to avoid conflicts with specific paths)
     path('', include(router.urls)),

@@ -23,7 +23,8 @@ import {
   Shield,
   User,
   Loader2,
-  ChevronLeft
+  ChevronLeft,
+  Users
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -246,6 +247,12 @@ export function AppNavigation({
         name: t('tasks_management'),
         href: '/tasks',
         icon: Clock,
+      },
+      {
+        name: t('user_analytics'),
+        href: '/admin/user-analytics',
+        icon: Users,
+        badge: 'NEW'
       },
       {
         name: t('yandex_tokens'),

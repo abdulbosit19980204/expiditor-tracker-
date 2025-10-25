@@ -5,6 +5,7 @@ from django.utils import timezone
 from .models import (
     Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
     ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount, CheckAnalytics, YandexToken,
+    UserSession, UserActivity,
 )
 
 @admin.register(Projects)
@@ -372,6 +373,126 @@ class YandexTokenAdmin(admin.ModelAdmin):
             
             return TemplateResponse(request, 'admin/expeditor_app/yandextoken/delete_selected_confirmation.html', context)
     delete_selected_tokens.short_description = "Delete selected tokens"
+
+
+@admin.register(UserSession)
+class UserSessionAdmin(admin.ModelAdmin):
+    list_display = ['session_id_short', 'ip_address', 'user_type', 'first_visit', 'last_activity', 'total_requests', 'is_active']
+    list_filter = ['user_type', 'is_active', 'first_visit', 'last_activity']
+    search_fields = ['session_id', 'ip_address', 'user_agent']
+    readonly_fields = ['session_id', 'first_visit', 'last_activity', 'session_duration_minutes']
+    ordering = ['-last_activity']
+    actions = ['deactivate_sessions', 'activate_sessions', 'delete_old_sessions']
+    
+    fieldsets = (
+        ('Session Information', {
+            'fields': ('session_id', 'ip_address', 'user_agent', 'user_type')
+        }),
+        ('Activity Statistics', {
+            'fields': ('total_requests', 'page_views', 'api_calls', 'map_interactions', 'session_duration_minutes')
+        }),
+        ('Timestamps', {
+            'fields': ('first_visit', 'last_activity'),
+            'classes': ('collapse',)
+        }),
+        ('Status', {
+            'fields': ('is_active', 'location')
+        }),
+    )
+    
+    def session_id_short(self, obj):
+        """Show shortened session ID."""
+        return f"{obj.session_id[:8]}..."
+    session_id_short.short_description = 'Session ID'
+    session_id_short.admin_order_field = 'session_id'
+    
+    def deactivate_sessions(self, request, queryset):
+        """Deactivate selected sessions."""
+        count = queryset.update(is_active=False)
+        messages.success(request, f'{count} session(s) deactivated')
+    deactivate_sessions.short_description = "Deactivate selected sessions"
+    
+    def activate_sessions(self, request, queryset):
+        """Activate selected sessions."""
+        count = queryset.update(is_active=True)
+        messages.success(request, f'{count} session(s) activated')
+    activate_sessions.short_description = "Activate selected sessions"
+    
+    def delete_old_sessions(self, request, queryset):
+        """Delete sessions older than 30 days."""
+        from datetime import timedelta
+        cutoff_date = timezone.now() - timedelta(days=30)
+        old_sessions = queryset.filter(first_visit__lt=cutoff_date)
+        count = old_sessions.count()
+        old_sessions.delete()
+        messages.success(request, f'{count} old session(s) deleted')
+    delete_old_sessions.short_description = "Delete sessions older than 30 days"
+
+
+@admin.register(UserActivity)
+class UserActivityAdmin(admin.ModelAdmin):
+    list_display = ['activity_type', 'session_ip', 'timestamp', 'page_url_short', 'api_endpoint_short', 'duration_display']
+    list_filter = ['activity_type', 'timestamp', 'session__user_type']
+    search_fields = ['session__ip_address', 'page_url', 'api_endpoint', 'metadata']
+    readonly_fields = ['timestamp', 'duration_display']
+    ordering = ['-timestamp']
+    actions = ['delete_old_activities']
+    
+    fieldsets = (
+        ('Activity Information', {
+            'fields': ('session', 'activity_type', 'timestamp')
+        }),
+        ('Details', {
+            'fields': ('page_url', 'api_endpoint', 'duration', 'duration_display')
+        }),
+        ('Metadata', {
+            'fields': ('metadata',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def session_ip(self, obj):
+        """Show session IP address."""
+        return obj.session.ip_address
+    session_ip.short_description = 'IP Address'
+    session_ip.admin_order_field = 'session__ip_address'
+    
+    def page_url_short(self, obj):
+        """Show shortened page URL."""
+        if obj.page_url:
+            return obj.page_url[:50] + '...' if len(obj.page_url) > 50 else obj.page_url
+        return '-'
+    page_url_short.short_description = 'Page URL'
+    
+    def api_endpoint_short(self, obj):
+        """Show shortened API endpoint."""
+        if obj.api_endpoint:
+            return obj.api_endpoint[:30] + '...' if len(obj.api_endpoint) > 30 else obj.api_endpoint
+        return '-'
+    api_endpoint_short.short_description = 'API Endpoint'
+    
+    def duration_display(self, obj):
+        """Display duration in readable format."""
+        if obj.duration:
+            total_seconds = obj.duration.total_seconds()
+            if total_seconds < 60:
+                return f"{total_seconds:.1f}s"
+            elif total_seconds < 3600:
+                return f"{total_seconds/60:.1f}m"
+            else:
+                return f"{total_seconds/3600:.1f}h"
+        return "-"
+    duration_display.short_description = 'Duration'
+    
+    def delete_old_activities(self, request, queryset):
+        """Delete activities older than 30 days."""
+        from datetime import timedelta
+        cutoff_date = timezone.now() - timedelta(days=30)
+        old_activities = queryset.filter(timestamp__lt=cutoff_date)
+        count = old_activities.count()
+        old_activities.delete()
+        messages.success(request, f'{count} old activity(ies) deleted')
+    delete_old_activities.short_description = "Delete activities older than 30 days"
 
 
 @admin.register(CheckAnalytics)

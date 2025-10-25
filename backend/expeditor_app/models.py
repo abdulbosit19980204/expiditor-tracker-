@@ -310,6 +310,74 @@ class TaskList(models.Model):
         return f"{self.name} ({self.code})"
 
 
+class UserSession(models.Model):
+    """Track user sessions for analytics"""
+    session_id = models.CharField(max_length=255, unique=True, db_index=True)
+    ip_address = models.GenericIPAddressField()
+    user_type = models.CharField(max_length=50, default='guest')  # guest, regular_user, super_user
+    first_visit = models.DateTimeField(auto_now_add=True)
+    last_activity = models.DateTimeField(auto_now=True)
+    total_requests = models.PositiveIntegerField(default=0)
+    page_views = models.PositiveIntegerField(default=0)
+    map_interactions = models.PositiveIntegerField(default=0)
+    api_calls = models.PositiveIntegerField(default=0)
+    session_duration = models.DurationField(null=True, blank=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name_plural = "User Sessions"
+        ordering = ['-last_activity']
+    
+    def __str__(self):
+        return f"Session {self.session_id[:8]}... ({self.user_type})"
+    
+    @property
+    def session_duration_minutes(self):
+        if self.session_duration:
+            return int(self.session_duration.total_seconds() / 60)
+        return 0
+
+
+class UserActivity(models.Model):
+    """Track individual user activities"""
+    session = models.ForeignKey(UserSession, on_delete=models.CASCADE, related_name='activities')
+    activity_type = models.CharField(max_length=100)  # page_view, api_call, map_interaction, etc.
+    timestamp = models.DateTimeField(auto_now_add=True)
+    page_url = models.URLField(null=True, blank=True)
+    api_endpoint = models.CharField(max_length=255, null=True, blank=True)
+    additional_data = models.JSONField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name_plural = "User Activities"
+        ordering = ['-timestamp']
+    
+    def __str__(self):
+        return f"{self.activity_type} at {self.timestamp}"
+
+
+class TelegramAccount(models.Model):
+    """Stores Telegram contact information for quick redirects from the UI.
+    If multiple rows exist, the latest active one will be used. Either
+    username or phone_number can be provided; both are optional but at
+    least one should be set for a working link.
+    """
+    display_name = models.CharField(max_length=120, blank=True, null=True)
+    username = models.CharField(max_length=120, blank=True, null=True)
+    phone_number = models.CharField(max_length=32, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Telegram Accounts"
+        ordering = ['-updated_at', '-id']
+    
+    def __str__(self):
+        who = self.username or self.phone_number or "unknown"
+        return f"TelegramAccount({who})"
+
+
 class EmailConfig(models.Model):
     backend = models.CharField(max_length=200, default='django.core.mail.backends.smtp.EmailBackend')
     host = models.CharField(max_length=200, default='smtp.gmail.com')
@@ -329,27 +397,6 @@ class EmailConfig(models.Model):
     def __str__(self):
         return f"SMTP {self.host}:{self.port} (TLS={self.use_tls}, SSL={self.use_ssl})"
 
-
-class TelegramAccount(models.Model):
-    """Stores Telegram contact information for quick redirects from the UI.
-
-    If multiple rows exist, the latest active one will be used. Either
-    username or phone_number can be provided; both are optional but at
-    least one should be set for a working link.
-    """
-    display_name = models.CharField(max_length=120, blank=True, null=True)
-    username = models.CharField(max_length=120, blank=True, null=True, help_text="Telegram @username without @")
-    phone_number = models.CharField(max_length=32, blank=True, null=True, help_text="International format like +99890...")
-    is_active = models.BooleanField(default=True, db_index=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name_plural = "Settings — Telegram Accounts"
-
-    def __str__(self):
-        who = self.username or self.phone_number or "unknown"
-        return f"TelegramAccount({who})"
 
 # Proxy models for grouping in Django Admin without DB changes
 class SettingsEmailRecipient(EmailRecipient):

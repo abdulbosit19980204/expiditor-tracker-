@@ -19,7 +19,11 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Expeditor Tracker",
   },
-  generator: 'v0.dev'
+  generator: 'v0.dev',
+  // Optimize resource loading
+  other: {
+    'preload-css': 'false', // Disable automatic CSS preloading
+  }
 }
 
 export const viewport: Viewport = {

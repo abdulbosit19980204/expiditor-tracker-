@@ -720,11 +720,18 @@ export default function ExpeditorTracker() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   {user?.is_superuser && (
-                    <Link href="/tasks" className="inline-flex">
-                      <Button variant="outline" size="sm" title="Task Management">
-                        <Clock className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <>
+                      <Link href="/tasks" className="inline-flex">
+                        <Button variant="outline" size="sm" title="Task Management">
+                          <Clock className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                       <Link href="/admin/user-analytics" className="inline-flex">
+                         <Button variant="outline" size="sm" title={t('user_analytics')}>
+                           <Users className="h-4 w-4" />
+                         </Button>
+                       </Link>
+                    </>
                   )}
                 </>
               )}
@@ -848,7 +855,7 @@ export default function ExpeditorTracker() {
                       >
                         <div className="flex items-center gap-2">
                           <ArrowUpDown className="h-4 w-4" />
-                          Sort
+                          {t('sort_by')}
                         </div>
                         {isSortOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                       </Button>
@@ -977,37 +984,37 @@ export default function ExpeditorTracker() {
                     <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
                       {/* Sort By */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Sort by</label>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">{t('sort_by')}</label>
                         <Select
                           value={sortBy}
                           onValueChange={(value) => setSortBy(value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Select field" />
+                            <SelectValue placeholder={t('sort_by')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="name">Name</SelectItem>
-                            <SelectItem value="phone">Phone</SelectItem>
-                            <SelectItem value="transport">Transport</SelectItem>
-                            <SelectItem value="filial">Filial</SelectItem>
-                            <SelectItem value="checks_count">Checks Count</SelectItem>
+                            <SelectItem value="name">{t('sort_name')}</SelectItem>
+                            <SelectItem value="phone">{t('sort_phone')}</SelectItem>
+                            <SelectItem value="transport">{t('sort_transport')}</SelectItem>
+                            <SelectItem value="filial">{t('sort_filial')}</SelectItem>
+                            <SelectItem value="checks_count">{t('sort_checks_count')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       {/* Sort Order */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Order</label>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">{t('sort_order')}</label>
                         <Select
                           value={sortOrder}
                           onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Select order" />
+                            <SelectValue placeholder={t('sort_order')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="asc">Ascending (A-Z)</SelectItem>
-                            <SelectItem value="desc">Descending (Z-A)</SelectItem>
+                            <SelectItem value="asc">{t('sort_ascending')}</SelectItem>
+                            <SelectItem value="desc">{t('sort_descending')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1308,37 +1315,37 @@ placeholder={t('search_expeditors')}
                     <div className="mt-3 space-y-3 p-3 bg-gray-50 rounded-lg">
                       {/* Sort By */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Sort by</label>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">{t('sort_by')}</label>
                         <Select
                           value={sortBy}
                           onValueChange={(value) => setSortBy(value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Select field" />
+                            <SelectValue placeholder={t('sort_by')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="name">Name</SelectItem>
-                            <SelectItem value="phone">Phone</SelectItem>
-                            <SelectItem value="transport">Transport</SelectItem>
-                            <SelectItem value="filial">Filial</SelectItem>
-                            <SelectItem value="checks_count">Checks Count</SelectItem>
+                            <SelectItem value="name">{t('sort_name')}</SelectItem>
+                            <SelectItem value="phone">{t('sort_phone')}</SelectItem>
+                            <SelectItem value="transport">{t('sort_transport')}</SelectItem>
+                            <SelectItem value="filial">{t('sort_filial')}</SelectItem>
+                            <SelectItem value="checks_count">{t('sort_checks_count')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       {/* Sort Order */}
                       <div>
-                        <label className="text-xs font-medium text-gray-600 mb-1 block">Order</label>
+                        <label className="text-xs font-medium text-gray-600 mb-1 block">{t('sort_order')}</label>
                         <Select
                           value={sortOrder}
                           onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="Select order" />
+                            <SelectValue placeholder={t('sort_order')} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="asc">Ascending (A-Z)</SelectItem>
-                            <SelectItem value="desc">Descending (Z-A)</SelectItem>
+                            <SelectItem value="asc">{t('sort_ascending')}</SelectItem>
+                            <SelectItem value="desc">{t('sort_descending')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

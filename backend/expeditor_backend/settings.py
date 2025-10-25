@@ -76,6 +76,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'expeditor_app.middleware.UserTrackingMiddleware',
+    'expeditor_app.middleware.MapInteractionMiddleware',
 ]
 
 ROOT_URLCONF = 'expeditor_backend.urls'

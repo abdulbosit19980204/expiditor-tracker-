@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const checkDevice = () => {
       setIsMobile(window.innerWidth < 768)
     }
@@ -15,6 +17,11 @@ export function useIsMobile() {
 
     return () => window.removeEventListener("resize", checkDevice)
   }, [])
+
+  // Return false during SSR to prevent hydration mismatch
+  if (!mounted) {
+    return false
+  }
 
   return isMobile
 }
