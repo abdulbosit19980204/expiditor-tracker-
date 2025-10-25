@@ -762,6 +762,9 @@ export default function BuzilishlarPage() {
                                   <div className="flex items-center gap-2 mb-2">
                                     <User className="h-4 w-4 text-blue-600" />
                                     <p className="font-semibold text-gray-900">{check.client_name}</p>
+                                    <Badge variant="outline" className="text-xs bg-gray-100">
+                                      ID: {check.id.split('_')[2]}
+                                    </Badge>
                                     <Badge variant={check.check_type === 'violation' ? 'destructive' : 'secondary'} className="text-xs">
                                       {check.check_type === 'violation' ? 'Buzilish' : 'Shubhali'}
                                     </Badge>
