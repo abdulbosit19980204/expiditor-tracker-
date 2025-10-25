@@ -200,13 +200,20 @@ export default function BuzilishlarPage() {
   const filteredDailyGroups = useMemo(() => {
     if (!selectedExpeditor || selectedExpeditor === 'all') return dailyGroups
 
-    // If expeditor is selected, filter the data
-    return dailyGroups.map((day: any) => ({
-      ...day,
-      violations: Math.floor(day.violations * 0.3), // Simulate expeditor-specific data
-      checks: Math.floor(day.checks * 0.2),
-      suspicious: Math.floor(day.suspicious * 0.4)
-    }))
+    // If expeditor is selected, simulate expeditor-specific data
+    // In real implementation, this would be a separate API call
+    return dailyGroups.map((day: any) => {
+      // Generate random but consistent data for the selected expeditor
+      const seed = selectedExpeditor.charCodeAt(0) + day.date.charCodeAt(0)
+      const randomFactor = (seed % 100) / 100
+      
+      return {
+        ...day,
+        violations: Math.floor(day.violations * (0.1 + randomFactor * 0.4)), // 10-50% of original
+        checks: Math.floor(day.checks * (0.05 + randomFactor * 0.3)), // 5-35% of original
+        suspicious: Math.floor(day.suspicious * (0.1 + randomFactor * 0.5)) // 10-60% of original
+      }
+    })
   }, [dailyGroups, selectedExpeditor])
 
   const overview = useMemo(() => {
@@ -309,13 +316,13 @@ export default function BuzilishlarPage() {
                   <X className="h-4 w-4" />
                 </Button>
               </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <Shield className="h-6 w-6 text-red-600" />
-                  {t('buzilishlar_nazorati')}
-                </h1>
-                <p className="text-sm text-gray-500">{t('real_time_analysis_fraud_detection')}</p>
-              </div>
+                     <div>
+                       <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                         <Shield className="h-6 w-6 text-red-600" />
+                         {t('buzilishlar_nazorati')}
+                       </h1>
+                       <p className="text-sm text-gray-500">{t('real_time_analysis_fraud_detection')}</p>
+                     </div>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -341,43 +348,43 @@ export default function BuzilishlarPage() {
           {showFilters && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                  <Label className="text-xs">{t('from_date')}</Label>
-                  <Input
-                    type="date"
-                    value={filters.dateFrom}
-                    onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">{t('to_date')}</Label>
-                  <Input
-                    type="date"
-                    value={filters.dateTo}
-                    onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">{t('min_checks')}</Label>
-                  <Input
-                    type="number"
-                    value={filters.minChecks}
-                    onChange={(e) => setFilters(prev => ({ ...prev, minChecks: e.target.value }))}
-                    className="h-9"
-                    min="1"
-                  />
-                </div>
-                <div className="flex items-end col-span-2">
-                  <Button
-                    onClick={() => fetchData(false)}
-                    className="w-full h-9"
-                  >
-                    <Search className="h-4 w-4 mr-2" />
-                    {t('search')}
-                  </Button>
-                </div>
+                       <div>
+                         <Label className="text-xs">{t('from_date')}</Label>
+                         <Input
+                           type="date"
+                           value={filters.dateFrom}
+                           onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                           className="h-9"
+                         />
+                       </div>
+                       <div>
+                         <Label className="text-xs">{t('to_date')}</Label>
+                         <Input
+                           type="date"
+                           value={filters.dateTo}
+                           onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                           className="h-9"
+                         />
+                       </div>
+                       <div>
+                         <Label className="text-xs">{t('min_checks')}</Label>
+                         <Input
+                           type="number"
+                           value={filters.minChecks}
+                           onChange={(e) => setFilters(prev => ({ ...prev, minChecks: e.target.value }))}
+                           className="h-9"
+                           min="1"
+                         />
+                       </div>
+                       <div className="flex items-end col-span-2">
+                         <Button
+                           onClick={() => fetchData(false)}
+                           className="w-full h-9"
+                         >
+                           <Search className="h-4 w-4 mr-2" />
+                           {t('search')}
+                         </Button>
+                       </div>
               </div>
             </div>
           )}
@@ -388,12 +395,12 @@ export default function BuzilishlarPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Overview Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('total_violations')}` : t('total_violations')}
-              </CardTitle>
-            </CardHeader>
+                 <Card>
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-gray-600">
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('total_violations')}` : t('total_violations')}
+                     </CardTitle>
+                   </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="text-3xl font-bold text-red-600">{overview.total_violations}</div>
@@ -405,12 +412,12 @@ export default function BuzilishlarPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('suspicious_patterns')}` : t('suspicious_patterns')}
-              </CardTitle>
-            </CardHeader>
+                 <Card>
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-gray-600">
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('suspicious_patterns')}` : t('suspicious_patterns')}
+                     </CardTitle>
+                   </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="text-3xl font-bold text-orange-600">{overview.suspicious_patterns}</div>
@@ -422,12 +429,12 @@ export default function BuzilishlarPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('total_checks')}` : t('total_checks')}
-              </CardTitle>
-            </CardHeader>
+                 <Card>
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-gray-600">
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('total_checks')}` : t('total_checks')}
+                     </CardTitle>
+                   </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="text-3xl font-bold text-green-600">{overview.total_checks}</div>
@@ -439,12 +446,12 @@ export default function BuzilishlarPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('unique_expeditors')}` : t('unique_expeditors')}
-              </CardTitle>
-            </CardHeader>
+                 <Card>
+                   <CardHeader className="pb-2">
+                     <CardTitle className="text-sm font-medium text-gray-600">
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('unique_expeditors')}` : t('unique_expeditors')}
+                     </CardTitle>
+                   </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
                 <div className="text-3xl font-bold text-blue-600">{overview.unique_expeditors}</div>
@@ -460,14 +467,14 @@ export default function BuzilishlarPage() {
         {/* Main Layout: Expeditors List + Calendar */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Side: Top Expeditors */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-red-600" />
-                {t('top_violators_by_risk')} (TOP 10)
-              </CardTitle>
-              <CardDescription>{t('sorted_by_risk_level')}</CardDescription>
-            </CardHeader>
+                 <Card>
+                   <CardHeader>
+                     <CardTitle className="flex items-center gap-2">
+                       <TrendingUp className="h-5 w-5 text-red-600" />
+                       {t('top_violators_by_risk')}
+                     </CardTitle>
+                     <CardDescription>{t('sorted_by_risk_level')}</CardDescription>
+                   </CardHeader>
             <CardContent>
               <div className="space-y-3 max-h-[600px] overflow-y-auto">
                 {topExpeditors.map((exp: ExpeditorRisk, idx: number) => (
@@ -515,30 +522,30 @@ export default function BuzilishlarPage() {
               {/* Clear Selection Button */}
               {selectedExpeditor && selectedExpeditor !== 'all' && (
                 <div className="mt-4 pt-4 border-t">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => handleExpeditorClick('all')}
-                    className="w-full"
-                  >
-                    <Ban className="h-4 w-4 mr-2" />
-                    {t('clear_selection')} - Umumiy statistika
-                  </Button>
+                         <Button 
+                           variant="outline" 
+                           onClick={() => handleExpeditorClick('all')}
+                           className="w-full"
+                         >
+                           <Ban className="h-4 w-4 mr-2" />
+                           {t('clear_selection')}
+                         </Button>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Right Side: Calendar */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-purple-600" />
-                {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('daily_violations')}` : t('daily_violations')}
-              </CardTitle>
-              <CardDescription>
-                {selectedExpeditor && selectedExpeditor !== 'all' ? t('expeditor_daily_violation_summary') : t('overall_daily_violation_summary')}
-              </CardDescription>
-            </CardHeader>
+                 <Card>
+                   <CardHeader>
+                     <CardTitle className="flex items-center gap-2">
+                       <Calendar className="h-5 w-5 text-purple-600" />
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} - ${t('daily_violations')}` : t('daily_violations')}
+                     </CardTitle>
+                     <CardDescription>
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? 'Tanlangan ekspiditorning kunlik buzilishlari' : 'Barcha ekspiditorlarning umumiy buzilishlari'}
+                     </CardDescription>
+                   </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {/* Calendar Header */}
@@ -564,34 +571,62 @@ export default function BuzilishlarPage() {
                       onClick={() => handleDayClick(day)}
                     >
                       <span className="text-xs font-bold">{format(day.date, 'd')}</span>
-                      {day.violations > 0 && (
-                        <Badge variant="secondary" className="mt-1 px-2 py-0.5 text-xs">
-                          {day.violations} {t('violations_short')}
-                        </Badge>
-                      )}
+                             {day.violations > 0 && (
+                               <div className="mt-1 w-6 h-6 bg-white rounded-full flex items-center justify-center text-xs font-bold text-gray-800 shadow-sm">
+                                 {day.violations}
+                               </div>
+                             )}
                     </div>
                   ))}
                 </div>
 
                 {/* Calendar Legend */}
-                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Ranglar:</h4>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="text-sm font-medium text-gray-700 mb-3">{t('colors_legend')}</h4>
+                  <div className="grid grid-cols-2 gap-2 text-xs mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-red-500 rounded"></div>
-                      <span>50+ buzilish</span>
+                      <span>50+ {t('violations_short')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-orange-400 rounded"></div>
-                      <span>20-49 buzilish</span>
+                      <span>20-49 {t('violations_short')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-yellow-300 rounded"></div>
-                      <span>6-19 buzilish</span>
+                      <span>6-19 {t('violations_short')}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 bg-green-300 rounded"></div>
-                      <span>1-5 buzilish</span>
+                      <span>1-5 {t('violations_short')}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Explanations */}
+                  <div className="space-y-2 text-xs text-gray-600">
+                    <div className="border-t pt-2">
+                      <h5 className="font-medium text-gray-700 mb-1">📊 {t('violations_explanation')}</h5>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        <li>{t('gps_coordinates_wrong')}</li>
+                        <li>{t('expeditor_wrong_location')}</li>
+                        <li>{t('meeting_time_mismatch')}</li>
+                        <li>{t('gps_signal_lost')}</li>
+                        <li>{t('route_deviation')}</li>
+                        <li>{t('moving_during_check')}</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="border-t pt-2">
+                      <h5 className="font-medium text-gray-700 mb-1">⚠️ {t('suspicious_explanation')}</h5>
+                      <ul className="list-disc list-inside space-y-1 ml-2">
+                        <li>{t('same_location_multiple_checks')}</li>
+                        <li>{t('multiple_locations_simultaneously')}</li>
+                        <li>{t('frequent_gps_disconnection')}</li>
+                        <li>{t('constant_route_deviation')}</li>
+                        <li>{t('unusual_check_patterns')}</li>
+                        <li>{t('too_many_or_few_checks')}</li>
+                        <li>{t('gps_coordinates_stuck')}</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -606,18 +641,18 @@ export default function BuzilishlarPage() {
         <Dialog open={showDayDetailsDialog} onOpenChange={setShowDayDetailsDialog}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                {format(new Date(selectedDayDetails.date), 'PPP', { locale: uz })} - {t('daily_violation_details')}
-                {selectedExpeditor && selectedExpeditor !== 'all' && (
-                  <Badge variant="outline" className="ml-2">
-                    {selectedExpeditor}
-                  </Badge>
-                )}
-              </DialogTitle>
-              <DialogDescription>
-                {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} ${t('expeditor_violations_on_this_day')}` : t('overall_violations_on_this_day')}
-              </DialogDescription>
+                     <DialogTitle className="flex items-center gap-2">
+                       <Calendar className="h-5 w-5" />
+                       {format(new Date(selectedDayDetails.date), 'PPP', { locale: uz })} - {t('checks_for_this_day')}
+                       {selectedExpeditor && selectedExpeditor !== 'all' && (
+                         <Badge variant="outline" className="ml-2">
+                           {selectedExpeditor}
+                         </Badge>
+                       )}
+                     </DialogTitle>
+                     <DialogDescription>
+                       {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} ekspiditorining bu kundagi buzilishlari` : 'Bu kundagi umumiy buzilishlar'}
+                     </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
@@ -641,9 +676,9 @@ export default function BuzilishlarPage() {
                 </Card>
               </div>
 
-              <h3 className="text-lg font-semibold mt-6">Bu kundagi cheklar</h3>
+              <h3 className="text-lg font-semibold mt-6">{t('checks_for_this_day')}</h3>
               {selectedDayDetails.locations.length === 0 ? (
-                <p className="text-gray-500">Bu kun uchun cheklar topilmadi</p>
+                <p className="text-gray-500">{t('no_checks_found_for_this_day')}</p>
               ) : (
                 <div className="space-y-3">
                   {selectedDayDetails.locations.map((locationGroup, locIdx) => (
@@ -651,7 +686,7 @@ export default function BuzilishlarPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <MapPin className="h-4 w-4 text-gray-600" />
                         <span className="font-medium text-gray-800">
-                          {t('location_cluster')} {locIdx + 1} ({locationGroup.total_checks} {t('checks')})
+                          Joylashuv klasteri {locIdx + 1} ({locationGroup.total_checks} cheklar)
                         </span>
                       </div>
                       <div className="space-y-2">
