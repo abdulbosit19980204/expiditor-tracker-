@@ -205,20 +205,54 @@ export default function BuzilishlarPage() {
              const seed = (selectedExpeditor || 'all').charCodeAt(0) + day.date.charCodeAt(0)
              const randomFactor = (seed % 100) / 100
              
-             // Generate sample check data for demonstration
-             const checkCount = Math.max(1, Math.floor(day.checks * (0.1 + randomFactor * 0.3)))
-             const sampleChecks = Array.from({ length: checkCount }, (_, i) => {
+             // Generate sample check data for demonstration - only violations and suspicious
+             const violationCount = Math.floor(day.violations * (0.1 + randomFactor * 0.4))
+             const suspiciousCount = Math.floor(day.suspicious * (0.1 + randomFactor * 0.5))
+             const totalProblematicChecks = Math.max(1, violationCount + suspiciousCount)
+             
+             const sampleChecks = Array.from({ length: totalProblematicChecks }, (_, i) => {
                const checkTime = new Date(day.date)
                checkTime.setHours(8 + (i * 2) % 12, (i * 15) % 60, 0, 0)
                
+               const clientNames = [
+                 'Ахмедов Азизбек', 'Каримова Мадина', 'Тошпулатов Бахтиёр',
+                 'Юлдашева Гулнора', 'Рахимов Фарход', 'Норова Ойша',
+                 'Абдуллаев Шохрух', 'Махмудова Зухра', 'Исмоилов Дилшод',
+                 'Хакимова Нилуфар', 'Усманов Жахонгир', 'Азизова Сабина'
+               ]
+               
+               const agents = [
+                 'Агент Али', 'Агент Бахтиёр', 'Агент Гулнора', 'Агент Дилшод',
+                 'Агент Елена', 'Агент Фарход', 'Агент Зухра', 'Агент Исмоил'
+               ]
+               
+               const violationTypes = [
+                 'GPS xatosi', 'Joylashuv noto\'g\'ri', 'Vaqt mos kelmadi',
+                 'Marshrut buzildi', 'Signal yo\'q', 'Koordinatalar noto\'g\'ri'
+               ]
+               
+               const suspiciousTypes = [
+                 'Shubhali harakat', 'Tez-tez joy o\'zgartirish', 'Notabiiy naqsh',
+                 'GPS uzilish', 'Marshrutdan chetga chiqish', 'Vaqt buzilishi'
+               ]
+               
+               const isViolation = i < violationCount
+               const isSuspicious = i >= violationCount && i < totalProblematicChecks
+               
                return {
                  id: `check_${day.date}_${i}`,
-                 client_name: `Mijoz ${i + 1}`,
-                 time: checkTime.toISOString(), // Store as ISO string
+                 client_name: clientNames[i % clientNames.length],
+                 agent: agents[i % agents.length],
+                 summa: Math.floor(Math.random() * 500000) + 50000, // 50,000 - 550,000 UZS
+                 time: checkTime.toISOString(),
                  expeditor: selectedExpeditor || 'Noma\'lum',
                  lat: 41.3111 + (Math.random() - 0.5) * 0.1,
                  lon: 69.2797 + (Math.random() - 0.5) * 0.1,
-                 violation_type: Math.random() > 0.7 ? 'GPS xatosi' : undefined
+                 violation_type: isViolation ? violationTypes[i % violationTypes.length] : undefined,
+                 suspicious_type: isSuspicious ? suspiciousTypes[i % suspiciousTypes.length] : undefined,
+                 check_type: isViolation ? 'violation' : isSuspicious ? 'suspicious' : 'normal',
+                 phone: `+9989${Math.floor(Math.random() * 100000000)}`,
+                 address: `Toshkent shahar, ${i + 1}-uy, ${i + 10}-ko'cha`
                }
              })
 
@@ -722,36 +756,68 @@ export default function BuzilishlarPage() {
                         </div>
                         <div className="space-y-3">
                           {locationGroup.checks.map((check, checkIdx) => (
-                            <div key={checkIdx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <User className="h-4 w-4 text-gray-600" />
-                                  <p className="font-medium text-gray-900">{check.client_name}</p>
+                            <div key={checkIdx} className="p-4 bg-white rounded-lg border shadow-sm">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <User className="h-4 w-4 text-blue-600" />
+                                    <p className="font-semibold text-gray-900">{check.client_name}</p>
+                                    <Badge variant={check.check_type === 'violation' ? 'destructive' : 'secondary'} className="text-xs">
+                                      {check.check_type === 'violation' ? 'Buzilish' : 'Shubhali'}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-3 text-sm">
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <Clock className="h-3 w-3 text-gray-500" />
+                                        <span className="text-gray-600">Vaqt:</span>
+                                        <span className="font-medium">{format(new Date(check.time), 'HH:mm')}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <User className="h-3 w-3 text-gray-500" />
+                                        <span className="text-gray-600">Agent:</span>
+                                        <span className="font-medium">{check.agent}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <MapIcon className="h-3 w-3 text-gray-500" />
+                                        <span className="text-gray-600">GPS:</span>
+                                        <span className="font-medium text-xs">{check.lat.toFixed(4)}, {check.lon.toFixed(4)}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">Summa:</span>
+                                        <span className="font-bold text-green-600">{check.summa?.toLocaleString()} UZS</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">Telefon:</span>
+                                        <span className="font-medium text-xs">{check.phone}</span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">Manzil:</span>
+                                        <span className="font-medium text-xs">{check.address}</span>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-4 text-xs text-gray-500">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {format(new Date(check.time), 'HH:mm')}
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <MapIcon className="h-3 w-3" />
-                                    {check.lat.toFixed(4)}, {check.lon.toFixed(4)}
-                                  </div>
-                                  <div className="flex items-center gap-1">
-                                    <User className="h-3 w-3" />
-                                    {check.expeditor}
-                                  </div>
+                                
+                                <div className="flex flex-col items-end gap-2">
+                                  {check.violation_type && (
+                                    <Badge variant="destructive" className="text-xs">
+                                      {check.violation_type}
+                                    </Badge>
+                                  )}
+                                  {check.suspicious_type && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {check.suspicious_type}
+                                    </Badge>
+                                  )}
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="h-3 w-3" />
+                                  </Button>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {check.violation_type && (
-                                  <Badge variant="destructive" className="text-xs">
-                                    {check.violation_type}
-                                  </Badge>
-                                )}
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-3 w-3" />
-                                </Button>
                               </div>
                             </div>
                           ))}
