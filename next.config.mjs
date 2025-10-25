@@ -18,6 +18,12 @@ const nextConfig = {
   compiler: {
     removeConsole: isProd,
   },
+  // Fix static file serving
+  trailingSlash: false,
+  generateEtags: false,
+  // Ensure proper static file handling
+  assetPrefix: '',
+  basePath: '',
   async headers() {
     if (isProd) {
       return [
