@@ -207,6 +207,12 @@ export function AppNavigation({
       icon: Home,
     },
     {
+      name: 'Cheklar',
+      href: '/checklar',
+      icon: Clock,
+      badge: 'NEW',
+    },
+    {
       name: t('telegram_contact_dev'),
       href: '#',
       icon: Send,
@@ -242,12 +248,12 @@ export function AppNavigation({
         },
       ]
     },
+    {
+      name: t('tasks_management'),
+      href: '/tasks',
+      icon: Clock,
+    },
     ...(user?.is_superuser ? [
-      {
-        name: t('tasks_management'),
-        href: '/tasks',
-        icon: Clock,
-      },
       {
         name: t('user_analytics'),
         href: '/admin/user-analytics',
