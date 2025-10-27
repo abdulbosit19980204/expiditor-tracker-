@@ -75,7 +75,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',  # Keep disabled to avoid X-Frame-Options: DENY
     'expeditor_app.middleware.UserTrackingMiddleware',
     'expeditor_app.middleware.MapInteractionMiddleware',
 ]

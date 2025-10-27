@@ -53,28 +53,12 @@ class EkispiditorSerializer(serializers.ModelSerializer):
 
 
 class CheckSerializer(serializers.ModelSerializer):
-    check_detail = serializers.SerializerMethodField()
-    
-    def get_check_detail(self, obj):
-        # Optimized: Use cached property to avoid N+1 queries
-        # Note: For optimal performance, prefetch CheckDetail in the viewset queryset
-        if hasattr(obj, '_prefetched_check_detail'):
-            # If prefetched, use the cached data
-            return CheckDetailSerializer(obj._prefetched_check_detail).data if obj._prefetched_check_detail else None
-        
-        # Fallback: fetch individually (less optimal)
-        try:
-            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
-            return CheckDetailSerializer(check_detail).data
-        except CheckDetail.DoesNotExist:
-            return None
-    
     class Meta:
         model = Check
         fields = ['id', 'check_id', 'project', 'sklad', 'city', 'sborshik', 'agent',
                  'ekispiditor', 'yetkazilgan_vaqti', 'receiptIdDate', 'transport_number', 'kkm_number',
                  'client_name', 'client_address', 'check_lat', 'check_lon', 'status',
-                 'check_detail', 'created_at', 'updated_at']
+                 'created_at', 'updated_at']
 
 
 class TelegramAccountSerializer(serializers.ModelSerializer):

@@ -39,7 +39,7 @@ import { Progress } from '@/components/ui/progress'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addDays } from 'date-fns'
 import { uz } from 'date-fns/locale'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:7896/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:7896/api'
 
 // Define proper types
 interface CheckDetail {
@@ -137,42 +137,72 @@ export default function BuzilishlarPage() {
     else setLoading(true)
 
     try {
-      const queryParams = new URLSearchParams()
-      if (filters.dateFrom) queryParams.append('date_from', filters.dateFrom)
-      if (filters.dateTo) queryParams.append('date_to', filters.dateTo)
-      if (filters.expeditor) queryParams.append('expeditor', filters.expeditor)
-      if (filters.minChecks) queryParams.append('min_checks', filters.minChecks)
-
-      const response = await fetch(
-        `${API_BASE_URL}/analytics/violation-insights/?${queryParams.toString()}`,
-        {
-          headers: {
-            'Authorization': `Token ${token}`,
-            'Content-Type': 'application/json',
-          },
+      // Fetch real data from multiple endpoints with authentication
+      const [violationInsights, checksData, expeditorsData] = await Promise.all([
+        // Violation insights
+        fetch(`${API_BASE_URL}/analytics/violation-insights/?${new URLSearchParams({
+          ...(filters.dateFrom && { date_from: filters.dateFrom }),
+          ...(filters.dateTo && { date_to: filters.dateTo }),
+          ...(filters.expeditor && { expeditor: filters.expeditor }),
+          ...(filters.minChecks && { min_checks: filters.minChecks })
+        }).toString()}`, {
+          headers: { 'Authorization': `Token ${token}` },
           cache: 'no-store',
-        }
-      )
+        }),
+        
+        // Real checks data
+        fetch(`${API_BASE_URL}/check/?${new URLSearchParams({
+          ...(filters.dateFrom && { dateFrom: filters.dateFrom }),
+          ...(filters.dateTo && { dateTo: filters.dateTo }),
+          ...(filters.expeditor && { expeditor: filters.expeditor }),
+          limit: '1000'
+        }).toString()}`, {
+          headers: { 'Authorization': `Token ${token}` },
+          cache: 'no-store',
+        }),
+        
+        // Expeditors data
+        fetch(`${API_BASE_URL}/ekispiditor/`, {
+          headers: { 'Authorization': `Token ${token}` },
+          cache: 'no-store',
+        })
+      ])
 
-      if (!response.ok) throw new Error(`Failed to fetch: ${response.status}`)
+      if (!violationInsights.ok || !checksData.ok || !expeditorsData.ok) {
+        throw new Error(`Failed to fetch data: ${violationInsights.status}`)
+      }
 
-      const result = await response.json()
-      setRawData(result)
-      
-      // Extract filter options
-      if (result.expeditor_risks) {
-        const expeditors = result.expeditor_risks.map((r: any) => r.expeditor).filter(Boolean) as string[]
-        setFilterOptions(prev => ({ ...prev, expeditors: [...new Set(expeditors)] }))
+      const [violationData, checks, expeditors] = await Promise.all([
+        violationInsights.json(),
+        checksData.json(),
+        expeditorsData.json()
+      ])
+
+      // Combine real data
+      const result = {
+        ...violationData,
+        real_checks: checks.results || checks,
+        real_expeditors: expeditors.results || expeditors
       }
       
+      setRawData(result)
+
+      // Extract filter options from real expeditors
+      if (expeditors.results || expeditors) {
+        const expeditorNames = (expeditors.results || expeditors)
+          .map((e: any) => e.name || e.ekispiditor_name)
+          .filter(Boolean) as string[]
+        setFilterOptions(prev => ({ ...prev, expeditors: [...new Set(expeditorNames)] }))
+      }
+
       if (isRefresh) {
-        toast({ title: t('updated'), description: t('data_updated') })
+        toast({ title: 'Yangilandi', description: 'Ma\'lumotlar yangilandi' })
       }
     } catch (error: any) {
       console.error('Error fetching data:', error)
       toast({
-        title: t('error'),
-        description: error.message || t('failed_to_load_data'),
+        title: 'Xatolik',
+        description: error.message || 'Ma\'lumotlarni yuklashda xatolik',
         variant: "destructive"
       })
     } finally {
@@ -198,82 +228,82 @@ export default function BuzilishlarPage() {
     }))
   }, [rawData])
 
-         // Filter daily groups by selected expeditor
-         const filteredDailyGroups = useMemo(() => {
-           return dailyGroups.map((day: any) => {
-             // Generate random but consistent data
-             const seed = (selectedExpeditor || 'all').charCodeAt(0) + day.date.charCodeAt(0)
-             const randomFactor = (seed % 100) / 100
-             
-             // Generate sample check data for demonstration - only violations and suspicious
-             const violationCount = Math.floor(day.violations * (0.1 + randomFactor * 0.4))
-             const suspiciousCount = Math.floor(day.suspicious * (0.1 + randomFactor * 0.5))
-             const totalProblematicChecks = Math.max(1, violationCount + suspiciousCount)
-             
-             const sampleChecks = Array.from({ length: totalProblematicChecks }, (_, i) => {
-               const checkTime = new Date(day.date)
-               checkTime.setHours(8 + (i * 2) % 12, (i * 15) % 60, 0, 0)
-               
-               const clientNames = [
-                 'Ахмедов Азизбек', 'Каримова Мадина', 'Тошпулатов Бахтиёр',
-                 'Юлдашева Гулнора', 'Рахимов Фарход', 'Норова Ойша',
-                 'Абдуллаев Шохрух', 'Махмудова Зухра', 'Исмоилов Дилшод',
-                 'Хакимова Нилуфар', 'Усманов Жахонгир', 'Азизова Сабина'
-               ]
-               
-               const agents = [
-                 'Агент Али', 'Агент Бахтиёр', 'Агент Гулнора', 'Агент Дилшод',
-                 'Агент Елена', 'Агент Фарход', 'Агент Зухра', 'Агент Исмоил'
-               ]
-               
-               const violationTypes = [
-                 'GPS xatosi', 'Joylashuv noto\'g\'ri', 'Vaqt mos kelmadi',
-                 'Marshrut buzildi', 'Signal yo\'q', 'Koordinatalar noto\'g\'ri'
-               ]
-               
-               const suspiciousTypes = [
-                 'Shubhali harakat', 'Tez-tez joy o\'zgartirish', 'Notabiiy naqsh',
-                 'GPS uzilish', 'Marshrutdan chetga chiqish', 'Vaqt buzilishi'
-               ]
-               
-               const isViolation = i < violationCount
-               const isSuspicious = i >= violationCount && i < totalProblematicChecks
-               
-               return {
-                 id: `check_${day.date}_${i}`,
-                 client_name: clientNames[i % clientNames.length],
-                 agent: agents[i % agents.length],
-                 summa: Math.floor(Math.random() * 500000) + 50000, // 50,000 - 550,000 UZS
-                 time: checkTime.toISOString(),
-                 expeditor: selectedExpeditor || 'Noma\'lum',
-                 lat: 41.3111 + (Math.random() - 0.5) * 0.1,
-                 lon: 69.2797 + (Math.random() - 0.5) * 0.1,
-                 violation_type: isViolation ? violationTypes[i % violationTypes.length] : undefined,
-                 suspicious_type: isSuspicious ? suspiciousTypes[i % suspiciousTypes.length] : undefined,
-                 check_type: isViolation ? 'violation' : isSuspicious ? 'suspicious' : 'normal',
-                 phone: `+9989${Math.floor(Math.random() * 100000000)}`,
-                 address: `Toshkent shahar, ${i + 1}-uy, ${i + 10}-ko'cha`
-               }
-             })
+  // Filter daily groups by selected expeditor using real data
+  const filteredDailyGroups = useMemo(() => {
+    if (!rawData?.real_checks) return dailyGroups
 
-             return {
-               ...day,
-               violations: Math.floor(day.violations * (0.1 + randomFactor * 0.4)), // 10-50% of original
-               checks: Math.floor(day.checks * (0.05 + randomFactor * 0.3)), // 5-35% of original
-               suspicious: Math.floor(day.suspicious * (0.1 + randomFactor * 0.5)), // 10-60% of original
-               locations: [{
-                 id: 1,
-                 date: day.date,
-                 location_lat: 41.3111,
-                 location_lon: 69.2797,
-                 location_radius: 100,
-                 total_checks: sampleChecks.length,
-                 expeditors: [selectedExpeditor || 'all'],
-                 checks: sampleChecks
-               }]
-             }
-           })
-         }, [dailyGroups, selectedExpeditor])
+    const realChecks = rawData.real_checks || []
+    
+    return dailyGroups.map((day: any) => {
+      const dayStr = day.date
+      
+      // Filter checks for this day and expeditor
+      const dayChecks = realChecks.filter((check: any) => {
+        const checkDate = new Date(check.yetkazilgan_vaqti || check.receiptIdDate || check.created_at)
+        const checkDateStr = format(checkDate, 'yyyy-MM-dd')
+        
+        const expeditorMatch = selectedExpeditor === 'all' || 
+          check.ekispiditor === selectedExpeditor ||
+          check.expeditor === selectedExpeditor
+        
+        return checkDateStr === dayStr && expeditorMatch
+      })
+
+      // Separate violations and suspicious checks
+      const violationChecks = dayChecks.filter((check: any) => {
+        // Check for GPS violations, location mismatches, etc.
+        return check.check_lat && check.check_lon && (
+          Math.abs(check.check_lat - 41.3111) > 0.01 || // GPS deviation
+          Math.abs(check.check_lon - 69.2797) > 0.01 ||
+          !check.status || check.status === 'failed' ||
+          check.status === 'pending'
+        )
+      })
+
+      const suspiciousChecks = dayChecks.filter((check: any) => {
+        // Check for suspicious patterns
+        return check.check_detail && (
+          check.check_detail.total_sum < 10000 || // Very low amount
+          check.check_detail.total_sum > 1000000 || // Very high amount
+          !check.client_name || check.client_name.length < 3
+        )
+      })
+
+      // Create check details for dialog
+      const checkDetails = [...violationChecks, ...suspiciousChecks].map((check: any, i: number) => ({
+        id: check.id || check.check_id || `check_${dayStr}_${i}`,
+        client_name: check.client_name || 'Noma\'lum mijoz',
+        agent: check.agent || check.sborshik || 'Noma\'lum agent',
+        summa: check.check_detail?.total_sum || 0,
+        time: check.yetkazilgan_vaqti || check.receiptIdDate || check.created_at,
+        expeditor: check.ekispiditor || check.expeditor || selectedExpeditor || 'Noma\'lum',
+        lat: check.check_lat || 41.3111,
+        lon: check.check_lon || 69.2797,
+        violation_type: violationChecks.includes(check) ? 'GPS buzilishi' : undefined,
+        suspicious_type: suspiciousChecks.includes(check) ? 'Shubhali summa' : undefined,
+        check_type: violationChecks.includes(check) ? 'violation' : 'suspicious',
+        phone: check.client_phone || `+9989${Math.floor(Math.random() * 100000000)}`,
+        address: check.client_address || 'Manzil ko\'rsatilmagan'
+      }))
+
+      return {
+        ...day,
+        violations: violationChecks.length,
+        checks: dayChecks.length,
+        suspicious: suspiciousChecks.length,
+        locations: [{
+          id: 1,
+          date: dayStr,
+          location_lat: 41.3111,
+          location_lon: 69.2797,
+          location_radius: 100,
+          total_checks: checkDetails.length,
+          expeditors: [selectedExpeditor || 'all'],
+          checks: checkDetails
+        }]
+      }
+    })
+  }, [dailyGroups, selectedExpeditor, rawData])
 
   const overview = useMemo(() => {
     if (!rawData?.overview) return {
@@ -298,8 +328,36 @@ export default function BuzilishlarPage() {
 
   const topExpeditors = useMemo(() => {
     if (!rawData?.expeditor_risks) return []
-    return (rawData.expeditor_risks as ExpeditorRisk[])
-      .sort((a, b) => b.total_violations - a.total_violations)
+    
+    // Merge real expeditors data with violation insights to get accurate violation counts
+    const realExpeditors = rawData.real_expeditors || []
+    const violationInsights = rawData.expeditor_risks || []
+    
+    // Create a map of expeditor violation data from insights
+    const violationMap = new Map()
+    violationInsights.forEach((insight: any) => {
+      violationMap.set(insight.expeditor?.trim(), {
+        total_violations: insight.total_violations || 0,
+        suspicious_patterns: insight.suspicious_patterns || 0,
+        critical_violations: insight.critical_violations || 0
+      })
+    })
+    
+    return realExpeditors
+      .map((exp: any) => {
+        const expeditorName = exp.name || exp.ekispiditor_name || exp.expeditor || ''
+        const violationData = violationMap.get(expeditorName.trim()) || {}
+        
+        return {
+          expeditor: expeditorName,
+          total_checks: exp.today_checks_count || exp.checks_count || exp.total_checks || 0,
+          total_violations: violationData.total_violations || 0,
+          suspicious_patterns: violationData.suspicious_patterns || 0,
+          critical_violations: violationData.critical_violations || 0
+        }
+      })
+      .filter((exp: any) => exp.expeditor && exp.total_checks > 0)
+      .sort((a: any, b: any) => b.total_violations - a.total_violations)
       .slice(0, 10)
   }, [rawData])
 

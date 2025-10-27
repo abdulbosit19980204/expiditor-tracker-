@@ -65,7 +65,6 @@ class UserTrackingMiddleware(MiddlewareMixin):
         session = UserSession.objects.create(
             session_id=session_id,
             ip_address=ip_address,
-            user_agent=user_agent,
             user_type=user_type,
             location=self._get_location_from_ip(ip_address)
         )
@@ -100,7 +99,7 @@ class UserTrackingMiddleware(MiddlewareMixin):
             activity_type=activity_type,
             page_url=page_url,
             api_endpoint=api_endpoint,
-            metadata=metadata
+            additional_data=metadata
         )
     
     def _get_client_ip(self, request):
@@ -160,7 +159,7 @@ class MapInteractionMiddleware(MiddlewareMixin):
                     session=session,
                     activity_type='map_interaction',
                     api_endpoint=request.path,
-                    metadata={
+                    additional_data={
                         'map_type': 'yandex',
                         'method': request.method,
                     }

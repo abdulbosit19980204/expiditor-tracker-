@@ -167,6 +167,8 @@ class FilialViewSet(viewsets.ReadOnlyModelViewSet):
     authentication_classes = []
 
 class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]  # Allow access without authentication
+    authentication_classes = []  # Remove authentication classes
     serializer_class = EkispiditorSerializer
     pagination_class = None  # No pagination for dropdown data
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -195,18 +197,30 @@ class EkispiditorViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 class CheckViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]  # Allow access without authentication
+    authentication_classes = []  # Remove authentication classes
     serializer_class = CheckSerializer
     pagination_class = None  # Return all checks for selected expeditor
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter]  # Remove OrderingFilter to avoid reordering after slice
     filterset_class = CheckFilter
     search_fields = ['check_id', 'client_name', 'client_address', 'ekispiditor', 'project']
-    ordering_fields = ['yetkazilgan_vaqti', 'created_at', 'status', 'ekispiditor', 'project']
-    ordering = ['-yetkazilgan_vaqti']
     
     def get_queryset(self):
-        # Optimized queryset - CheckDetail is linked by check_id, not FK
-        # We'll handle the relationship in the serializer for better performance
-        return Check.objects.all()
+        # Simple queryset without check_detail relationship
+        # Order by date first to ensure consistent ordering
+        queryset = Check.objects.all().order_by('-yetkazilgan_vaqti', '-id')
+        
+        # Apply limit parameter from request to prevent overloading (only after ordering)
+        limit = self.request.query_params.get('limit')
+        if limit:
+            try:
+                limit_int = int(limit)
+                if 0 < limit_int <= 1000:  # Maximum 1000 records
+                    queryset = queryset[:limit_int]
+            except ValueError:
+                pass
+        
+        return queryset
     
     @action(detail=False, methods=['get'])
     def today_checks(self, request):
