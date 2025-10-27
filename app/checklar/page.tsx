@@ -77,6 +77,8 @@ export default function ChecklarPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
   
+  const [allChecks, setAllChecks] = useState<Check[]>([])
+  
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -139,45 +141,12 @@ export default function ChecklarPage() {
       let checksList = checksData.results || checksData
       checksList = Array.isArray(checksList) ? checksList : []
       
-      // Apply sorting
-      checksList.sort((a: Check, b: Check) => {
-        let valueA: any = ''
-        let valueB: any = ''
-        
-        switch (sortField) {
-          case 'date':
-            valueA = new Date(a.yetkazilgan_vaqti || a.created_at || 0).getTime()
-            valueB = new Date(b.yetkazilgan_vaqti || b.created_at || 0).getTime()
-            break
-          case 'summa':
-            valueA = a.check_detail?.total_sum || 0
-            valueB = b.check_detail?.total_sum || 0
-            break
-          case 'client':
-            valueA = (a.client_name || '').toLowerCase()
-            valueB = (b.client_name || '').toLowerCase()
-            break
-          case 'expeditor':
-            valueA = (a.expeditor || '').toLowerCase()
-            valueB = (b.expeditor || '').toLowerCase()
-            break
-        }
-        
-        if (valueA < valueB) return sortOrder === 'asc' ? -1 : 1
-        if (valueA > valueB) return sortOrder === 'asc' ? 1 : -1
-        return 0
-      })
+      console.log('Fetched checks:', checksList.length)
       
-      // Calculate pagination
-      setTotalPages(Math.ceil(checksList.length / pageSize))
-      
-      // Apply pagination
-      const startIndex = (currentPage - 1) * pageSize
-      const paginatedChecks = checksList.slice(startIndex, startIndex + pageSize)
-      
-      setChecks(paginatedChecks)
+      // Set initial checks (fallback)
+      setAllChecks(checksList)
 
-      // Fetch filter options
+      // Fetch filter options and map expeditors to checks
       const [expeditorsResponse, filialsResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/ekispiditor/`, {
           headers: { 'Authorization': `Token ${token}` },
@@ -196,6 +165,33 @@ export default function ChecklarPage() {
           ? expeditorsList.map((e: any) => e.name || e.ekispiditor_name).filter(Boolean)
           : []
         setFilterOptions(prev => ({ ...prev, expeditors: [...new Set(expeditorNames)] }))
+        
+        // Map expeditor names to checks
+        const expeditorMap = new Map()
+        if (Array.isArray(expeditorsList)) {
+          expeditorsList.forEach((exp: any) => {
+            const name = exp.name || exp.ekispiditor_name
+            expeditorMap.set(name, exp)
+          })
+        }
+        
+        // Enrich checks with expeditor data
+        const enrichedChecks = checksList.map(check => {
+          const expeditorName = check.expeditor || check.ekispiditor
+          if (expeditorName && expeditorMap.size > 0) {
+            const expeditorData = Array.from(expeditorMap.values()).find(
+              (e: any) => e.name === expeditorName || e.ekispiditor_name === expeditorName
+            )
+            return { ...check, expeditor_name: expeditorData ? (expeditorData.name || expeditorData.ekispiditor_name) : expeditorName }
+          }
+          return { ...check, expeditor_name: expeditorName || '-' }
+        })
+        
+        // Set all checks with expeditor mapping
+        setAllChecks(enrichedChecks)
+      } else {
+        // If expeditors fetch fails, just use the original checksList
+        setAllChecks(checksList)
       }
 
       if (filialsResponse.ok) {
@@ -230,26 +226,89 @@ export default function ChecklarPage() {
   useEffect(() => {
     if (token) fetchData()
   }, [token, fetchData])
+  
+  // Apply sorting and pagination to allChecks
+  const sortedAndPaginatedChecks = useMemo(() => {
+    // Sort checks
+    const sorted = [...allChecks].sort((a: Check, b: Check) => {
+      let valueA: any = ''
+      let valueB: any = ''
+      
+      switch (sortField) {
+        case 'date':
+          valueA = new Date(a.yetkazilgan_vaqti || a.created_at || 0).getTime()
+          valueB = new Date(b.yetkazilgan_vaqti || b.created_at || 0).getTime()
+          break
+        case 'summa':
+          valueA = a.check_detail?.total_sum || 0
+          valueB = b.check_detail?.total_sum || 0
+          break
+        case 'client':
+          valueA = (a.client_name || '').toLowerCase()
+          valueB = (b.client_name || '').toLowerCase()
+          break
+        case 'expeditor':
+          valueA = ((a as any).expeditor_name || a.expeditor || '').toLowerCase()
+          valueB = ((b as any).expeditor_name || b.expeditor || '').toLowerCase()
+          break
+      }
+      
+      if (valueA < valueB) return sortOrder === 'asc' ? -1 : 1
+      if (valueA > valueB) return sortOrder === 'asc' ? 1 : -1
+      return 0
+    })
+    
+    // Update total pages
+    setTotalPages(Math.ceil(sorted.length / pageSize))
+    
+    // Apply pagination
+    const startIndex = (currentPage - 1) * pageSize
+    return sorted.slice(startIndex, startIndex + pageSize)
+  }, [allChecks, sortField, sortOrder, currentPage, pageSize])
+  
+  useEffect(() => {
+    setChecks(sortedAndPaginatedChecks)
+  }, [sortedAndPaginatedChecks])
 
   const handleCheckVerification = async (check: Check) => {
     try {
-      // Open external link in new tab (no CORS issue)
-      const externalUrl = `https://smartpos.uz/uz/proverka-cheka?uid=${check.check_id}`
-      window.open(externalUrl, '_blank')
+      setLoading(true)
       
-      // Also show internal details
-      const details: CheckDetails = {}
-      details['Check ID'] = check.check_id
-      details['Mijoz'] = check.client_name
-      details['Agent'] = check.agent || check.sborshik || '-'
-      details['Ekspiditor'] = check.expeditor || '-'
-      details['Proyekt'] = check.project || '-'
-      details['Shahar'] = check.city || '-'
-      details['Jami Summa'] = check.check_detail?.total_sum ? `${check.check_detail.total_sum.toLocaleString('uz-UZ')} UZS` : '0 UZS'
-      if (check.check_detail?.nalichniy) details['Naqd'] = `${check.check_detail.nalichniy.toLocaleString('uz-UZ')} UZS`
-      if (check.check_detail?.uzcard) details['UzCard'] = `${check.check_detail.uzcard.toLocaleString('uz-UZ')} UZS`
-      if (check.check_detail?.humo) details['Humo'] = `${check.check_detail.humo.toLocaleString('uz-UZ')} UZS`
-      if (check.check_detail?.click) details['Click'] = `${check.check_detail.click.toLocaleString('uz-UZ')} UZS`
+      // Fetch check details from smartpos.uz via our API
+      const response = await fetch('/api/check/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ check_id: check.check_id })
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch check details')
+      }
+      
+      // Merge smartpos data with our database data
+      const details: CheckDetails = {
+        ...data.details,
+        'Check ID': check.check_id,
+        'Mijoz': check.client_name,
+        'Agent': check.agent || check.sborshik || '-',
+        'Ekspiditor': check.expeditor || '-',
+        'Proyekt': check.project || '-',
+        'Shahar': check.city || '-',
+      }
+      
+      // Add financial data if available
+      if (check.check_detail?.total_sum) {
+        details['Jami Summa (DB)'] = `${check.check_detail.total_sum.toLocaleString('uz-UZ')} UZS`
+      }
+      if (check.check_detail?.nalichniy) details['Naqd (DB)'] = `${check.check_detail.nalichniy.toLocaleString('uz-UZ')} UZS`
+      if (check.check_detail?.uzcard) details['UzCard (DB)'] = `${check.check_detail.uzcard.toLocaleString('uz-UZ')} UZS`
+      if (check.check_detail?.humo) details['Humo (DB)'] = `${check.check_detail.humo.toLocaleString('uz-UZ')} UZS`
+      if (check.check_detail?.click) details['Click (DB)'] = `${check.check_detail.click.toLocaleString('uz-UZ')} UZS`
+      
       details['GPS koordinatalar'] = check.check_lat && check.check_lon ? `${check.check_lat.toFixed(6)}, ${check.check_lon.toFixed(6)}` : '-'
       details['Yetkazilgan vaqti'] = check.yetkazilgan_vaqti ? format(new Date(check.yetkazilgan_vaqti), 'dd.MM.yyyy HH:mm') : '-'
       details['Status'] = check.status || '-'
@@ -257,13 +316,20 @@ export default function ChecklarPage() {
       setCheckDetails(details)
       setSelectedCheck(check)
       setShowDetailsDialog(true)
+      
+      // Also open external link
+      const externalUrl = `https://smartpos.uz/uz/proverka-cheka?uid=${check.check_id}`
+      window.open(externalUrl, '_blank')
+      
     } catch (error: any) {
-      console.error('Error showing check details:', error)
+      console.error('Error verifying check:', error)
       toast({
         title: 'Xatolik',
-        description: error.message || 'Chek ma\'lumotlarini ko\'rsatishda xatolik',
+        description: error.message || 'Chekni tekshirishda xatolik',
         variant: "destructive"
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -575,8 +641,8 @@ export default function ChecklarPage() {
                     <tr key={check.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm font-mono text-gray-900">{check.check_id}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{check.client_name || 'Noma\'lum'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{check.agent || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{check.expeditor || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{check.agent || check.sborshik || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{(check as any).expeditor_name || check.expeditor || check.ekispiditor || '-'}</td>
                       <td className="px-4 py-3 text-sm font-semibold text-green-600">
                         {check.check_detail?.total_sum ? `${check.check_detail.total_sum.toLocaleString('uz-UZ')} UZS` : '-'}
                       </td>
