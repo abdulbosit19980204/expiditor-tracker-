@@ -44,12 +44,19 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:7896/a
 // Define proper types
 interface CheckDetail {
   id: string
+  check_id?: string
   client_name: string
   time: string
   expeditor: string
   lat: number
   lon: number
   violation_type?: string
+  summa?: number
+  agent?: string
+  phone?: string
+  address?: string
+  suspicious_type?: string
+  check_type?: 'violation' | 'suspicious'
 }
 
 interface ViolationGroup {
@@ -186,7 +193,7 @@ export default function BuzilishlarPage() {
       }
       
       setRawData(result)
-
+      
       // Extract filter options from real expeditors
       if (expeditors.results || expeditors) {
         const expeditorNames = (expeditors.results || expeditors)
@@ -194,7 +201,7 @@ export default function BuzilishlarPage() {
           .filter(Boolean) as string[]
         setFilterOptions(prev => ({ ...prev, expeditors: [...new Set(expeditorNames)] }))
       }
-
+      
       if (isRefresh) {
         toast({ title: 'Yangilandi', description: 'Ma\'lumotlar yangilandi' })
       }
@@ -249,7 +256,7 @@ export default function BuzilishlarPage() {
         return checkDateStr === dayStr && expeditorMatch
       })
 
-      // Separate violations and suspicious checks
+      // Separate violations and suspicious checks with detailed reasons
       const violationChecks = dayChecks.filter((check: any) => {
         // Check for GPS violations, location mismatches, etc.
         return check.check_lat && check.check_lon && (
@@ -269,9 +276,46 @@ export default function BuzilishlarPage() {
         )
       })
 
+      // Helper function to get violation comment
+      const getViolationComment = (check: any) => {
+        const comments = []
+        if (check.check_lat && check.check_lon) {
+          if (Math.abs(check.check_lat - 41.3111) > 0.01) {
+            comments.push('GPS kengligi noto\'g\'ri')
+          }
+          if (Math.abs(check.check_lon - 69.2797) > 0.01) {
+            comments.push('GPS uzunligi noto\'g\'ri')
+          }
+        }
+        if (!check.status || check.status === 'failed') {
+          comments.push('Status xatosi')
+        }
+        if (check.status === 'pending') {
+          comments.push('Kutilmoqda')
+        }
+        return comments.join(', ') || 'GPS buzilishi'
+      }
+
+      // Helper function to get suspicious comment
+      const getSuspiciousComment = (check: any) => {
+        if (!check.check_detail) return 'Ma\'lumot yo\'q'
+        const comments = []
+        if (check.check_detail.total_sum < 10000) {
+          comments.push('Juda kichik summa (< 10,000 UZS)')
+        }
+        if (check.check_detail.total_sum > 1000000) {
+          comments.push('Juda katta summa (> 1,000,000 UZS)')
+        }
+        if (!check.client_name || check.client_name.length < 3) {
+          comments.push('Mijoz nomi to\'liq emas')
+        }
+        return comments.join(', ') || 'Shubhali summa'
+      }
+
       // Create check details for dialog
       const checkDetails = [...violationChecks, ...suspiciousChecks].map((check: any, i: number) => ({
-        id: check.id || check.check_id || `check_${dayStr}_${i}`,
+        id: String(check.id) || check.check_id || `check_${dayStr}_${i}`,
+        check_id: check.check_id || String(check.id),
         client_name: check.client_name || 'Noma\'lum mijoz',
         agent: check.agent || check.sborshik || 'Noma\'lum agent',
         summa: check.check_detail?.total_sum || 0,
@@ -279,8 +323,8 @@ export default function BuzilishlarPage() {
         expeditor: check.ekispiditor || check.expeditor || selectedExpeditor || 'Noma\'lum',
         lat: check.check_lat || 41.3111,
         lon: check.check_lon || 69.2797,
-        violation_type: violationChecks.includes(check) ? 'GPS buzilishi' : undefined,
-        suspicious_type: suspiciousChecks.includes(check) ? 'Shubhali summa' : undefined,
+        violation_type: violationChecks.includes(check) ? getViolationComment(check) : undefined,
+        suspicious_type: suspiciousChecks.includes(check) ? getSuspiciousComment(check) : undefined,
         check_type: violationChecks.includes(check) ? 'violation' : 'suspicious',
         phone: check.client_phone || `+9989${Math.floor(Math.random() * 100000000)}`,
         address: check.client_address || 'Manzil ko\'rsatilmagan'
@@ -821,7 +865,7 @@ export default function BuzilishlarPage() {
                                     <User className="h-4 w-4 text-blue-600" />
                                     <p className="font-semibold text-gray-900">{check.client_name}</p>
                                     <Badge variant="outline" className="text-xs bg-gray-100">
-                                      ID: {check.id.split('_')[2]}
+                                      ID: {check.check_id || String(check.id)}
                                     </Badge>
                                     <Badge variant={check.check_type === 'violation' ? 'destructive' : 'secondary'} className="text-xs">
                                       {check.check_type === 'violation' ? 'Buzilish' : 'Shubhali'}
@@ -843,14 +887,16 @@ export default function BuzilishlarPage() {
                                       <div className="flex items-center gap-2">
                                         <MapIcon className="h-3 w-3 text-gray-500" />
                                         <span className="text-gray-600">GPS:</span>
-                                        <span className="font-medium text-xs">{check.lat.toFixed(4)}, {check.lon.toFixed(4)}</span>
+                                        <span className="font-medium text-xs">{check.lat?.toFixed(4)}, {check.lon?.toFixed(4)}</span>
                                       </div>
                                     </div>
                                     
                                     <div className="space-y-2">
                                       <div className="flex items-center gap-2">
                                         <span className="text-gray-600">Summa:</span>
-                                        <span className="font-bold text-green-600">{check.summa?.toLocaleString()} UZS</span>
+                                        <span className={`font-bold ${check.summa > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                          {check.summa?.toLocaleString('uz-UZ') || 0} UZS
+                                        </span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <span className="text-gray-600">Telefon:</span>
@@ -866,12 +912,12 @@ export default function BuzilishlarPage() {
                                 
                                 <div className="flex flex-col items-end gap-2">
                                   {check.violation_type && (
-                                    <Badge variant="destructive" className="text-xs">
+                                    <Badge variant="destructive" className="text-xs" title="Buzilish sababi">
                                       {check.violation_type}
                                     </Badge>
                                   )}
                                   {check.suspicious_type && (
-                                    <Badge variant="secondary" className="text-xs">
+                                    <Badge variant="secondary" className="text-xs" title="Shubhali sabab">
                                       {check.suspicious_type}
                                     </Badge>
                                   )}
@@ -879,6 +925,15 @@ export default function BuzilishlarPage() {
                                     <Eye className="h-3 w-3" />
                                   </Button>
                                 </div>
+                                
+                                {/* Comment section */}
+                                {(check.violation_type || check.suspicious_type) && (
+                                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p className="text-xs text-gray-600">
+                                      <strong>Sabab:</strong> {check.violation_type || check.suspicious_type}
+                                    </p>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))}

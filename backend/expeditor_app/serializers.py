@@ -53,12 +53,22 @@ class EkispiditorSerializer(serializers.ModelSerializer):
 
 
 class CheckSerializer(serializers.ModelSerializer):
+    check_detail = serializers.SerializerMethodField()
+    
+    def get_check_detail(self, obj):
+        """Get check detail with total_sum"""
+        try:
+            check_detail = CheckDetail.objects.get(check_id=obj.check_id)
+            return CheckDetailSerializer(check_detail).data
+        except CheckDetail.DoesNotExist:
+            return None
+    
     class Meta:
         model = Check
         fields = ['id', 'check_id', 'project', 'sklad', 'city', 'sborshik', 'agent',
                  'ekispiditor', 'yetkazilgan_vaqti', 'receiptIdDate', 'transport_number', 'kkm_number',
                  'client_name', 'client_address', 'check_lat', 'check_lon', 'status',
-                 'created_at', 'updated_at']
+                 'created_at', 'updated_at', 'check_detail']
 
 
 class TelegramAccountSerializer(serializers.ModelSerializer):
