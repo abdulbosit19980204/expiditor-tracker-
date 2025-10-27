@@ -123,6 +123,13 @@ export default function BuzilishlarPage() {
     filial: '',
     minChecks: '5'
   })
+  const [appliedFilters, setAppliedFilters] = useState({
+    dateFrom: '',
+    dateTo: '',
+    expeditor: '',
+    filial: '',
+    minChecks: '5'
+  })
   const [showFilters, setShowFilters] = useState(false)
   
   // View state
@@ -146,13 +153,13 @@ export default function BuzilishlarPage() {
 
     try {
       // Fetch real data from multiple endpoints with authentication
-      const [violationInsights, checksData, expeditorsData] = await Promise.all([
+      const [violationInsights, checksData, expeditorsData, filialsData] = await Promise.all([
         // Violation insights
         fetch(`${API_BASE_URL}/analytics/violation-insights/?${new URLSearchParams({
-          ...(filters.dateFrom && { date_from: filters.dateFrom }),
-          ...(filters.dateTo && { date_to: filters.dateTo }),
-          ...(filters.expeditor && { expeditor: filters.expeditor }),
-          ...(filters.minChecks && { min_checks: filters.minChecks })
+          ...(appliedFilters.dateFrom && { date_from: appliedFilters.dateFrom }),
+          ...(appliedFilters.dateTo && { date_to: appliedFilters.dateTo }),
+          ...(appliedFilters.expeditor && { expeditor: appliedFilters.expeditor }),
+          ...(appliedFilters.minChecks && { min_checks: appliedFilters.minChecks })
         }).toString()}`, {
           headers: { 'Authorization': `Token ${token}` },
           cache: 'no-store',
@@ -160,9 +167,10 @@ export default function BuzilishlarPage() {
         
         // Real checks data
         fetch(`${API_BASE_URL}/check/?${new URLSearchParams({
-          ...(filters.dateFrom && { dateFrom: filters.dateFrom }),
-          ...(filters.dateTo && { dateTo: filters.dateTo }),
-          ...(filters.expeditor && { expeditor: filters.expeditor }),
+          ...(appliedFilters.dateFrom && { dateFrom: appliedFilters.dateFrom }),
+          ...(appliedFilters.dateTo && { dateTo: appliedFilters.dateTo }),
+          ...(appliedFilters.expeditor && { expeditor: appliedFilters.expeditor }),
+          ...(appliedFilters.filial && { filial: appliedFilters.filial }),
           limit: '1000'
         }).toString()}`, {
           headers: { 'Authorization': `Token ${token}` },
@@ -173,24 +181,32 @@ export default function BuzilishlarPage() {
         fetch(`${API_BASE_URL}/ekispiditor/`, {
           headers: { 'Authorization': `Token ${token}` },
           cache: 'no-store',
+        }),
+        
+        // Filials data
+        fetch(`${API_BASE_URL}/filial/`, {
+          headers: { 'Authorization': `Token ${token}` },
+          cache: 'no-store',
         })
       ])
 
-      if (!violationInsights.ok || !checksData.ok || !expeditorsData.ok) {
+      if (!violationInsights.ok || !checksData.ok || !expeditorsData.ok || !filialsData.ok) {
         throw new Error(`Failed to fetch data: ${violationInsights.status}`)
       }
 
-      const [violationData, checks, expeditors] = await Promise.all([
+      const [violationData, checks, expeditors, filials] = await Promise.all([
         violationInsights.json(),
         checksData.json(),
-        expeditorsData.json()
+        expeditorsData.json(),
+        filialsData.json()
       ])
 
       // Combine real data
       const result = {
         ...violationData,
         real_checks: checks.results || checks,
-        real_expeditors: expeditors.results || expeditors
+        real_expeditors: expeditors.results || expeditors,
+        real_filials: filials.results || filials
       }
       
       setRawData(result)
@@ -201,6 +217,14 @@ export default function BuzilishlarPage() {
           .map((e: any) => e.name || e.ekispiditor_name)
           .filter(Boolean) as string[]
         setFilterOptions(prev => ({ ...prev, expeditors: [...new Set(expeditorNames)] }))
+      }
+      
+      // Extract filter options from filials
+      if (filials.results || filials) {
+        const filialList = (filials.results || filials)
+          .map((f: any) => ({ id: f.id, name: f.filial_name || f.name }))
+          .filter((f: any) => f.name)
+        setFilterOptions(prev => ({ ...prev, filials: filialList }))
       }
       
       if (isRefresh) {
@@ -217,7 +241,7 @@ export default function BuzilishlarPage() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [token, filters])
+  }, [token, appliedFilters])
 
   useEffect(() => {
     if (token) fetchData()
@@ -509,13 +533,14 @@ export default function BuzilishlarPage() {
           {/* Filters Panel */}
           {showFilters && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
                   <Label className="text-xs">{t('from_date')}</Label>
                   <Input
                     type="date"
                     value={filters.dateFrom}
                     onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                    onBlur={() => setAppliedFilters({ ...filters })}
                     className="h-9"
                   />
                 </div>
@@ -525,8 +550,43 @@ export default function BuzilishlarPage() {
                     type="date"
                     value={filters.dateTo}
                     onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                    onBlur={() => setAppliedFilters({ ...filters })}
                     className="h-9"
                   />
+                </div>
+                <div>
+                  <Label className="text-xs">Ekspiditor</Label>
+                  <Select
+                    value={filters.expeditor || undefined} 
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, expeditor: value === 'all' ? '' : value }))}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Barchasi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Barchasi</SelectItem>
+                      {filterOptions.expeditors.map((exp: string) => (
+                        <SelectItem key={exp} value={exp}>{exp}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs">Filial</Label>
+                  <Select 
+                    value={filters.filial || undefined} 
+                    onValueChange={(value) => setFilters(prev => ({ ...prev, filial: value === 'all' ? '' : value }))}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue placeholder="Barchasi" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Barchasi</SelectItem>
+                      {filterOptions.filials.map((filial: any) => (
+                        <SelectItem key={filial.id} value={String(filial.id)}>{filial.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label className="text-xs">{t('min_checks')}</Label>
@@ -534,14 +594,26 @@ export default function BuzilishlarPage() {
                     type="number"
                     value={filters.minChecks}
                     onChange={(e) => setFilters(prev => ({ ...prev, minChecks: e.target.value }))}
+                    onBlur={() => setAppliedFilters({ ...filters })}
                     className="h-9"
                     min="1"
                   />
                 </div>
-                       <div className="flex items-end col-span-2">
+                <div className="flex items-end gap-2">
                   <Button
-                    onClick={() => fetchData(false)}
-                    className="w-full h-9"
+                    onClick={() => {
+                      const resetFilters = { dateFrom: '', dateTo: '', expeditor: '', filial: '', minChecks: '5' }
+                      setFilters(resetFilters)
+                      setAppliedFilters(resetFilters)
+                    }}
+                    variant="outline"
+                    className="h-9"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    onClick={() => setAppliedFilters({ ...filters })}
+                    className="flex-1 h-9"
                   >
                     <Search className="h-4 w-4 mr-2" />
                     {t('search')}
@@ -811,6 +883,36 @@ export default function BuzilishlarPage() {
                            {selectedExpeditor}
                          </Badge>
                        )}
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         onClick={() => {
+                           // Collect all GPS coordinates with client info
+                           const allChecks = selectedDayDetails.locations.flatMap(loc => loc.checks)
+                           
+                           // Calculate center point for zoom
+                           const centerLat = allChecks.reduce((sum: number, check: any) => sum + (check.lat || 0), 0) / allChecks.length
+                           const centerLon = allChecks.reduce((sum: number, check: any) => sum + (check.lon || 0), 0) / allChecks.length
+                           
+                           // Create simple markers with coordinates
+                           const markers = allChecks.map((check: any) => {
+                             const lat = check.lat?.toFixed(6)
+                             const lon = check.lon?.toFixed(6)
+                             return `${lon},${lat}`
+                           }).join('~')
+                           
+                           // Open Yandex Maps with all markers
+                           // Using center point for view, and pt parameter for all markers
+                           const url = `https://yandex.com/maps/?ll=${centerLon.toFixed(6)},${centerLat.toFixed(6)}&z=15&pt=${markers}`
+                           console.log('Opening Yandex Maps with URL:', url)
+                           window.open(url, '_blank')
+                         }}
+                         className="ml-2"
+                         title="Barcha joylashuvlarni Yandex Maps'da ko'rish"
+                       >
+                         <MapIcon className="h-4 w-4 mr-1" />
+                         Barcha joylashuvlar
+                       </Button>
               </DialogTitle>
                      <DialogDescription>
                        {selectedExpeditor && selectedExpeditor !== 'all' ? `${selectedExpeditor} ekspiditorining bu kundagi buzilishlari` : 'Bu kundagi umumiy buzilishlar'}
