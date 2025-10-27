@@ -885,7 +885,13 @@ export default function BuzilishlarPage() {
                                         <span className="font-medium">{check.agent}</span>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <MapIcon className="h-3 w-3 text-gray-500" />
+                                        <button
+                                          onClick={() => window.open(`https://yandex.com/maps/?pt=${check.lon?.toFixed(6)},${check.lat?.toFixed(6)}&z=17`, '_blank')}
+                                          className="hover:bg-blue-100 p-1 rounded transition-colors"
+                                          title="Yandex Maps'da ko'rish"
+                                        >
+                                          <MapIcon className="h-3 w-3 text-blue-600 hover:text-blue-700" />
+                                        </button>
                                         <span className="text-gray-600">GPS:</span>
                                         <span className="font-medium text-xs">{check.lat?.toFixed(4)}, {check.lon?.toFixed(4)}</span>
                                       </div>
