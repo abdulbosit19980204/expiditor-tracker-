@@ -130,6 +130,7 @@ export default function BuzilishlarPage() {
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | null>(null)
   const [selectedDayDetails, setSelectedDayDetails] = useState<DailyGroup | null>(null)
   const [showDayDetailsDialog, setShowDayDetailsDialog] = useState(false)
+  const [showReasonPopup, setShowReasonPopup] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !token) {
@@ -916,30 +917,25 @@ export default function BuzilishlarPage() {
                                   </div>
                                 </div>
                                 
-                                <div className="flex flex-col items-end gap-2">
-                                  {check.violation_type && (
-                                    <Badge variant="destructive" className="text-xs" title="Buzilish sababi">
-                                      {check.violation_type}
-                                    </Badge>
-                                  )}
-                                  {check.suspicious_type && (
-                                    <Badge variant="secondary" className="text-xs" title="Shubhali sabab">
-                                      {check.suspicious_type}
-                                    </Badge>
-                                  )}
-                                  <Button variant="outline" size="sm">
+                                <div className="flex flex-col items-end gap-2 relative">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onMouseEnter={() => setShowReasonPopup(check.id)}
+                                    onMouseLeave={() => setShowReasonPopup(null)}
+                                  >
                                     <Eye className="h-3 w-3" />
                                   </Button>
+                                  
+                                  {/* Flash popup */}
+                                  {showReasonPopup === check.id && (check.violation_type || check.suspicious_type) && (
+                                    <div className="absolute top-10 right-0 z-10 bg-yellow-100 border border-yellow-300 rounded-lg p-3 shadow-lg max-w-xs animate-fade-in">
+                                      <p className="text-xs text-gray-800">
+                                        <strong>Sabab:</strong> {check.violation_type || check.suspicious_type}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
-                                
-                                {/* Comment section */}
-                                {(check.violation_type || check.suspicious_type) && (
-                                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                    <p className="text-xs text-gray-600">
-                                      <strong>Sabab:</strong> {check.violation_type || check.suspicious_type}
-                                    </p>
-                                  </div>
-                                )}
                               </div>
                             </div>
                           ))}
