@@ -894,11 +894,15 @@ export default function BuzilishlarPage() {
                            const centerLat = allChecks.reduce((sum: number, check: any) => sum + (check.lat || 0), 0) / allChecks.length
                            const centerLon = allChecks.reduce((sum: number, check: any) => sum + (check.lon || 0), 0) / allChecks.length
                            
-                           // Create simple markers with coordinates
-                           const markers = allChecks.map((check: any) => {
+                           // Create markers with client information
+                           const markers = allChecks.map((check: any, idx: number) => {
                              const lat = check.lat?.toFixed(6)
                              const lon = check.lon?.toFixed(6)
-                             return `${lon},${lat}`
+                             const clientName = check.client_name || 'Noma\'lum mijoz'
+                             const agent = check.agent || 'Agent'
+                             const summa = check.summa?.toLocaleString('uz-UZ') || '0'
+                             // Format: lon,lat,label where label is client info
+                             return `${lon},${lat},~${clientName}|${agent}|${summa}UZS`
                            }).join('~')
                            
                            // Open Yandex Maps with all markers
