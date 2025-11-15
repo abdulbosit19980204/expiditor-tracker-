@@ -46,7 +46,8 @@ export function AuthGuard({ children, requireApproval = true, adminOnly = false 
       router.push("/login?message=admin_required")
       return
     }
-  }, [isAuthenticated, isApproved, isLoading, isPublicRoute, requireApproval, adminOnly, user, router, pathname])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isApproved, isLoading, isPublicRoute, requireApproval, adminOnly, user?.is_staff, user?.is_superuser, pathname])
 
   // Show loading while checking authentication
   if (isLoading) {

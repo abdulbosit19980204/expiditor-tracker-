@@ -227,7 +227,8 @@ export default function UserAnalyticsPage() {
       fetchAnalyticsDataRef.current?.()
       fetchLiveDataRef.current?.()
     }
-  }, [dateRange, userTypeFilter, user, token, mounted, fetchAnalyticsDataRef, fetchLiveDataRef])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange, userTypeFilter, user?.is_superuser, token, mounted])
 
   // Auto-refresh live data every 30 seconds
   useEffect(() => {
@@ -238,7 +239,8 @@ export default function UserAnalyticsPage() {
     }, 30000)
 
     return () => clearInterval(interval)
-  }, [mounted, user, token, fetchLiveDataRef])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, user?.is_superuser, token])
 
   // Chart data processing
   const dailyChartData = useMemo(() => {
