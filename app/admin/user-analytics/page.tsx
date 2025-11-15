@@ -125,22 +125,44 @@ export default function UserAnalyticsPage() {
     })
   }, [])
 
-  // Fetch analytics data
+  // Store latest values in refs to avoid dependency issues
+  const dateRangeRef = useRef(dateRange)
+  const userTypeFilterRef = useRef(userTypeFilter)
+  const tokenRef = useRef(token)
+
+  // Update refs when values change
+  useEffect(() => {
+    dateRangeRef.current = dateRange
+  }, [dateRange])
+
+  useEffect(() => {
+    userTypeFilterRef.current = userTypeFilter
+  }, [userTypeFilter])
+
+  useEffect(() => {
+    tokenRef.current = token
+  }, [token])
+
+  // Fetch analytics data - use refs to avoid dependency issues
   const fetchAnalyticsData = useCallback(async () => {
-    if (!dateRange.from || !dateRange.to || !token) return
+    const currentDateRange = dateRangeRef.current
+    const currentUserTypeFilter = userTypeFilterRef.current
+    const currentToken = tokenRef.current
+    
+    if (!currentDateRange.from || !currentDateRange.to || !currentToken) return
     
     try {
       setLoading(true)
       const params = new URLSearchParams({
-        date_from: dateRange.from.toISOString(),
-        date_to: dateRange.to.toISOString(),
-        user_type: userTypeFilter
+        date_from: currentDateRange.from.toISOString(),
+        date_to: currentDateRange.to.toISOString(),
+        user_type: currentUserTypeFilter
       })
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
       const response = await fetch(`${API_BASE_URL}/admin/user-analytics/?${params}`, {
         headers: {
-          'Authorization': `Token ${token}`,
+          'Authorization': `Token ${currentToken}`,
           'Content-Type': 'application/json',
         },
       })
@@ -155,23 +177,25 @@ export default function UserAnalyticsPage() {
     } finally {
       setLoading(false)
     }
-  }, [dateRange, userTypeFilter, token])
+  }, []) // Empty dependency array - using refs instead
 
   // Store refs for callbacks
   useEffect(() => {
     fetchAnalyticsDataRef.current = fetchAnalyticsData
   }, [fetchAnalyticsData])
 
-  // Fetch live data
+  // Fetch live data - use refs to avoid dependency issues
   const fetchLiveData = useCallback(async () => {
-    if (!token) return
+    const currentToken = tokenRef.current
+    
+    if (!currentToken) return
     
     try {
       setLiveLoading(true)
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
       const response = await fetch(`${API_BASE_URL}/admin/user-analytics/live/`, {
         headers: {
-          'Authorization': `Token ${token}`,
+          'Authorization': `Token ${currentToken}`,
           'Content-Type': 'application/json',
         },
       })
@@ -186,7 +210,7 @@ export default function UserAnalyticsPage() {
     } finally {
       setLiveLoading(false)
     }
-  }, [token])
+  }, []) // Empty dependency array - using refs instead
 
   // Store refs for callbacks
   useEffect(() => {
@@ -221,14 +245,17 @@ export default function UserAnalyticsPage() {
     )
   }
 
-  // Initial data fetch
+  // Initial data fetch - trigger when dependencies change
   useEffect(() => {
     if (user?.is_superuser && token && mounted && dateRange.from && dateRange.to) {
-      fetchAnalyticsDataRef.current?.()
-      fetchLiveDataRef.current?.()
+      // Use a small timeout to ensure refs are updated
+      const timeoutId = setTimeout(() => {
+        fetchAnalyticsDataRef.current?.()
+        fetchLiveDataRef.current?.()
+      }, 0)
+      return () => clearTimeout(timeoutId)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateRange, userTypeFilter, user?.is_superuser, token, mounted])
+  }, [dateRange.from, dateRange.to, userTypeFilter, user?.is_superuser, token, mounted])
 
   // Auto-refresh live data every 30 seconds
   useEffect(() => {
