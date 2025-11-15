@@ -255,6 +255,7 @@ export default function UserAnalyticsPage() {
   }, [dateRange.to?.getTime()])
 
   // Initial data fetch - trigger when dependencies change
+  // Note: dateRange.from and dateRange.to are checked inside but not in deps to avoid Date object reference issues
   useEffect(() => {
     if (user?.is_superuser && token && mounted && dateRange.from && dateRange.to) {
       // Use a small timeout to ensure refs are updated
@@ -264,7 +265,8 @@ export default function UserAnalyticsPage() {
       }, 0)
       return () => clearTimeout(timeoutId)
     }
-  }, [dateFromTimestamp, dateToTimestamp, userTypeFilter, user?.is_superuser, token, mounted, dateRange.from, dateRange.to])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFromTimestamp, dateToTimestamp, userTypeFilter, user?.is_superuser, token, mounted])
 
   // Auto-refresh live data every 30 seconds
   useEffect(() => {
