@@ -246,13 +246,14 @@ export default function UserAnalyticsPage() {
   }
 
   // Memoize date range timestamps to avoid dependency issues with Date objects
+  // Use the Date object itself as dependency, but return timestamp for comparison
   const dateFromTimestamp = useMemo(() => {
     return dateRange.from?.getTime() || 0
-  }, [dateRange.from?.getTime()])
+  }, [dateRange.from])
   
   const dateToTimestamp = useMemo(() => {
     return dateRange.to?.getTime() || 0
-  }, [dateRange.to?.getTime()])
+  }, [dateRange.to])
 
   // Initial data fetch - trigger when dependencies change
   // Note: dateRange.from and dateRange.to are checked inside but not in deps to avoid Date object reference issues
