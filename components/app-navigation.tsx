@@ -24,7 +24,8 @@ import {
   User,
   Loader2,
   ChevronLeft,
-  Users
+  Users,
+  BookOpen
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -205,6 +206,12 @@ export function AppNavigation({
       name: t('main_dashboard'),
       href: '/',
       icon: Home,
+    },
+    {
+      name: 'Foydalanuvchilar Qo\'llanmasi',
+      href: '/qollanma',
+      icon: BookOpen,
+      badge: 'NEW',
     },
     {
       name: 'Cheklar',
