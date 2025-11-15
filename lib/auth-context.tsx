@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react"
 import { useRouter } from "next/navigation"
 
 interface User {
@@ -45,7 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!token && !!user
   const isApproved = user?.is_approved || false
 
-  const checkAuthStatus = async () => {
+  const logout = useCallback(() => {
+    localStorage.removeItem("auth_token")
+    localStorage.removeItem("user_data")
+    setToken(null)
+    setUser(null)
+    router.push("/login")
+  }, [router])
+
+  const checkAuthStatus = useCallback(async () => {
     try {
       const storedToken = localStorage.getItem("auth_token")
       const storedUser = localStorage.getItem("user_data")
@@ -65,20 +73,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const data = await response.json()
           if (data.is_authenticated && data.is_approved) {
             // Token is valid and user is approved
+            setIsLoading(false)
             return
           }
         }
 
         // Token is invalid or user not approved
         logout()
+      } else {
+        setIsLoading(false)
       }
     } catch (error) {
       console.error("Auth status check failed:", error)
       logout()
-    } finally {
-      setIsLoading(false)
     }
-  }
+  }, [logout])
 
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
@@ -107,17 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem("auth_token")
-    localStorage.removeItem("user_data")
-    setToken(null)
-    setUser(null)
-    router.push("/login")
-  }
-
   useEffect(() => {
     checkAuthStatus()
-  }, [])
+  }, [checkAuthStatus])
 
   const value: AuthContextType = {
     user,
