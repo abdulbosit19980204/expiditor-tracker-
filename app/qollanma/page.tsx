@@ -28,9 +28,11 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/lib/auth-context"
 import { AuthGuard } from "@/components/auth-guard"
+import { useLanguage } from "@/lib/language-context"
 
 export default function QollanmaPage() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['intro', 'basics']))
 
   const toggleSection = (section: string) => {
@@ -53,10 +55,10 @@ export default function QollanmaPage() {
               <BookOpen className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-              Foydalanuvchilar Qo'llanmasi
+              {t('user_guide_title')}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Expeditor Tracker tizimini qanday ishlatishni o'rganing
+              {t('user_guide_subtitle')}
             </p>
           </div>
 
@@ -66,7 +68,7 @@ export default function QollanmaPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-600" />
-                  Asosiy Funksiyalar
+                  {t('basic_functions')}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -74,7 +76,7 @@ export default function QollanmaPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5 text-green-600" />
-                  Filtrlash va Qidiruv
+                  {t('filtering_and_search')}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -82,7 +84,7 @@ export default function QollanmaPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-purple-600" />
-                  Statistika va Analitika
+                  {t('statistics_and_analytics')}
                 </CardTitle>
               </CardHeader>
             </Card>
@@ -94,7 +96,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <HelpCircle className="h-5 w-5 text-blue-600" />
-                  Proyekt Nima?
+                  {t('what_is_project')}
                 </span>
                 <Button
                   variant="ghost"
@@ -108,35 +110,35 @@ export default function QollanmaPage() {
             {expandedSections.has('intro') && (
               <CardContent className="space-y-4">
                 <p className="text-gray-700 leading-relaxed">
-                  <strong>Expeditor Tracker</strong> - bu yetkazib berish xodimlarini (ekspeditorlar) va ularning ishlarini kuzatish, tahlil qilish va boshqarish tizimi.
+                  <strong>{t('expeditor_tracker')}</strong> - {t('user_guide_subtitle').toLowerCase()}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
                     <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Xaritada Kuzatish</h4>
-                      <p className="text-sm text-gray-600">Barcha yetkazib berishlar joylashuvini xaritada ko'ring</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('map_tracking')}</h4>
+                      <p className="text-sm text-gray-600">{t('map_tracking')} - {t('statistics_and_analysis').toLowerCase()}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg">
                     <BarChart3 className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Statistika va Tahlil</h4>
-                      <p className="text-sm text-gray-600">Batafsil statistika va hisobotlar oling</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('statistics_and_analysis')}</h4>
+                      <p className="text-sm text-gray-600">{t('statistics_and_analysis')} - {t('statistics_and_analysis').toLowerCase()}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg">
                     <Filter className="h-5 w-5 text-purple-600 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Kengaytirilgan Filtrlash</h4>
-                      <p className="text-sm text-gray-600">Sana, loyiha, shahar va boshqalar bo'yicha filtrlash</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('advanced_filtering')}</h4>
+                      <p className="text-sm text-gray-600">{t('advanced_filtering')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-4 bg-orange-50 rounded-lg">
                     <Clock className="h-5 w-5 text-orange-600 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-gray-900 mb-1">Real Vaqtda Yangilanish</h4>
-                      <p className="text-sm text-gray-600">Ma'lumotlar real vaqtda yangilanadi</p>
+                      <h4 className="font-semibold text-gray-900 mb-1">{t('real_time_updates')}</h4>
+                      <p className="text-sm text-gray-600">{t('real_time_updates')}</p>
                     </div>
                   </div>
                 </div>
@@ -150,7 +152,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-600" />
-                  Asosiy Funksiyalar
+                  {t('basic_functions')}
                 </span>
                 <Button
                   variant="ghost"
@@ -167,29 +169,29 @@ export default function QollanmaPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5 text-blue-600" />
-                    <h3 className="text-xl font-semibold text-gray-900">1. Xarita (Map)</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">1. {t('map_section')}</h3>
                   </div>
                   <div className="pl-7 space-y-2">
                     <p className="text-gray-700">
-                      Asosiy sahifada markazda katta xarita ko'rinadi. Xaritada rangli nuqtalar (markerlar) - bu checklar (yetkazib berishlar).
+                      {t('map_description')}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-3">
                       <Badge className="bg-green-500 text-white">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Yashil = Muvaffaqiyatli
+                        {t('green_successful')}
                       </Badge>
                       <Badge className="bg-red-500 text-white">
                         <XCircle className="h-3 w-3 mr-1" />
-                        Qizil = Muammo
+                        {t('red_problem')}
                       </Badge>
                       <Badge className="bg-yellow-500 text-white">
                         <Clock className="h-3 w-3 mr-1" />
-                        Sariq = Kutayotgan
+                        {t('yellow_pending')}
                       </Badge>
                     </div>
                     <div className="bg-blue-50 p-4 rounded-lg mt-3">
                       <p className="text-sm text-gray-700">
-                        <strong>Nima qilish kerak:</strong> Marker ustiga bosing - check haqida batafsil ma'lumot ko'rinadi. Xaritani surib ko'ring (zoom in/out).
+                        <strong>{t('what_to_do')}</strong> {t('map_what_to_do')}
                       </p>
                     </div>
                   </div>
@@ -201,11 +203,11 @@ export default function QollanmaPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Users className="h-5 w-5 text-green-600" />
-                    <h3 className="text-xl font-semibold text-gray-900">2. Ekspeditorlar Ro'yxati</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">2. {t('expeditors_list')}</h3>
                   </div>
                   <div className="pl-7 space-y-2">
                     <p className="text-gray-700">
-                      Barcha ekspeditorlar ro'yxati ko'rinadi. Har bir ekspeditor yonida:
+                      {t('expeditors_list_desc')}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-gray-700 ml-4">
                       <li>Ism</li>
@@ -215,7 +217,7 @@ export default function QollanmaPage() {
                     </ul>
                     <div className="bg-green-50 p-4 rounded-lg mt-3">
                       <p className="text-sm text-gray-700">
-                        <strong>Nima qilish kerak:</strong> Ekspeditor ustiga bosing - uning checklari ko'rinadi. Qidiruv bo'limida ism yozib qidiring.
+                        <strong>{t('what_to_do')}</strong> {t('expeditors_what_to_do')}
                       </p>
                     </div>
                   </div>
@@ -227,11 +229,11 @@ export default function QollanmaPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-purple-600" />
-                    <h3 className="text-xl font-semibold text-gray-900">3. Checklar Ro'yxati</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">3. {t('checks_list')}</h3>
                   </div>
                   <div className="pl-7 space-y-2">
                     <p className="text-gray-700">
-                      Tanlangan ekspeditorning barcha checklari ko'rinadi. Har bir checkda:
+                      {t('checks_list_desc')}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-gray-700 ml-4">
                       <li>Check ID (raqam)</li>
@@ -243,7 +245,7 @@ export default function QollanmaPage() {
                     </ul>
                     <div className="bg-purple-50 p-4 rounded-lg mt-3">
                       <p className="text-sm text-gray-700">
-                        <strong>Nima qilish kerak:</strong> Check ustiga bosing - batafsil ma'lumot ochiladi. Qidiruv bo'limida check ID yozib qidiring.
+                        <strong>{t('what_to_do')}</strong> {t('checks_what_to_do')}
                       </p>
                     </div>
                   </div>
@@ -255,11 +257,11 @@ export default function QollanmaPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-orange-600" />
-                    <h3 className="text-xl font-semibold text-gray-900">4. Statistika Paneli</h3>
+                    <h3 className="text-xl font-semibold text-gray-900">4. {t('statistics_panel')}</h3>
                   </div>
                   <div className="pl-7 space-y-2">
                     <p className="text-gray-700">
-                      Statistika panelida quyidagi ma'lumotlar ko'rinadi:
+                      {t('statistics_panel_desc')}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-gray-700 ml-4">
                       <li>Jami checklar soni</li>
@@ -269,7 +271,7 @@ export default function QollanmaPage() {
                     </ul>
                     <div className="bg-orange-50 p-4 rounded-lg mt-3">
                       <p className="text-sm text-gray-700">
-                        <strong>Nima qilish kerak:</strong> Statistika tugmasini bosing (yoki avtomatik ochiladi). Ma'lumotlarni ko'ring va tahlil qiling.
+                        <strong>{t('what_to_do')}</strong> {t('statistics_what_to_do')}
                       </p>
                     </div>
                   </div>
@@ -284,7 +286,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Filter className="h-5 w-5 text-green-600" />
-                  Filtrlash va Qidiruv
+                  {t('filtering_and_search')}
                 </span>
                 <Button
                   variant="ghost"
@@ -298,74 +300,74 @@ export default function QollanmaPage() {
             {expandedSections.has('filters') && (
               <CardContent className="space-y-4">
                 <p className="text-gray-700">
-                  Filtrlash tugmasini bosib, quyidagi filtrlardan foydalaning:
+                  {t('filter_description')}
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      Sana Oralig'i
+                      {t('date_range_filter')}
                     </h4>
                     <p className="text-sm text-gray-700">
-                      "From" (dan) va "To" (gacha) - boshlanish va tugash sanalarini tanlang. Kalendardan tanlash mumkin.
+                      {t('date_range_desc')}
                     </p>
                   </div>
 
                   <div className="p-4 bg-green-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <BarChart3 className="h-4 w-4" />
-                      Loyiha (Project)
+                      {t('project_filter')}
                     </h4>
                     <p className="text-sm text-gray-700">
-                      Dropdown dan loyihani tanlang yoki "All" (Hammasi) ni tanlang.
+                      {t('project_filter_desc')}
                     </p>
                   </div>
 
                   <div className="p-4 bg-purple-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
-                      Ombor (Sklad)
+                      {t('warehouse_filter')}
                     </h4>
                     <p className="text-sm text-gray-700">
-                      Dropdown dan omborni tanlang yoki "All" ni tanlang.
+                      {t('warehouse_filter_desc')}
                     </p>
                   </div>
 
                   <div className="p-4 bg-orange-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <Globe className="h-4 w-4" />
-                      Shahar (City)
+                      {t('city_filter')}
                     </h4>
                     <p className="text-sm text-gray-700">
-                      Dropdown dan shaharni tanlang yoki "All" ni tanlang.
+                      {t('city_filter_desc')}
                     </p>
                   </div>
 
                   <div className="p-4 bg-red-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <CheckCircle className="h-4 w-4" />
-                      Status
+                      {t('status_filter')}
                     </h4>
                     <p className="text-sm text-gray-700">
-                      Delivered (Yetkazilgan), Failed (Noto'g'ri), Pending (Kutayotgan) yoki "All" ni tanlang.
+                      {t('status_filter_desc')}
                     </p>
                   </div>
 
                   <div className="p-4 bg-yellow-50 rounded-lg">
                     <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                       <Search className="h-4 w-4" />
-                      Qidiruv
+                      {t('search_filter')}
                     </h4>
                     <p className="text-sm text-gray-700">
-                      Check ID yoki mijoz ismini yozing. Avtomatik qidiriladi.
+                      {t('search_filter_desc')}
                     </p>
                   </div>
                 </div>
 
                 <div className="bg-blue-50 p-4 rounded-lg mt-4">
                   <p className="text-sm text-gray-700">
-                    <strong>Qanday ishlatish:</strong> Filtrlarni to'ldiring → "Apply" (Qo'llash) tugmasini bosing → Natijalar yangilanadi. Filtrlarni tozalash uchun "Clear" (Tozalash) tugmasini bosing.
+                    <strong>{t('how_to_use')}</strong> {t('how_to_use_filters')}
                   </p>
                 </div>
               </CardContent>
@@ -378,7 +380,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-purple-600" />
-                  Statistika va Analitika
+                  {t('statistics_and_analytics')}
                 </span>
                 <Button
                   variant="ghost"
@@ -393,43 +395,43 @@ export default function QollanmaPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-4">
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Asosiy Statistika</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('main_statistics')}</h4>
                     <p className="text-sm text-gray-700 mb-3">
-                      Asosiy sahifada statistika paneli mavjud. Yoki "Statistics" tugmasini bosing.
+                      {t('main_statistics_desc')}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
-                      <li>Jami checklar soni</li>
-                      <li>Jami summa</li>
-                      <li>Muvaffaqiyat darajasi (%)</li>
-                      <li>To'lov usullari bo'yicha taqsimot</li>
-                      <li>Eng yaxshi ekspeditorlar</li>
-                      <li>Eng yaxshi loyihalar</li>
+                      <li>{t('total_checks')}</li>
+                      <li>{t('total_amount')}</li>
+                      <li>{t('success_rate_percent')}</li>
+                      <li>{t('payment_methods')}</li>
+                      <li>{t('top_expeditors')}</li>
+                      <li>{t('top_projects')}</li>
                     </ul>
                   </div>
 
                   <div className="p-4 bg-green-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Kengaytirilgan Analitika</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('enhanced_analytics')}</h4>
                     <p className="text-sm text-gray-700 mb-3">
-                      Yuqoridagi "Analytics" tugmasini bosing yoki "Enhanced Analytics" ni tanlang.
+                      {t('enhanced_analytics_desc')}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
-                      <li>Grafiklar va diagrammalar</li>
-                      <li>Trendlar</li>
-                      <li>Tahlillar</li>
-                      <li>Export qilish imkoniyati</li>
+                      <li>{t('enhanced_analytics_items').split(', ')[0]}</li>
+                      <li>{t('enhanced_analytics_items').split(', ')[1]}</li>
+                      <li>{t('enhanced_analytics_items').split(', ')[2]}</li>
+                      <li>{t('enhanced_analytics_items').split(', ')[3]}</li>
                     </ul>
                   </div>
 
                   <div className="p-4 bg-purple-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Violation Analytics (Buzilishlar Analitikasi)</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('violation_analytics_title')}</h4>
                     <p className="text-sm text-gray-700 mb-3">
-                      "Violation Analytics" tugmasini bosing.
+                      {t('violation_analytics_desc')}
                     </p>
                     <ul className="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
-                      <li>Muammoli checklar</li>
-                      <li>Bir xil joydagi buzilishlar</li>
-                      <li>Buzilishlar statistikasi</li>
-                      <li>Tahlillar</li>
+                      <li>{t('violation_analytics_items').split(', ')[0]}</li>
+                      <li>{t('violation_analytics_items').split(', ')[1]}</li>
+                      <li>{t('violation_analytics_items').split(', ')[2]}</li>
+                      <li>{t('violation_analytics_items').split(', ')[3]}</li>
                     </ul>
                   </div>
                 </div>
@@ -443,7 +445,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-blue-600" />
-                  Check Haqida Batafsil Ma'lumot
+                  {t('check_details_title')}
                 </span>
                 <Button
                   variant="ghost"
@@ -457,37 +459,37 @@ export default function QollanmaPage() {
             {expandedSections.has('check-details') && (
               <CardContent className="space-y-4">
                 <p className="text-gray-700">
-                  Check ustiga bosganingizda modal oyna ochiladi va quyidagi ma'lumotlar ko'rinadi:
+                  {t('check_details_desc')}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <CheckCircle className="h-4 w-4 text-green-600" />
-                    <span className="text-sm text-gray-700">Check ID</span>
+                    <span className="text-sm text-gray-700">{t('check_id')}</span>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <Users className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm text-gray-700">Mijoz ismi va manzili</span>
+                    <span className="text-sm text-gray-700">{t('client_name_address')}</span>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <Clock className="h-4 w-4 text-purple-600" />
-                    <span className="text-sm text-gray-700">Yetkazib berilgan vaqt</span>
+                    <span className="text-sm text-gray-700">{t('delivery_time')}</span>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <DollarSign className="h-4 w-4 text-green-600" />
-                    <span className="text-sm text-gray-700">Jami summa</span>
+                    <span className="text-sm text-gray-700">{t('total_amount')}</span>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <CheckCircle className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm text-gray-700">To'lov usullari (Naqd, UzCard, Humo, Click)</span>
+                    <span className="text-sm text-gray-700">{t('payment_methods_detail')}</span>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                     <MapPin className="h-4 w-4 text-red-600" />
-                    <span className="text-sm text-gray-700">GPS koordinatalar</span>
+                    <span className="text-sm text-gray-700">{t('gps_coordinates')}</span>
                   </div>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg mt-4">
                   <p className="text-sm text-gray-700">
-                    <strong>Nima qilish kerak:</strong> Ma'lumotlarni ko'ring → "Close" (Yopish) tugmasini bosing. Yoki xaritada ko'rsatish uchun "Show on Map" tugmasini bosing.
+                    <strong>{t('what_to_do')}</strong> {t('check_details_what_to_do')}
                   </p>
                 </div>
               </CardContent>
@@ -500,7 +502,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <RefreshCw className="h-5 w-5 text-green-600" />
-                  Ma'lumotlarni Yangilash
+                  {t('update_data_title')}
                 </span>
                 <Button
                   variant="ghost"
@@ -514,17 +516,16 @@ export default function QollanmaPage() {
             {expandedSections.has('update') && (
               <CardContent className="space-y-4">
                 <p className="text-gray-700">
-                  Ma'lumotlarni yangilash uchun:
+                  {t('update_data_desc')}
                 </p>
-                <ol className="list-decimal list-inside space-y-2 text-gray-700 ml-4">
-                  <li>Yuqoridagi "Refresh" (🔄) tugmasini bosing</li>
-                  <li>Yoki "Update Data" tugmasini bosing</li>
-                  <li>Progress bar ko'rinadi</li>
-                  <li>Ma'lumotlar yangilanadi</li>
-                </ol>
+                <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {t('update_data_steps')}
+                  </p>
+                </div>
                 <div className="bg-yellow-50 p-4 rounded-lg mt-4">
                   <p className="text-sm text-gray-700">
-                    <strong>Eslatma:</strong> Yangilanish bir necha soniya davom etishi mumkin. Katta ma'lumotlar bo'lsa, uzoqroq vaqt olishi mumkin.
+                    <strong>{t('update_data_note')}</strong>
                   </p>
                 </div>
               </CardContent>
@@ -537,7 +538,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <Smartphone className="h-5 w-5 text-purple-600" />
-                  Mobil Qurilmalarda Ishlatish
+                  {t('mobile_usage')}
                 </span>
                 <Button
                   variant="ghost"
@@ -551,20 +552,16 @@ export default function QollanmaPage() {
             {expandedSections.has('mobile') && (
               <CardContent className="space-y-4">
                 <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-2">Telegram WebApp</h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 ml-4">
-                    <li>Telegram bot orqali kirish</li>
-                    <li>Yoki brauzerda ochish</li>
-                    <li>Interfeys mobil uchun moslashtirilgan</li>
-                  </ol>
+                  <h4 className="font-semibold text-gray-900 mb-2">{t('telegram_webapp')}</h4>
+                  <p className="text-sm text-gray-700">
+                    {t('telegram_webapp_desc')}
+                  </p>
                 </div>
                 <div className="p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-2">Mobil Brauzer</h4>
-                  <ol className="list-decimal list-inside space-y-1 text-sm text-gray-700 ml-4">
-                    <li>Saytga kirish</li>
-                    <li>Interfeys avtomatik moslashadi</li>
-                    <li>Barcha funksiyalar ishlaydi</li>
-                  </ol>
+                  <h4 className="font-semibold text-gray-900 mb-2">{t('mobile_browser')}</h4>
+                  <p className="text-sm text-gray-700">
+                    {t('mobile_browser_desc')}
+                  </p>
                 </div>
               </CardContent>
             )}
@@ -576,7 +573,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <HelpCircle className="h-5 w-5 text-orange-600" />
-                  Tez-tez Beriladigan Savollar
+                  {t('faq_title')}
                 </span>
                 <Button
                   variant="ghost"
@@ -591,33 +588,33 @@ export default function QollanmaPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-4">
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Q: Check nima?</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('what_is_check')}</h4>
                     <p className="text-sm text-gray-700">
-                      <strong>A:</strong> Check - bu yetkazib berish (delivery). Har bir buyurtma bir check hisoblanadi.
+                      {t('check_answer')}
                     </p>
                   </div>
                   <div className="p-4 bg-green-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Q: Ekspeditor nima?</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('what_is_expeditor')}</h4>
                     <p className="text-sm text-gray-700">
-                      <strong>A:</strong> Ekspeditor - yetkazib berish xodimi. Ular buyurtmalarni mijozlarga yetkazib beradi.
+                      {t('expeditor_answer')}
                     </p>
                   </div>
                   <div className="p-4 bg-purple-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Q: Xaritada nuqtalar ko'rinmayapti?</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('map_no_points')}</h4>
                     <p className="text-sm text-gray-700">
-                      <strong>A:</strong> Filtrlarni tekshiring. Ekspeditor tanlanganligini tekshiring. Sana oralig'ini tekshiring.
+                      {t('map_no_points_answer')}
                     </p>
                   </div>
                   <div className="p-4 bg-orange-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Q: Ma'lumotlar yangilanmayapti?</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('data_not_updating')}</h4>
                     <p className="text-sm text-gray-700">
-                      <strong>A:</strong> "Refresh" tugmasini bosing. Yoki "Update Data" tugmasini bosing. Bir necha soniya kuting.
+                      {t('data_not_updating_answer')}
                     </p>
                   </div>
                   <div className="p-4 bg-red-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">Q: Statistika ko'rinmayapti?</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">{t('stats_not_showing')}</h4>
                     <p className="text-sm text-gray-700">
-                      <strong>A:</strong> "Statistics" tugmasini bosing. Yoki statistika panelini oching. Filtrlarni tekshiring.
+                      {t('stats_not_showing_answer')}
                     </p>
                   </div>
                 </div>
@@ -631,7 +628,7 @@ export default function QollanmaPage() {
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600" />
-                  Foydalanish Tavsiyalari
+                  {t('tips_title')}
                 </span>
                 <Button
                   variant="ghost"
@@ -646,27 +643,27 @@ export default function QollanmaPage() {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">✅ Filtrlarni saqlang</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">✅ {t('save_filters')}</h4>
                     <p className="text-sm text-gray-700">
-                      Filtrlarni to'ldiring. Tizim avtomatik saqlaydi. Keyingi safar avtomatik yuklanadi.
+                      {t('save_filters_desc')}
                     </p>
                   </div>
                   <div className="p-4 bg-green-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">✅ Ekspeditorni tanlang</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">✅ {t('select_expeditor')}</h4>
                     <p className="text-sm text-gray-700">
-                      Ekspeditor ustiga bosing. Faqat uning checklari ko'rinadi. Xaritada faqat uning checklari ko'rsatiladi.
+                      {t('select_expeditor_desc')}
                     </p>
                   </div>
                   <div className="p-4 bg-purple-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">✅ Xaritadan foydalaning</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">✅ {t('use_map')}</h4>
                     <p className="text-sm text-gray-700">
-                      Marker ustiga bosing. Batafsil ma'lumot ko'ring. Xaritada harakatlaning.
+                      {t('use_map_desc')}
                     </p>
                   </div>
                   <div className="p-4 bg-orange-50 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-2">✅ Statistikadan foydalaning</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">✅ {t('use_statistics')}</h4>
                     <p className="text-sm text-gray-700">
-                      Statistika panelini oching. Ma'lumotlarni tahlil qiling. Hisobotlar tayyorlang.
+                      {t('use_statistics_desc')}
                     </p>
                   </div>
                 </div>
@@ -679,7 +676,7 @@ export default function QollanmaPage() {
             <Link href="/">
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Home className="h-5 w-5 mr-2" />
-                Asosiy Sahifaga Qaytish
+                {t('back_to_home')}
               </Button>
             </Link>
           </div>
