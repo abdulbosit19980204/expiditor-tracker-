@@ -190,13 +190,18 @@ export function AppNavigation({
         if (data.url) {
           window.open(data.url, '_blank')
         } else {
+          // Show error message
+          const errorMsg = data.error || "Telegram account not configured. Please contact administrator."
+          alert(errorMsg + "\n\nPlease configure a Telegram account in Django admin panel:\n1. Go to Django admin\n2. Find 'Telegram Accounts' section\n3. Add a new account with username or phone number\n4. Make sure 'is_active' is checked")
           window.open('https://t.me/', '_blank')
         }
       } else {
+        alert("Failed to get Telegram account information. Please contact administrator.")
         window.open('https://t.me/', '_blank')
       }
     } catch (error) {
       console.error('Failed to get telegram target:', error)
+      alert("Error connecting to server. Please try again later.")
       window.open('https://t.me/', '_blank')
     }
   }

@@ -722,17 +722,39 @@ class TelegramTargetView(APIView):
     def get(self, request):
         account = TelegramAccount.objects.filter(is_active=True).order_by('-updated_at', '-id').first()
         if not account:
-            return Response({ 'url': None }, status=200)
+            return Response({ 
+                'url': None, 
+                'error': 'No active Telegram account found. Please configure a Telegram account in Django admin panel.',
+                'display_name': None,
+                'username': None,
+                'phone_number': None
+            }, status=200)
 
         url = None
         if account.username:
-            url = f"https://t.me/{account.username}"
+            # Remove @ if present
+            username = account.username.lstrip('@')
+            url = f"https://t.me/{username}"
         elif account.phone_number:
             # tg://resolve?phone=... works in some clients; https form is more universal via share
             phone = account.phone_number.lstrip('+')
             url = f"https://t.me/+{phone}"
+        else:
+            return Response({
+                'url': None,
+                'error': 'Telegram account found but no username or phone number configured. Please set username or phone number in Django admin.',
+                'display_name': account.display_name,
+                'username': account.username,
+                'phone_number': account.phone_number
+            }, status=200)
 
-        return Response({'url': url, 'display_name': account.display_name, 'username': account.username, 'phone_number': account.phone_number})
+        return Response({
+            'url': url, 
+            'display_name': account.display_name, 
+            'username': account.username, 
+            'phone_number': account.phone_number,
+            'error': None
+        })
 
 
 class ViolationAnalyticsDashboardView(APIView):

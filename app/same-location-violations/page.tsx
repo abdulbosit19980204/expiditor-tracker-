@@ -182,11 +182,16 @@ export default function ViolationAnalyticsPage() {
         console.log("Opening Telegram URL:", info.url)
         window.open(info.url, "_blank")
       } else {
-        console.log("No URL found, opening default Telegram")
+        console.log("No URL found")
+        // Show error message to user
+        const errorMsg = info?.error || "Telegram account not configured. Please contact administrator."
+        alert(errorMsg + "\n\nPlease configure a Telegram account in Django admin panel:\n1. Go to Django admin\n2. Find 'Telegram Accounts' section\n3. Add a new account with username or phone number\n4. Make sure 'is_active' is checked")
+        // Still try to open default Telegram
         window.open("https://t.me/", "_blank")
       }
     } catch (error) {
       console.error("Failed to get Telegram info:", error)
+      alert("Error connecting to server. Please try again later.")
       window.open("https://t.me/", "_blank")
     }
   }, [])

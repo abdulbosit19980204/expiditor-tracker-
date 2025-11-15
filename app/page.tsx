@@ -95,11 +95,24 @@ export default function ExpeditorTracker() {
         console.log("Opening Telegram URL:", info.url)
         window.open(info.url, "_blank")
       } else {
-        console.log("No URL found, opening default Telegram")
+        console.log("No URL found")
+        // Show error message to user
+        const errorMsg = info?.error || "Telegram account not configured. Please contact administrator."
+        toast({
+          title: "Telegram Account Not Found",
+          description: errorMsg,
+          variant: "destructive",
+        })
+        // Still try to open default Telegram
         window.open("https://t.me/", "_blank")
       }
     } catch (error) {
       console.error("Failed to get Telegram info:", error)
+      toast({
+        title: "Error",
+        description: "Failed to connect to Telegram. Please try again later.",
+        variant: "destructive",
+      })
       window.open("https://t.me/", "_blank")
     }
   }, [])
