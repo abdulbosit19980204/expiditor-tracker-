@@ -245,6 +245,15 @@ export default function UserAnalyticsPage() {
     )
   }
 
+  // Memoize date range timestamps to avoid dependency issues with Date objects
+  const dateFromTimestamp = useMemo(() => {
+    return dateRange.from?.getTime() || 0
+  }, [dateRange.from?.getTime()])
+  
+  const dateToTimestamp = useMemo(() => {
+    return dateRange.to?.getTime() || 0
+  }, [dateRange.to?.getTime()])
+
   // Initial data fetch - trigger when dependencies change
   useEffect(() => {
     if (user?.is_superuser && token && mounted && dateRange.from && dateRange.to) {
@@ -255,7 +264,7 @@ export default function UserAnalyticsPage() {
       }, 0)
       return () => clearTimeout(timeoutId)
     }
-  }, [dateRange.from, dateRange.to, userTypeFilter, user?.is_superuser, token, mounted])
+  }, [dateFromTimestamp, dateToTimestamp, userTypeFilter, user?.is_superuser, token, mounted, dateRange.from, dateRange.to])
 
   // Auto-refresh live data every 30 seconds
   useEffect(() => {
