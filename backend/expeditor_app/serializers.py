@@ -18,7 +18,7 @@ class CheckDetailSerializer(serializers.ModelSerializer):
 class SkladSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sklad
-        fields = ['id', 'sklad_name', 'sklad_code', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'sklad_name', 'sklad_code', 'description', 'lat', 'lon', 'created_at', 'updated_at']
 
 
 class FilialSerializer(serializers.ModelSerializer):

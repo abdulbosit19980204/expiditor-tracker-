@@ -23,9 +23,11 @@ class CheckDetailAdmin(admin.ModelAdmin):
 
 @admin.register(Sklad)
 class SkladAdmin(admin.ModelAdmin):
-    list_display = ['sklad_name', 'sklad_code', 'created_at']
+    list_display = ['sklad_name', 'sklad_code', 'lat', 'lon', 'created_at']
     search_fields = ['sklad_name', 'sklad_code']
     list_filter = ['created_at']
+    fields = ['sklad_name', 'sklad_code', 'description', 'lat', 'lon', 'created_at', 'updated_at']
+    readonly_fields = ['created_at', 'updated_at']
 
 @admin.register(City)
 class CityAdmin(admin.ModelAdmin):

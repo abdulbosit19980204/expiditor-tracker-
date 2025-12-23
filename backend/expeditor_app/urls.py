@@ -12,6 +12,7 @@ from .auth_views import register_user, login_user, logout_user, get_user_profile
 from .integration import UpdateChecksView
 from .violation_insights_views import ViolationInsightsView, SameLocationViolationsView
 from .user_analytics_views import UserAnalyticsView, LiveUserDataView, UserSessionListView
+from .manager_report_views import ManagerReportView, ManagerReportPDFView, ManagerReportEmailView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -43,6 +44,11 @@ urlpatterns = [
     # Statistics endpoints
     path('statistics/', StatisticsView.as_view(), name='statistics'),
     path('statistics/global/', GlobalStatisticsView.as_view(), name='statistics-global'),
+    
+    # Manager Report endpoints
+    path('manager-report/', ManagerReportView.as_view(), name='manager-report'),
+    path('manager-report/pdf/', ManagerReportPDFView.as_view(), name='manager-report-pdf'),
+    path('manager-report/email/', ManagerReportEmailView.as_view(), name='manager-report-email'),
     
     # Other specific endpoints
     path('telegram/target/', TelegramTargetView.as_view(), name='telegram-target'),

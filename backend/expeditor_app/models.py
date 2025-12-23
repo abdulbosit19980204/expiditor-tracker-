@@ -40,6 +40,8 @@ class Sklad(models.Model):
     sklad_name = models.CharField(max_length=100, unique=True)
     sklad_code = models.CharField(max_length=50, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
+    lat = models.FloatField(blank=True, null=True, help_text="Sklad address latitude")
+    lon = models.FloatField(blank=True, null=True, help_text="Sklad address longitude")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

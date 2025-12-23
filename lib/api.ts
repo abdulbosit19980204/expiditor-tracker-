@@ -550,4 +550,24 @@ export async function getTelegramTarget(): Promise<{ url: string | null; display
   return apiRequestSafe(`/telegram/target/`)
 }
 
-export const analytics = { getAnalyticsSummary, getTelegramTarget }
+export async function getManagerReport(params: {
+  date_from: string
+  date_to: string
+  filial?: string
+  project?: string
+  radius_meters?: number
+  time_window_minutes?: number
+}) {
+  const search = new URLSearchParams()
+  search.set('date_from', params.date_from)
+  search.set('date_to', params.date_to)
+  if (params.filial) search.set('filial', params.filial)
+  if (params.project) search.set('project', params.project)
+  if (params.radius_meters !== undefined) search.set('radius_meters', params.radius_meters.toString())
+  if (params.time_window_minutes !== undefined) search.set('time_window_minutes', params.time_window_minutes.toString())
+
+  const endpoint = `/manager-report/?${search.toString()}`
+  return apiRequestSafe<any>(endpoint)
+}
+
+export const analytics = { getAnalyticsSummary, getTelegramTarget, getManagerReport }

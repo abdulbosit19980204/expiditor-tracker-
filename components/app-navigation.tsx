@@ -25,7 +25,8 @@ import {
   Loader2,
   ChevronLeft,
   Users,
-  BookOpen
+  BookOpen,
+  FileText
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -264,6 +265,11 @@ export function AppNavigation({
       name: t('tasks_management'),
       href: '/tasks',
       icon: Clock,
+    },
+    {
+      name: 'Manager Xisoboti',
+      href: '/manager-report',
+      icon: FileText,
     },
     ...(user?.is_superuser ? [
       {
