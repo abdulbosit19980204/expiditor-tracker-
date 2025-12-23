@@ -100,6 +100,13 @@ class ManagerReportView(APIView):
             check_lat__isnull=False,
             check_lon__isnull=False
         ).exclude(check_lat=0, check_lon=0)
+
+        # Ekispiditor -> filial nomi map (statistika uchun)
+        expeditor_filial_map = {}
+        expeditor_names = checks.values_list('ekispiditor', flat=True).distinct()
+        filials = Ekispiditor.objects.filter(ekispiditor_name__in=expeditor_names).select_related('filial')
+        for e in filials:
+            expeditor_filial_map[e.ekispiditor_name] = e.filial.filial_name if e.filial else "Biriktirilmagan"
         
         # CheckDetail bilan birga olish
         checks_with_details = []
@@ -141,7 +148,8 @@ class ManagerReportView(APIView):
             same_location_violations,
             sklad_violations,
             same_time_violations,
-            checks_with_details
+            checks_with_details,
+            expeditor_filial_map
         )
         
         return Response({
@@ -369,7 +377,7 @@ class ManagerReportView(APIView):
         return violations
     
     def _calculate_statistics(self, same_location_violations, sklad_violations, 
-                            same_time_violations, all_checks):
+                            same_time_violations, all_checks, expeditor_filial_map):
         """Umumiy statistika hisoblash"""
         total_violations = len(same_location_violations) + len(sklad_violations) + len(same_time_violations)
         
@@ -388,32 +396,75 @@ class ManagerReportView(APIView):
             'total_violations': 0,
             'total_checks': 0,
         })
+
+        # Filial va loyiha bo'yicha
+        filial_stats = defaultdict(lambda: {
+            'same_location': 0,
+            'sklad': 0,
+            'same_time': 0,
+            'total_violations': 0,
+            'total_checks': 0,
+        })
+        project_stats = defaultdict(lambda: {
+            'same_location': 0,
+            'sklad': 0,
+            'same_time': 0,
+            'total_violations': 0,
+            'total_checks': 0,
+        })
         
         for violation in same_location_violations:
             expeditor = violation['expeditor']
             expeditor_stats[expeditor]['same_location'] += 1
             expeditor_stats[expeditor]['total_violations'] += 1
+            filial_name = expeditor_filial_map.get(expeditor, 'Biriktirilmagan')
+            filial_stats[filial_name]['same_location'] += 1
+            filial_stats[filial_name]['total_violations'] += 1
+            for c in violation.get('checks', []):
+                project_name = c.get('project') or 'Noma\'lum'
+                project_stats[project_name]['same_location'] += 1
+                project_stats[project_name]['total_violations'] += 1
         
         for violation in sklad_violations:
             expeditor = violation['expeditor']
             expeditor_stats[expeditor]['sklad'] += 1
             expeditor_stats[expeditor]['total_violations'] += 1
+            filial_name = expeditor_filial_map.get(expeditor, 'Biriktirilmagan')
+            filial_stats[filial_name]['sklad'] += 1
+            filial_stats[filial_name]['total_violations'] += 1
+            for c in violation.get('checks', []):
+                project_name = c.get('project') or 'Noma\'lum'
+                project_stats[project_name]['sklad'] += 1
+                project_stats[project_name]['total_violations'] += 1
         
         for violation in same_time_violations:
             expeditor = violation['expeditor']
             expeditor_stats[expeditor]['same_time'] += 1
             expeditor_stats[expeditor]['total_violations'] += 1
+            filial_name = expeditor_filial_map.get(expeditor, 'Biriktirilmagan')
+            filial_stats[filial_name]['same_time'] += 1
+            filial_stats[filial_name]['total_violations'] += 1
+            for c in violation.get('checks', []):
+                project_name = c.get('project') or 'Noma\'lum'
+                project_stats[project_name]['same_time'] += 1
+                project_stats[project_name]['total_violations'] += 1
         
         # Har bir expeditorning umumiy checklari soni
         for item in all_checks:
             expeditor = item['check'].ekispiditor
             if expeditor:
                 expeditor_stats[expeditor]['total_checks'] += 1
+                filial_name = expeditor_filial_map.get(expeditor, 'Biriktirilmagan')
+                filial_stats[filial_name]['total_checks'] += 1
+            project_name = item['check'].project or 'Noma\'lum'
+            project_stats[project_name]['total_checks'] += 1
         
         return {
             'total_violations': total_violations,
             'violation_types': violation_types,
             'expeditor_statistics': dict(expeditor_stats),
+            'filial_statistics': dict(filial_stats),
+            'project_statistics': dict(project_stats),
             'total_checks_analyzed': len(all_checks),
         }
 

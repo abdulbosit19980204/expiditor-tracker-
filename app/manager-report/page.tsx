@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { AlertCircle, Download, Mail, Filter, BarChart3, MapPin, Clock, Warehouse, Users } from "lucide-react"
+import { AlertCircle, Download, Mail, Filter, BarChart3, MapPin, Clock, Warehouse, Users, Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import { AuthGuard } from "@/components/auth-guard"
@@ -17,6 +17,16 @@ import type { Project, Filial } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  LabelList,
+} from "recharts"
 
 interface Violation {
   type: string
@@ -67,6 +77,20 @@ interface ManagerReportData {
       total_violations: number
       total_checks: number
     }>
+    filial_statistics: Record<string, {
+      same_location: number
+      sklad: number
+      same_time: number
+      total_violations: number
+      total_checks: number
+    }>
+    project_statistics: Record<string, {
+      same_location: number
+      sklad: number
+      same_time: number
+      total_violations: number
+      total_checks: number
+    }>
     total_checks_analyzed: number
   }
   violations: {
@@ -89,6 +113,8 @@ export default function ManagerReportPage() {
   const [reportData, setReportData] = useState<ManagerReportData | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [filials, setFilials] = useState<Filial[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [showDetails, setShowDetails] = useState(false)
   
   const [filters, setFilters] = useState({
     dateRange: getCurrentMonthRange(),
@@ -265,6 +291,99 @@ export default function ManagerReportPage() {
     }
   }
 
+  // Top expeditors (violation ko'pchiligi) bar chart ma'lumotlari
+  const topExpeditors = useMemo(() => {
+    if (!reportData) return []
+    const entries = Object.entries(reportData.statistics.expeditor_statistics)
+    return entries
+      .map(([name, stats]) => ({
+        name,
+        total: stats.total_violations,
+        checks: stats.total_checks,
+        same_location: stats.same_location,
+        sklad: stats.sklad,
+        same_time: stats.same_time,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10)
+  }, [reportData])
+
+  const topFilials = useMemo(() => {
+    if (!reportData) return []
+    const entries = Object.entries(reportData.statistics.filial_statistics || {})
+    return entries
+      .map(([name, stats]) => ({
+        name,
+        total: stats.total_violations,
+        checks: stats.total_checks,
+        same_location: stats.same_location,
+        sklad: stats.sklad,
+        same_time: stats.same_time,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10)
+  }, [reportData])
+
+  const topProjects = useMemo(() => {
+    if (!reportData) return []
+    const entries = Object.entries(reportData.statistics.project_statistics || {})
+    return entries
+      .map(([name, stats]) => ({
+        name,
+        total: stats.total_violations,
+        checks: stats.total_checks,
+        same_location: stats.same_location,
+        sklad: stats.sklad,
+        same_time: stats.same_time,
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10)
+  }, [reportData])
+
+  // Violationsni qidirish bo'yicha filtrlash
+  const filterViolations = useCallback(
+    (items: Violation[]) => {
+      const term = searchTerm.trim().toLowerCase()
+      if (!term) return items
+      return items.filter((v) => {
+        const expMatch = v.expeditor?.toLowerCase().includes(term)
+        const checkMatch = v.checks?.some(
+          (c) =>
+            c.check_id.toLowerCase().includes(term) ||
+            (c.client_name || "").toLowerCase().includes(term),
+        )
+        return expMatch || checkMatch
+      })
+    },
+    [searchTerm],
+  )
+
+  // Managerlar uchun qo'shimcha foydali ko'rsatkichlar
+  const kpi = useMemo(() => {
+    if (!reportData) return null
+    const totalChecks = reportData.statistics.total_checks_analyzed || 0
+    const totalViolations = reportData.statistics.total_violations || 0
+    const violationRate = totalChecks > 0 ? (totalViolations / totalChecks) * 100 : 0
+    const expCount = Object.keys(reportData.statistics.expeditor_statistics || {}).length || 1
+    const avgPerExp = totalViolations / expCount
+    const vt = reportData.statistics.violation_types
+    const dominantTypeEntry = Object.entries(vt).sort((a, b) => b[1] - a[1])[0]
+    const dominantType =
+      dominantTypeEntry?.[0] === "same_location"
+        ? "Bitta joydan"
+        : dominantTypeEntry?.[0] === "sklad"
+        ? "Skladdan"
+        : "Bir vaqtda"
+    const topOffender = topExpeditors[0]?.name || "—"
+
+    return {
+      violationRate,
+      avgPerExp,
+      dominantType,
+      topOffender,
+    }
+  }, [reportData, topExpeditors])
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -379,6 +498,85 @@ export default function ManagerReportPage() {
           {/* Statistics */}
           {reportData && (
             <>
+              {/* Diagrammalar tepada */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Expeditorlar bo'yicha (Top 10)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {topExpeditors.length > 0 ? (
+                      <div className="h-72 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={topExpeditors} layout="vertical" margin={{ left: 80 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={140} />
+                            <Tooltip />
+                            <Bar dataKey="total" fill="#2563eb" name="Jami xatoliklar">
+                              <LabelList dataKey="total" position="right" />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Ma'lumot yo'q</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Filial va Loyiha (Top 10)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="h-64 w-full">
+                        {topFilials.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={topFilials} layout="vertical" margin={{ left: 60 }}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis type="number" />
+                              <YAxis dataKey="name" type="category" width={120} />
+                              <Tooltip />
+                              <Bar dataKey="total" fill="#0ea5e9" name="Jami xatoliklar">
+                                <LabelList dataKey="total" position="right" />
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <p className="text-sm text-gray-500">Filial bo'yicha ma'lumot yo'q</p>
+                        )}
+                      </div>
+                      <div className="h-64 w-full">
+                        {topProjects.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={topProjects} layout="vertical" margin={{ left: 60 }}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis type="number" />
+                              <YAxis dataKey="name" type="category" width={120} />
+                              <Tooltip />
+                              <Bar dataKey="total" fill="#f97316" name="Jami xatoliklar">
+                                <LabelList dataKey="total" position="right" />
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <p className="text-sm text-gray-500">Loyiha bo'yicha ma'lumot yo'q</p>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* KPI kartalar */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardHeader className="pb-3">
@@ -390,6 +588,39 @@ export default function ManagerReportPage() {
                   </CardContent>
                 </Card>
 
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-gray-600">Xatoliklar ulushi</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-orange-600">{(kpi?.violationRate || 0).toFixed(1)}%</div>
+                    <p className="text-xs text-gray-500 mt-1">Jami checklarga nisbatan</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-gray-600">Eng ko'p tur</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-semibold text-blue-600">{kpi?.dominantType || "—"}</div>
+                    <p className="text-xs text-gray-500 mt-1">Asosiy e'tibor qaratish kerak</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-medium text-gray-600">Top expeditor</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-lg font-semibold text-red-600">{kpi?.topOffender || "—"}</div>
+                    <p className="text-xs text-gray-500 mt-1">Ko'proq xatolik sodir etgan</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Violation turlari qisqa ko'rsatkichlari */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -430,7 +661,26 @@ export default function ManagerReportPage() {
               {/* Violations Tabs */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Xatoliklar Tafsilotlari</CardTitle>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Xatoliklar</CardTitle>
+                    <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+                      <div className="relative w-full md:w-64">
+                        <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <Input
+                          placeholder="Expeditor yoki check ID bo'yicha qidirish"
+                          className="pl-9"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <Button
+                        variant={showDetails ? "outline" : "default"}
+                        onClick={() => setShowDetails((p) => !p)}
+                      >
+                        {showDetails ? "Detallarni yashirish" : "Detallarni ko'rsatish"}
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="same_location" className="w-full">
@@ -448,28 +698,31 @@ export default function ManagerReportPage() {
 
                     <TabsContent value="same_location" className="mt-4">
                       <ViolationsTable
-                        violations={reportData.violations.same_location}
+                        violations={filterViolations(reportData.violations.same_location)}
                         type="same_location"
                         formatCurrency={formatCurrency}
                         formatDateTime={formatDateTime}
+                        showDetails={showDetails}
                       />
                     </TabsContent>
 
                     <TabsContent value="sklad" className="mt-4">
                       <ViolationsTable
-                        violations={reportData.violations.sklad}
+                        violations={filterViolations(reportData.violations.sklad)}
                         type="sklad"
                         formatCurrency={formatCurrency}
                         formatDateTime={formatDateTime}
+                        showDetails={showDetails}
                       />
                     </TabsContent>
 
                     <TabsContent value="same_time" className="mt-4">
                       <ViolationsTable
-                        violations={reportData.violations.same_time}
+                        violations={filterViolations(reportData.violations.same_time)}
                         type="same_time"
                         formatCurrency={formatCurrency}
                         formatDateTime={formatDateTime}
+                        showDetails={showDetails}
                       />
                     </TabsContent>
                   </Tabs>
@@ -485,6 +738,21 @@ export default function ManagerReportPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {topExpeditors.length > 0 && (
+                    <div className="h-64 w-full mb-6">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={topExpeditors} layout="vertical" margin={{ left: 60 }}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis dataKey="name" type="category" width={120} />
+                          <Tooltip />
+                          <Bar dataKey="total" fill="#2563eb" name="Jami xatoliklar">
+                            <LabelList dataKey="total" position="right" />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -511,6 +779,102 @@ export default function ManagerReportPage() {
                   </Table>
                 </CardContent>
               </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Filiallar bo'yicha statistika</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {topFilials.length > 0 && (
+                      <div className="h-64 w-full mb-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={topFilials} layout="vertical" margin={{ left: 80 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={140} />
+                            <Tooltip />
+                            <Bar dataKey="total" fill="#0ea5e9" name="Jami xatoliklar">
+                              <LabelList dataKey="total" position="right" />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Filial</TableHead>
+                          <TableHead>Bitta Joydan</TableHead>
+                          <TableHead>Skladdan</TableHead>
+                          <TableHead>Bir Vaqtda</TableHead>
+                          <TableHead>Jami</TableHead>
+                          <TableHead>Checklar</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(reportData?.statistics.filial_statistics || {}).map(([filial, stats]) => (
+                          <TableRow key={filial}>
+                            <TableCell className="font-medium">{filial}</TableCell>
+                            <TableCell>{stats.same_location}</TableCell>
+                            <TableCell>{stats.sklad}</TableCell>
+                            <TableCell>{stats.same_time}</TableCell>
+                            <TableCell className="font-bold">{stats.total_violations}</TableCell>
+                            <TableCell>{stats.total_checks}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Loyihalar bo'yicha statistika</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {topProjects.length > 0 && (
+                      <div className="h-64 w-full mb-4">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={topProjects} layout="vertical" margin={{ left: 80 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={140} />
+                            <Tooltip />
+                            <Bar dataKey="total" fill="#f97316" name="Jami xatoliklar">
+                              <LabelList dataKey="total" position="right" />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Loyiha</TableHead>
+                          <TableHead>Bitta Joydan</TableHead>
+                          <TableHead>Skladdan</TableHead>
+                          <TableHead>Bir Vaqtda</TableHead>
+                          <TableHead>Jami</TableHead>
+                          <TableHead>Checklar</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(reportData?.statistics.project_statistics || {}).map(([project, stats]) => (
+                          <TableRow key={project}>
+                            <TableCell className="font-medium">{project}</TableCell>
+                            <TableCell>{stats.same_location}</TableCell>
+                            <TableCell>{stats.sklad}</TableCell>
+                            <TableCell>{stats.same_time}</TableCell>
+                            <TableCell className="font-bold">{stats.total_violations}</TableCell>
+                            <TableCell>{stats.total_checks}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
             </>
           )}
 
@@ -528,11 +892,12 @@ export default function ManagerReportPage() {
   )
 }
 
-function ViolationsTable({ violations, type, formatCurrency, formatDateTime }: {
+function ViolationsTable({ violations, type, formatCurrency, formatDateTime, showDetails }: {
   violations: Violation[]
   type: string
   formatCurrency: (amount: number) => string
   formatDateTime: (iso: string) => string
+  showDetails: boolean
 }) {
   if (violations.length === 0) {
     return (
@@ -563,32 +928,42 @@ function ViolationsTable({ violations, type, formatCurrency, formatDateTime }: {
             )}
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Check ID</TableHead>
-                  <TableHead>Mijoz</TableHead>
-                  <TableHead>Vaqt</TableHead>
-                  <TableHead>Loyiha</TableHead>
-                  <TableHead>Summa</TableHead>
-                  {type === "sklad" && <TableHead>Masofa (m)</TableHead>}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {violation.checks.map((check) => (
-                  <TableRow key={check.check_id}>
-                    <TableCell className="font-mono text-sm">{check.check_id}</TableCell>
-                    <TableCell>{check.client_name || "-"}</TableCell>
-                    <TableCell>{formatDateTime(check.time)}</TableCell>
-                    <TableCell>{check.project}</TableCell>
-                    <TableCell>{formatCurrency(check.total_sum)}</TableCell>
-                    {type === "sklad" && (
-                      <TableCell>{check.distance_from_sklad?.toFixed(2) || "-"}</TableCell>
-                    )}
+            {showDetails ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Check ID</TableHead>
+                    <TableHead>Mijoz</TableHead>
+                    <TableHead>Vaqt</TableHead>
+                    <TableHead>Loyiha</TableHead>
+                    <TableHead>Summa</TableHead>
+                    {type === "sklad" && <TableHead>Masofa (m)</TableHead>}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {violation.checks.map((check) => (
+                    <TableRow key={check.check_id}>
+                      <TableCell className="font-mono text-sm">{check.check_id}</TableCell>
+                      <TableCell>{check.client_name || "-"}</TableCell>
+                      <TableCell>{formatDateTime(check.time)}</TableCell>
+                      <TableCell>{check.project}</TableCell>
+                      <TableCell>{formatCurrency(check.total_sum)}</TableCell>
+                      {type === "sklad" && (
+                        <TableCell>{check.distance_from_sklad?.toFixed(2) || "-"}</TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-sm text-gray-700 space-y-1">
+                <p className="font-medium">Checklar: {violation.check_count} ta</p>
+                <p className="truncate">
+                  IDs: {violation.checks.map((c) => c.check_id).slice(0, 5).join(", ")}
+                  {violation.checks.length > 5 && " ..."}
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
