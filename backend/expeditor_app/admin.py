@@ -292,9 +292,36 @@ class TaskListAdmin(admin.ModelAdmin):
 
 @admin.register(EmailConfig)
 class EmailConfigAdmin(admin.ModelAdmin):
-    list_display = ['host', 'port', 'use_tls', 'use_ssl', 'is_active', 'updated_at']
-    list_filter = ['use_tls', 'use_ssl', 'is_active']
-    search_fields = ['host', 'username', 'from_email']
+    list_display = ['host', 'port', 'use_tls', 'use_ssl', 'from_email', 'is_active', 'updated_at']
+    list_filter = ['use_tls', 'use_ssl', 'is_active', 'host']
+    search_fields = ['host', 'username', 'from_email', 'backend']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('SMTP Server Configuration', {
+            'fields': ('host', 'port', 'use_tls', 'use_ssl', 'backend'),
+            'description': 'SMTP server sozlamalari. Yandex uchun: smtp.yandex.ru:465 (SSL) yoki 587 (TLS). Gmail uchun: smtp.gmail.com:465 (SSL) yoki 587 (TLS).'
+        }),
+        ('Authentication', {
+            'fields': ('username', 'password', 'from_email'),
+            'description': 'Email manzil va parol. Username odatda to\'liq email manzil (masalan: example@gmail.com).'
+        }),
+        ('Status', {
+            'fields': ('is_active',),
+            'description': 'Faollashtirilgan konfiguratsiya ishlatiladi.'
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        """Save model and ensure only one active config"""
+        if obj.is_active:
+            # Boshqa faol configlarni o'chirish
+            EmailConfig.objects.exclude(id=obj.id).update(is_active=False)
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(TelegramAccount)

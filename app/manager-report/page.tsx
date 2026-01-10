@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePickerWithRange } from "@/components/date-range-picker"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { AlertCircle, Download, Mail, Filter, BarChart3, MapPin, Clock, Warehouse, Users, Search, ArrowUp, ArrowDown, SlidersHorizontal, RotateCcw, Eye, EyeOff } from "lucide-react"
+import { AlertCircle, Download, Mail, Filter, BarChart3, MapPin, Clock, Warehouse, Users, Search, ArrowUp, ArrowDown, SlidersHorizontal, RotateCcw, Eye, EyeOff, FileText, X } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/lib/auth-context"
 import { useLanguage } from "@/lib/language-context"
@@ -1154,7 +1154,7 @@ function ViolationsTable({ violations, type, formatCurrency, formatDateTime, sho
               <CardTitle className="text-lg">
                 {violation.expeditor} - {violation.check_count} {t('checks_count_display')}
               </CardTitle>
-              <Badge variant="destructive">{violation.check_count} {t('violations_count')}</Badge>
+              <Badge variant="destructive">{violation.check_count} {t('violations_short')}</Badge>
             </div>
             {violation.sklad_name && (
               <p className="text-sm text-gray-600">{t('warehouse_name')}: {violation.sklad_name}</p>

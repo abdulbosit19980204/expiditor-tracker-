@@ -9,6 +9,7 @@ from .views import (
 from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView, TaskListViewSet, TaskAnalyticsView
 from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
 from .sms_views import SmsConfigViewSet, SmsConfigStatusView
+from .email_config_views import EmailConfigViewSet
 from .auth_views import register_user, login_user, logout_user, get_user_profile, check_auth_status
 from .integration import UpdateChecksView
 from .violation_insights_views import ViolationInsightsView, SameLocationViolationsView
@@ -30,6 +31,7 @@ router.register(r'task-runs', TaskRunViewSet, basename='task-runs')
 router.register(r'task-list', TaskListViewSet, basename='task-list')
 router.register(r'yandex-tokens', YandexTokenViewSet, basename='yandex-tokens')
 router.register(r'sms-configs', SmsConfigViewSet, basename='sms-configs')
+router.register(r'email-configs', EmailConfigViewSet, basename='email-configs')
 
 # The API URLs are now determined automatically by the router.
 # IMPORTANT: Specific paths must come BEFORE router.urls to avoid conflicts

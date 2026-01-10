@@ -27,7 +27,8 @@ import {
   RefreshCw,
   User,
   LogOut,
-  MessageSquare
+  MessageSquare,
+  Mail
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -60,6 +61,20 @@ interface SmsConfig {
   updated_at: string
 }
 
+interface EmailConfig {
+  id: number
+  backend: string
+  host: string
+  port: number
+  use_tls: boolean
+  use_ssl: boolean
+  username: string
+  from_email: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://178.218.200.120:7896/api"
 
 export default function YandexTokenManagement() {
@@ -87,6 +102,23 @@ export default function YandexTokenManagement() {
     api_url: '',
     description: ''
   })
+  
+  // Email Config states
+  const [emailConfigs, setEmailConfigs] = useState<EmailConfig[]>([])
+  const [showEmailAddDialog, setShowEmailAddDialog] = useState(false)
+  const [showEmailEditDialog, setShowEmailEditDialog] = useState(false)
+  const [editingEmailConfig, setEditingEmailConfig] = useState<EmailConfig | null>(null)
+  const [showEmailPassword, setShowEmailPassword] = useState<number | null>(null)
+  const [emailFormData, setEmailFormData] = useState({
+    backend: 'django.core.mail.backends.smtp.EmailBackend',
+    host: 'smtp.gmail.com',
+    port: 587,
+    use_tls: true,
+    use_ssl: false,
+    username: '',
+    password: '',
+    from_email: ''
+  })
 
   // Permission check - only superuser can access
   useEffect(() => {
@@ -107,6 +139,7 @@ export default function YandexTokenManagement() {
   useEffect(() => {
     loadTokens()
     loadSmsConfigs()
+    loadEmailConfigs()
   }, [])
 
   const loadTokens = async () => {
@@ -489,6 +522,198 @@ export default function YandexTokenManagement() {
     setShowSmsEditDialog(true)
   }
 
+  // Email Config functions
+  const loadEmailConfigs = async () => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/email-configs/`, { headers })
+      if (response.ok) {
+        const data = await response.json()
+        setEmailConfigs(data.results || data)
+      } else {
+        console.error('Failed to load email configs:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Failed to load email configs:', error)
+    }
+  }
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
+      const url = editingEmailConfig 
+        ? `${API_BASE_URL}/email-configs/${editingEmailConfig.id}/`
+        : `${API_BASE_URL}/email-configs/`
+      
+      const method = editingEmailConfig ? 'PUT' : 'POST'
+      
+      // Password bo'sh bo'lsa, uni yubormaslik (update holatida)
+      const dataToSend = { ...emailFormData }
+      if (editingEmailConfig && !dataToSend.password) {
+        delete dataToSend.password
+      }
+      
+      const response = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(dataToSend),
+      })
+      
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Email Config ${editingEmailConfig ? 'updated' : 'created'} successfully`,
+          variant: "success",
+        })
+        loadEmailConfigs()
+        resetEmailForm()
+        setShowEmailAddDialog(false)
+        setShowEmailEditDialog(false)
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.detail || `Failed to ${editingEmailConfig ? 'update' : 'create'} Email config`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${editingEmailConfig ? 'update' : 'create'} Email config`,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleEmailStatusChange = async (configId: number, isActive: boolean) => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/email-configs/${configId}/`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ is_active: isActive }),
+      })
+      
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Email Config ${isActive ? 'activated' : 'deactivated'} successfully`,
+          variant: "success",
+        })
+        loadEmailConfigs()
+      } else {
+        const error = await response.json()
+        toast({
+          title: "Error",
+          description: error.detail || `Failed to ${isActive ? 'activate' : 'deactivate'} Email config`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to ${isActive ? 'activate' : 'deactivate'} Email config`,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleEmailDelete = async (configId: number) => {
+    const config = emailConfigs.find(c => c.id === configId)
+    const configHost = config?.host || 'this Email config'
+    
+    if (!confirm(`Are you sure you want to delete Email config "${configHost}"?`)) return
+    
+    try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Token ${token}`
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/email-configs/${configId}/`, {
+        method: 'DELETE',
+        headers,
+      })
+      
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Email Config "${configHost}" deleted successfully`,
+          variant: "success",
+        })
+        loadEmailConfigs()
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete Email config",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete Email config",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const resetEmailForm = () => {
+    setEmailFormData({
+      backend: 'django.core.mail.backends.smtp.EmailBackend',
+      host: 'smtp.gmail.com',
+      port: 587,
+      use_tls: true,
+      use_ssl: false,
+      username: '',
+      password: '',
+      from_email: ''
+    })
+    setEditingEmailConfig(null)
+  }
+
+  const openEmailEditDialog = (config: EmailConfig) => {
+    setEditingEmailConfig(config)
+    setEmailFormData({
+      backend: config.backend || 'django.core.mail.backends.smtp.EmailBackend',
+      host: config.host || 'smtp.gmail.com',
+      port: config.port || 587,
+      use_tls: config.use_tls,
+      use_ssl: config.use_ssl,
+      username: config.username || '',
+      password: '', // Password ni ko'rsatmaymiz
+      from_email: config.from_email || ''
+    })
+    setShowEmailEditDialog(true)
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto p-6">
@@ -510,7 +735,7 @@ export default function YandexTokenManagement() {
             Settings Management
           </h1>
           <p className="text-gray-600 mt-2">
-            Manage Yandex Maps API tokens and SMS configurations
+            Manage Yandex Maps API tokens, SMS and Email configurations
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -548,6 +773,10 @@ export default function YandexTokenManagement() {
           <TabsTrigger value="sms" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             SMS Config
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Email Config
           </TabsTrigger>
         </TabsList>
 
@@ -1121,6 +1350,404 @@ export default function YandexTokenManagement() {
                   <Button onClick={() => setShowSmsAddDialog(true)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add SMS Config
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="email" className="space-y-6">
+          {/* Add Email Config Dialog */}
+          <Dialog open={showEmailAddDialog} onOpenChange={setShowEmailAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="mb-4">
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Email Config
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Email Config</DialogTitle>
+                <DialogDescription>
+                  Configure SMTP settings for sending emails (Yandex, Gmail, etc.)
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="email_backend">Backend</Label>
+                  <Input
+                    id="email_backend"
+                    value={emailFormData.backend}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, backend: e.target.value })}
+                    placeholder="django.core.mail.backends.smtp.EmailBackend"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email_host">SMTP Host</Label>
+                  <Select
+                    value={emailFormData.host}
+                    onValueChange={(value) => {
+                      const newData = { ...emailFormData, host: value }
+                      // Auto-configure port and SSL/TLS based on host
+                      if (value.includes('yandex')) {
+                        newData.port = 465
+                        newData.use_ssl = true
+                        newData.use_tls = false
+                      } else if (value.includes('gmail')) {
+                        newData.port = 587
+                        newData.use_tls = true
+                        newData.use_ssl = false
+                      }
+                      setEmailFormData(newData)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select SMTP host" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="smtp.yandex.ru">Yandex (smtp.yandex.ru)</SelectItem>
+                      <SelectItem value="smtp.gmail.com">Gmail (smtp.gmail.com)</SelectItem>
+                      <SelectItem value="smtp.mail.ru">Mail.ru (smtp.mail.ru)</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {emailFormData.host === 'custom' && (
+                    <Input
+                      className="mt-2"
+                      placeholder="Enter custom SMTP host"
+                      value={emailFormData.host === 'custom' ? '' : emailFormData.host}
+                      onChange={(e) => setEmailFormData({ ...emailFormData, host: e.target.value })}
+                    />
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="email_port">Port</Label>
+                  <Input
+                    id="email_port"
+                    type="number"
+                    value={emailFormData.port}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, port: parseInt(e.target.value) || 587 })}
+                    placeholder="587 (TLS) or 465 (SSL)"
+                    required
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="email_use_tls"
+                      checked={emailFormData.use_tls}
+                      onChange={(e) => {
+                        const newData = { ...emailFormData, use_tls: e.target.checked }
+                        if (e.target.checked) {
+                          newData.use_ssl = false
+                        }
+                        setEmailFormData(newData)
+                      }}
+                      className="rounded"
+                    />
+                    <Label htmlFor="email_use_tls">Use TLS</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="email_use_ssl"
+                      checked={emailFormData.use_ssl}
+                      onChange={(e) => {
+                        const newData = { ...emailFormData, use_ssl: e.target.checked }
+                        if (e.target.checked) {
+                          newData.use_tls = false
+                        }
+                        setEmailFormData(newData)
+                      }}
+                      className="rounded"
+                    />
+                    <Label htmlFor="email_use_ssl">Use SSL</Label>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="email_username">Username (Email)</Label>
+                  <Input
+                    id="email_username"
+                    type="email"
+                    value={emailFormData.username}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, username: e.target.value })}
+                    placeholder="user@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email_password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="email_password"
+                      type={showEmailPassword === -1 ? "text" : "password"}
+                      value={emailFormData.password}
+                      onChange={(e) => setEmailFormData({ ...emailFormData, password: e.target.value })}
+                      placeholder="Enter email password or app password"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowEmailPassword(showEmailPassword === -1 ? null : -1)}
+                    >
+                      {showEmailPassword === -1 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    For Gmail: Use App Password if 2FA is enabled
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="email_from_email">From Email</Label>
+                  <Input
+                    id="email_from_email"
+                    type="email"
+                    value={emailFormData.from_email}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, from_email: e.target.value })}
+                    placeholder="user@example.com"
+                    required
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setShowEmailAddDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Add Config</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Email Config Dialog */}
+          <Dialog open={showEmailEditDialog} onOpenChange={setShowEmailEditDialog}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Email Config</DialogTitle>
+                <DialogDescription>
+                  Update SMTP email configuration
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="edit_email_backend">Backend</Label>
+                  <Input
+                    id="edit_email_backend"
+                    value={emailFormData.backend}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, backend: e.target.value })}
+                    placeholder="django.core.mail.backends.smtp.EmailBackend"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_email_host">SMTP Host</Label>
+                  <Select
+                    value={emailFormData.host}
+                    onValueChange={(value) => {
+                      const newData = { ...emailFormData, host: value }
+                      if (value.includes('yandex')) {
+                        newData.port = 465
+                        newData.use_ssl = true
+                        newData.use_tls = false
+                      } else if (value.includes('gmail')) {
+                        newData.port = 587
+                        newData.use_tls = true
+                        newData.use_ssl = false
+                      }
+                      setEmailFormData(newData)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="smtp.yandex.ru">Yandex (smtp.yandex.ru)</SelectItem>
+                      <SelectItem value="smtp.gmail.com">Gmail (smtp.gmail.com)</SelectItem>
+                      <SelectItem value="smtp.mail.ru">Mail.ru (smtp.mail.ru)</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="edit_email_port">Port</Label>
+                  <Input
+                    id="edit_email_port"
+                    type="number"
+                    value={emailFormData.port}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, port: parseInt(e.target.value) || 587 })}
+                    required
+                  />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="edit_email_use_tls"
+                      checked={emailFormData.use_tls}
+                      onChange={(e) => {
+                        const newData = { ...emailFormData, use_tls: e.target.checked }
+                        if (e.target.checked) {
+                          newData.use_ssl = false
+                        }
+                        setEmailFormData(newData)
+                      }}
+                      className="rounded"
+                    />
+                    <Label htmlFor="edit_email_use_tls">Use TLS</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="edit_email_use_ssl"
+                      checked={emailFormData.use_ssl}
+                      onChange={(e) => {
+                        const newData = { ...emailFormData, use_ssl: e.target.checked }
+                        if (e.target.checked) {
+                          newData.use_tls = false
+                        }
+                        setEmailFormData(newData)
+                      }}
+                      className="rounded"
+                    />
+                    <Label htmlFor="edit_email_use_ssl">Use SSL</Label>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="edit_email_username">Username (Email)</Label>
+                  <Input
+                    id="edit_email_username"
+                    type="email"
+                    value={emailFormData.username}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, username: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit_email_password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="edit_email_password"
+                      type={showEmailPassword === editingEmailConfig?.id ? "text" : "password"}
+                      value={emailFormData.password}
+                      onChange={(e) => setEmailFormData({ ...emailFormData, password: e.target.value })}
+                      placeholder="Leave empty to keep current password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowEmailPassword(showEmailPassword === editingEmailConfig?.id ? null : editingEmailConfig?.id || null)}
+                    >
+                      {showEmailPassword === editingEmailConfig?.id ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="edit_email_from_email">From Email</Label>
+                  <Input
+                    id="edit_email_from_email"
+                    type="email"
+                    value={emailFormData.from_email}
+                    onChange={(e) => setEmailFormData({ ...emailFormData, from_email: e.target.value })}
+                    required
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setShowEmailEditDialog(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Update Config</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* Email Configs List */}
+          <div className="grid gap-4">
+            {emailConfigs.map((config) => (
+              <Card key={config.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(config.is_active ? 'active' : 'inactive')}
+                        <h3 className="text-lg font-semibold">{config.host}:{config.port}</h3>
+                        <Badge variant={getStatusBadgeVariant(config.is_active ? 'active' : 'inactive')}>
+                          {config.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        <div>Backend: {config.backend}</div>
+                        <div>Username: {config.username}</div>
+                        <div>From: {config.from_email}</div>
+                        <div>TLS: {config.use_tls ? 'Yes' : 'No'} | SSL: {config.use_ssl ? 'Yes' : 'No'}</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {config.is_active ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEmailStatusChange(config.id, false)}
+                          title="Deactivate"
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEmailStatusChange(config.id, true)}
+                          title="Activate"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEmailEditDialog(config)}
+                        title="Edit"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEmailDelete(config.id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="text-xs text-gray-400 mt-2">
+                    Created: {formatDateTime(config.created_at)} | 
+                    Updated: {formatDateTime(config.updated_at)}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {emailConfigs.length === 0 && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-semibold text-gray-600 mb-2">No Email configs found</h3>
+                  <p className="text-gray-500 mb-4">Add your first Email configuration to get started.</p>
+                  <Button onClick={() => setShowEmailAddDialog(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Email Config
                   </Button>
                 </CardContent>
               </Card>

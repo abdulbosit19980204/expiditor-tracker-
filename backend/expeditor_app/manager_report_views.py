@@ -3,6 +3,7 @@ Manager Report Views - Xatoliklarni aniqlash va statistika
 """
 import math
 import io
+import logging
 from collections import defaultdict
 from django.db.models import Q, Count, Sum, F, FloatField, IntegerField
 from django.db.models.functions import TruncMinute, TruncHour
@@ -16,6 +17,9 @@ from datetime import datetime, timedelta
 from .models import Check, CheckDetail, Sklad, Ekispiditor, EmailRecipient, EmailConfig
 from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
+from .email_service import EmailService
+
+logger = logging.getLogger(__name__)
 
 # Email settings fallback
 DEFAULT_FROM_EMAIL = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@expeditor-tracker.com')
@@ -687,45 +691,56 @@ class ManagerReportEmailView(APIView):
         date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
         html_content = pdf_view._generate_html_report(report_data, date_from_obj, date_to_obj)
         
-        # Email yuborish - dinamik email config bilan
+        # Email yuborish - EmailService orqali
         try:
-            # Email backend sozlamalarini dinamik qilib o'rnatish
-            if email_config:
-                # Django email backend sozlamalarini o'zgartirish
-                from django.core.mail import get_connection
-                connection = get_connection(
-                    backend=email_config.backend,
-                    host=email_config.host,
-                    port=email_config.port,
-                    username=email_config.username,
-                    password=email_config.password,
-                    use_tls=email_config.use_tls,
-                    use_ssl=email_config.use_ssl,
-                    fail_silently=False,
-                )
-            else:
-                connection = None
-            
             subject = f"Manager Xisoboti - {date_from_obj.date()} dan {date_to_obj.date()} gacha"
             
-            email = EmailMessage(
-                subject=subject,
-                body=html_content,
-                from_email=email_config.from_email or DEFAULT_FROM_EMAIL if email_config else DEFAULT_FROM_EMAIL,
-                to=recipient_emails,
-                connection=connection,
-            )
-            email.content_subtype = "html"
-            email.send()
+            # Text versiyasi (ixtiyoriy)
+            text_content = f"""
+Manager Xisoboti
+Sana: {date_from_obj.date()} dan {date_to_obj.date()} gacha
+
+Jami Xatoliklar: {report_data['statistics']['total_violations']}
+Bitta Joydan: {report_data['statistics']['violation_types']['same_location']}
+Skladdan: {report_data['statistics']['violation_types']['sklad']}
+Bir Vaqtda: {report_data['statistics']['violation_types']['same_time']}
+
+Batafsil ma'lumot HTML formatida qo'shilgan.
+"""
             
-            return Response({
-                'success': True,
-                'message': f'Xisobot {len(recipient_emails)} ta emailga yuborildi',
-                'recipients': recipient_emails
-            })
+            # EmailService orqali yuborish
+            email_service = EmailService(email_config)
+            result = email_service.send_email(
+                to_emails=recipient_emails,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content
+            )
+            
+            if result['success']:
+                return Response({
+                    'success': True,
+                    'message': result['message'],
+                    'recipients': result['sent_to'],
+                    'provider': result.get('provider', 'unknown')
+                })
+            else:
+                return Response(
+                    {'error': result['message'], 'error_type': result.get('error_type')},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except ValueError as e:
+            # EmailConfig topilmagan yoki noto'g'ri sozlangan
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
+            logger.error(f"Email yuborishda kutilmagan xatolik: {str(e)}")
+            logger.error(error_trace)
             return Response(
                 {'error': f'Email yuborishda xatolik: {str(e)}', 'trace': error_trace if settings.DEBUG else None},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

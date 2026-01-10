@@ -40,7 +40,8 @@ import {
   TrendingUp,
   Zap,
   Target,
-  BarChart3
+  BarChart3,
+  FileText
 } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import Link from "next/link"

@@ -164,10 +164,10 @@ class ScheduledTaskSerializer(serializers.ModelSerializer):
 class EmailConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailConfig
-        fields = ['id', 'backend', 'host', 'port', 'use_tls', 'use_ssl', 'username', 'from_email', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'backend', 'host', 'port', 'use_tls', 'use_ssl', 'username', 'password', 'from_email', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True, 'required': False}
         }
 
 
