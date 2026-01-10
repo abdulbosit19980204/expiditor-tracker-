@@ -188,18 +188,35 @@ class ScheduledTask(models.Model):
     TASK_SCAN_PROBLEM_CHECKS = 'SCAN_PROBLEMS'
     TASK_SEND_ANALYTICS = 'SEND_ANALYTICS'
     TASK_ANALYZE_PATTERNS = 'ANALYZE_PATTERNS'
+    TASK_SEND_MANAGER_REPORT = 'SEND_MANAGER_REPORT'
 
     TASK_CHOICES = [
         (TASK_UPDATE_CHECKS, 'Update Checks from Integrations'),
         (TASK_SCAN_PROBLEM_CHECKS, 'Scan Problem Checks'),
         (TASK_SEND_ANALYTICS, 'Send Analytics Report'),
         (TASK_ANALYZE_PATTERNS, 'Analyze Check Patterns'),
+        (TASK_SEND_MANAGER_REPORT, 'Send Manager Report'),
+    ]
+    
+    FREQUENCY_DAILY = 'daily'
+    FREQUENCY_WEEKLY = 'weekly'
+    FREQUENCY_MONTHLY = 'monthly'
+    
+    FREQUENCY_CHOICES = [
+        (FREQUENCY_DAILY, 'Daily'),
+        (FREQUENCY_WEEKLY, 'Weekly'),
+        (FREQUENCY_MONTHLY, 'Monthly'),
     ]
 
     name = models.CharField(max_length=120)
     task_type = models.CharField(max_length=50, choices=TASK_CHOICES, db_index=True)
     is_enabled = models.BooleanField(default=False, db_index=True)
-    interval_minutes = models.PositiveIntegerField(default=60)
+    interval_minutes = models.PositiveIntegerField(default=60, help_text="Used for interval-based tasks")
+    # Manager Report uchun yangi fieldlar
+    frequency_type = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, blank=True, null=True, help_text="Daily/Weekly/Monthly for scheduled reports")
+    send_time = models.TimeField(blank=True, null=True, help_text="Time to send report (HH:MM format)")
+    recipient_user_ids = models.JSONField(default=list, blank=True, help_text="List of user IDs to receive the report")
+    recipient_emails = models.JSONField(default=list, blank=True, help_text="List of email addresses to receive the report")
     last_run_at = models.DateTimeField(blank=True, null=True, db_index=True)
     next_run_at = models.DateTimeField(blank=True, null=True, db_index=True)
     params = models.JSONField(blank=True, null=True)
@@ -516,6 +533,61 @@ class YandexToken(models.Model):
     @classmethod
     def get_active_token(cls):
         """Get the currently active token."""
+        return cls.objects.filter(status=cls.STATUS_ACTIVE).first()
+
+
+class SmsConfig(models.Model):
+    """SMS provider configuration management.
+    
+    This model stores SMS provider configurations (API keys, secrets, etc.)
+    for sending SMS notifications.
+    """
+    PROVIDER_ESKIZ = 'eskiz'
+    PROVIDER_SMS_UZ = 'sms_uz'
+    PROVIDER_CUSTOM = 'custom'
+    
+    PROVIDER_CHOICES = [
+        (PROVIDER_ESKIZ, 'Eskiz.uz'),
+        (PROVIDER_SMS_UZ, 'SMS.uz'),
+        (PROVIDER_CUSTOM, 'Custom Provider'),
+    ]
+    
+    STATUS_ACTIVE = 'active'
+    STATUS_INACTIVE = 'inactive'
+    
+    STATUS_CHOICES = [
+        (STATUS_ACTIVE, 'Active'),
+        (STATUS_INACTIVE, 'Inactive'),
+    ]
+    
+    name = models.CharField(max_length=100, help_text="Configuration name for identification")
+    provider = models.CharField(max_length=50, choices=PROVIDER_CHOICES, default=PROVIDER_ESKIZ, help_text="SMS provider")
+    api_key = models.CharField(max_length=200, blank=True, null=True, help_text="SMS API key")
+    api_secret = models.CharField(max_length=200, blank=True, null=True, help_text="SMS API secret")
+    sender = models.CharField(max_length=50, blank=True, null=True, help_text="SMS sender name/number")
+    api_url = models.URLField(blank=True, null=True, help_text="API endpoint URL (for custom provider)")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_INACTIVE, db_index=True)
+    description = models.TextField(blank=True, null=True, help_text="Configuration description")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Settings — SMS Config"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.name} ({self.provider}) - {self.status}"
+    
+    def save(self, *args, **kwargs):
+        """Override save to handle active config logic."""
+        # If this config is being set to active, deactivate all others
+        if self.status == self.STATUS_ACTIVE:
+            SmsConfig.objects.exclude(id=self.id).update(status=self.STATUS_INACTIVE)
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def get_active_config(cls):
+        """Get the currently active SMS config."""
         return cls.objects.filter(status=cls.STATUS_ACTIVE).first()
 
 

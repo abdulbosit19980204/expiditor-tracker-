@@ -7,7 +7,12 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
 import { 
   Play, 
   Pause, 
@@ -49,8 +54,14 @@ interface ScheduledTask {
   task_type: string
   is_enabled: boolean
   interval_minutes: number
+  frequency_type?: 'daily' | 'weekly' | 'monthly' | null
+  send_time?: string | null
+  recipient_user_ids?: number[]
+  recipient_emails?: string[]
   next_run_at: string | null
   last_run_at: string | null
+  next_run_display?: string | null
+  last_run_display?: string | null
   params: any
   created_at: string
   updated_at: string
@@ -129,6 +140,10 @@ export default function TaskManagement() {
   
   // Analytics state
   const [analytics, setAnalytics] = useState<TaskAnalytics | null>(null)
+  const [showReportScheduleDialog, setShowReportScheduleDialog] = useState(false)
+  const [editingTask, setEditingTask] = useState<ScheduledTask | null>(null)
+  const [allUsers, setAllUsers] = useState<Array<{id: number, username: string, email?: string}>>([])
+  const [emailRecipients, setEmailRecipients] = useState<Array<{id: number, email: string}>>([])
 
   useEffect(() => {
     loadTasks()
@@ -426,6 +441,7 @@ export default function TaskManagement() {
       'SCAN_PROBLEMS': 'Scan Problems',
       'SEND_ANALYTICS': 'Send Analytics',
       'ANALYZE_PATTERNS': 'Analyze Patterns',
+      'SEND_MANAGER_REPORT': 'Send Manager Report',
     }
     return labels[taskType as keyof typeof labels] || taskType
   }
@@ -436,6 +452,7 @@ export default function TaskManagement() {
       'SCAN_PROBLEMS': <AlertCircle className="h-4 w-4" />,
       'SEND_ANALYTICS': <Activity className="h-4 w-4" />,
       'ANALYZE_PATTERNS': <Settings className="h-4 w-4" />,
+      'SEND_MANAGER_REPORT': <FileText className="h-4 w-4" />,
     }
     return icons[taskType as keyof typeof icons] || <Settings className="h-4 w-4" />
   }
@@ -817,6 +834,19 @@ export default function TaskManagement() {
                             <RotateCcw className="h-4 w-4" />
                           )}
                         </Button>
+                        {task.task_type === 'SEND_MANAGER_REPORT' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditingTask(task)
+                              setShowReportScheduleDialog(true)
+                            }}
+                            title="Report Schedule Settings"
+                          >
+                            <Calendar className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1027,6 +1057,126 @@ export default function TaskManagement() {
               Close
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Schedule Dialog */}
+      <Dialog open={showReportScheduleDialog} onOpenChange={setShowReportScheduleDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Report Schedule Settings</DialogTitle>
+            <DialogDescription>
+              Configure when and to whom manager reports should be sent
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingTask && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Frequency</Label>
+                <Select
+                  value={editingTask.frequency_type || ''}
+                  onValueChange={(value) => setEditingTask({...editingTask, frequency_type: value as 'daily' | 'weekly' | 'monthly'})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Daily</SelectItem>
+                    <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="monthly">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Send Time (HH:MM)</Label>
+                <Input
+                  type="time"
+                  value={editingTask.send_time || ''}
+                  onChange={(e) => setEditingTask({...editingTask, send_time: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Recipient Emails (comma-separated)</Label>
+                <Textarea
+                  placeholder="email1@example.com, email2@example.com"
+                  value={Array.isArray(editingTask.recipient_emails) ? editingTask.recipient_emails.join(', ') : ''}
+                  onChange={(e) => {
+                    const emails = e.target.value.split(',').map(email => email.trim()).filter(email => email)
+                    setEditingTask({...editingTask, recipient_emails: emails})
+                  }}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Recipient User IDs (comma-separated)</Label>
+                <Input
+                  type="text"
+                  placeholder="1, 2, 3"
+                  value={Array.isArray(editingTask.recipient_user_ids) ? editingTask.recipient_user_ids.join(', ') : ''}
+                  onChange={(e) => {
+                    const ids = e.target.value.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+                    setEditingTask({...editingTask, recipient_user_ids: ids})
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReportScheduleDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (!editingTask) return
+              try {
+                const token = localStorage.getItem('auth_token')
+                const headers: Record<string, string> = {
+                  'Content-Type': 'application/json',
+                }
+                if (token) {
+                  headers.Authorization = `Token ${token}`
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/tasks/${editingTask.id}/`, {
+                  method: 'PATCH',
+                  headers,
+                  body: JSON.stringify({
+                    frequency_type: editingTask.frequency_type || null,
+                    send_time: editingTask.send_time || null,
+                    recipient_emails: editingTask.recipient_emails || [],
+                    recipient_user_ids: editingTask.recipient_user_ids || [],
+                  }),
+                })
+                
+                if (response.ok) {
+                  toast({
+                    title: "Success",
+                    description: "Report schedule updated successfully",
+                  })
+                  loadTasks()
+                  setShowReportScheduleDialog(false)
+                } else {
+                  const error = await response.json()
+                  toast({
+                    title: "Error",
+                    description: error.detail || "Failed to update report schedule",
+                    variant: "destructive",
+                  })
+                }
+              } catch (error) {
+                toast({
+                  title: "Error",
+                  description: "Failed to update report schedule",
+                  variant: "destructive",
+                })
+              }
+            }}>
+              Save
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

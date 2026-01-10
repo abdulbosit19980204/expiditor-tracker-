@@ -5,7 +5,7 @@ from django.utils import timezone
 from .models import (
     Projects, CheckDetail, Sklad, City, Ekispiditor, Check, Filial, ProblemCheck, IntegrationEndpoint,
     ScheduledTask, EmailRecipient, TaskRun, TaskList, EmailConfig, TelegramAccount, CheckAnalytics, YandexToken,
-    UserSession, UserActivity,
+    UserSession, UserActivity, SmsConfig,
 )
 
 @admin.register(Projects)
@@ -83,6 +83,11 @@ class ScheduledTaskAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'task_type', 'is_enabled', 'interval_minutes')
+        }),
+        ('Report Schedule (for SEND_MANAGER_REPORT)', {
+            'fields': ('frequency_type', 'send_time', 'recipient_user_ids', 'recipient_emails'),
+            'description': 'Configure when and to whom manager reports should be sent',
+            'classes': ('collapse',)
         }),
         ('Task Reference', {
             'fields': ('task',),
@@ -375,6 +380,60 @@ class YandexTokenAdmin(admin.ModelAdmin):
             
             return TemplateResponse(request, 'admin/expeditor_app/yandextoken/delete_selected_confirmation.html', context)
     delete_selected_tokens.short_description = "Delete selected tokens"
+
+
+@admin.register(SmsConfig)
+class SmsConfigAdmin(admin.ModelAdmin):
+    list_display = ['name', 'provider', 'sender', 'status', 'api_key_preview', 'created_at', 'updated_at']
+    list_filter = ['provider', 'status', 'created_at']
+    search_fields = ['name', 'provider', 'sender', 'api_key', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+    actions = ['activate_config', 'deactivate_config']
+    
+    fieldsets = (
+        ('Configuration Information', {
+            'fields': ('name', 'provider', 'description')
+        }),
+        ('API Credentials', {
+            'fields': ('api_key', 'api_secret', 'api_url'),
+            'description': 'API credentials for SMS provider'
+        }),
+        ('Sender Information', {
+            'fields': ('sender',),
+            'description': 'SMS sender name or number'
+        }),
+        ('Status', {
+            'fields': ('status',)
+        }),
+        ('Metadata', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def api_key_preview(self, obj):
+        """Show masked API key for security."""
+        if obj.api_key:
+            masked = '*' * (len(obj.api_key) - 4) + obj.api_key[-4:] if len(obj.api_key) > 4 else '****'
+            return masked
+        return "No key"
+    api_key_preview.short_description = 'API Key Preview'
+    
+    def activate_config(self, request, queryset):
+        """Activate selected SMS configs (only one can be active)."""
+        count = 0
+        for config in queryset:
+            config.status = SmsConfig.STATUS_ACTIVE
+            config.save()
+            count += 1
+        messages.success(request, f'{count} SMS config(s) activated')
+    activate_config.short_description = "Activate selected SMS configs"
+    
+    def deactivate_config(self, request, queryset):
+        """Deactivate selected SMS configs."""
+        count = queryset.update(status=SmsConfig.STATUS_INACTIVE)
+        messages.success(request, f'{count} SMS config(s) deactivated')
+    deactivate_config.short_description = "Deactivate selected SMS configs"
 
 
 @admin.register(UserSession)

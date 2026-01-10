@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount, CheckAnalytics, YandexToken
+from .models import Filial, Projects, CheckDetail, Sklad, City, Ekispiditor, Check, TelegramAccount, CheckAnalytics, YandexToken, SmsConfig, ScheduledTask, EmailConfig, EmailRecipient
 
 
 class ProjectsSerializer(serializers.ModelSerializer):
@@ -99,7 +99,80 @@ class CheckAnalyticsSerializer(serializers.ModelSerializer):
 
 
 class YandexTokenSerializer(serializers.ModelSerializer):
+    api_key_preview = serializers.SerializerMethodField()
+    
+    def get_api_key_preview(self, obj):
+        """Show masked API key for security."""
+        if obj.api_key:
+            return f"{obj.api_key[:8]}...{obj.api_key[-4:]}" if len(obj.api_key) > 12 else "****"
+        return None
+    
     class Meta:
         model = YandexToken
-        fields = ['id', 'name', 'keyword', 'api_key', 'status', 'description', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'keyword', 'api_key', 'api_key_preview', 'status', 'description', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'api_key_preview']
+        extra_kwargs = {
+            'api_key': {'write_only': True}
+        }
+
+
+class SmsConfigSerializer(serializers.ModelSerializer):
+    api_key_preview = serializers.SerializerMethodField()
+    
+    def get_api_key_preview(self, obj):
+        """Show masked API key for security."""
+        if obj.api_key:
+            masked = '*' * (len(obj.api_key) - 4) + obj.api_key[-4:] if len(obj.api_key) > 4 else '****'
+            return masked
+        return None
+    
+    class Meta:
+        model = SmsConfig
+        fields = ['id', 'name', 'provider', 'api_key', 'api_key_preview', 'api_secret', 'sender', 'api_url', 'status', 'description', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'api_key_preview']
+        extra_kwargs = {
+            'api_key': {'write_only': True},
+            'api_secret': {'write_only': True}
+        }
+
+
+class ScheduledTaskSerializer(serializers.ModelSerializer):
+    next_run_display = serializers.SerializerMethodField()
+    last_run_display = serializers.SerializerMethodField()
+    
+    def get_next_run_display(self, obj):
+        if obj.next_run_at:
+            return obj.next_run_at.strftime('%Y-%m-%d %H:%M:%S')
+        return None
+    
+    def get_last_run_display(self, obj):
+        if obj.last_run_at:
+            return obj.last_run_at.strftime('%Y-%m-%d %H:%M:%S')
+        return None
+    
+    class Meta:
+        model = ScheduledTask
+        fields = [
+            'id', 'name', 'task_type', 'is_enabled', 'interval_minutes',
+            'frequency_type', 'send_time', 'recipient_user_ids', 'recipient_emails',
+            'last_run_at', 'next_run_at', 'next_run_display', 'last_run_display',
+            'params', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at', 'last_run_at', 'next_run_at', 'next_run_display', 'last_run_display']
+
+
+class EmailConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailConfig
+        fields = ['id', 'backend', 'host', 'port', 'use_tls', 'use_ssl', 'username', 'from_email', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+
+class EmailRecipientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmailRecipient
+        fields = ['id', 'email', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']

@@ -12,15 +12,28 @@ class ScheduledTaskSerializer(serializers.ModelSerializer):
     """Serializer for ScheduledTask model."""
     
     estimated_duration = serializers.SerializerMethodField()
+    next_run_display = serializers.SerializerMethodField()
+    last_run_display = serializers.SerializerMethodField()
     
     class Meta:
         model = ScheduledTask
         fields = [
             'id', 'name', 'task_type', 'is_enabled', 'interval_minutes',
-            'last_run_at', 'next_run_at', 'params', 'created_at', 'updated_at',
-            'estimated_duration'
+            'frequency_type', 'send_time', 'recipient_user_ids', 'recipient_emails',
+            'last_run_at', 'next_run_at', 'next_run_display', 'last_run_display',
+            'params', 'created_at', 'updated_at', 'estimated_duration'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'estimated_duration']
+        read_only_fields = ['created_at', 'updated_at', 'estimated_duration', 'last_run_at', 'next_run_at', 'next_run_display', 'last_run_display']
+    
+    def get_next_run_display(self, obj):
+        if obj.next_run_at:
+            return obj.next_run_at.strftime('%Y-%m-%d %H:%M:%S')
+        return None
+    
+    def get_last_run_display(self, obj):
+        if obj.last_run_at:
+            return obj.last_run_at.strftime('%Y-%m-%d %H:%M:%S')
+        return None
     
     def get_estimated_duration(self, obj):
         """
@@ -56,6 +69,8 @@ class ScheduledTaskSerializer(serializers.ModelSerializer):
             'UPDATE_CHECKS': 0.5,
             'SCAN_PROBLEMS': 1.0,
             'ANALYZE_PATTERNS': 5.0,
+            'SEND_ANALYTICS': 2.0,
+            'SEND_MANAGER_REPORT': 3.0,
             'CLEANUP_OLD_DATA': 2.0,
         }
         return defaults.get(obj.task_type, 1.0)

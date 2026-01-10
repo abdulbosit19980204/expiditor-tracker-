@@ -8,6 +8,7 @@ from .views import (
 )
 from .task_views import ScheduledTaskViewSet, TaskRunViewSet, TaskStatusView, TaskListViewSet, TaskAnalyticsView
 from .yandex_token_views import YandexTokenViewSet, YandexTokenStatusView
+from .sms_views import SmsConfigViewSet, SmsConfigStatusView
 from .auth_views import register_user, login_user, logout_user, get_user_profile, check_auth_status
 from .integration import UpdateChecksView
 from .violation_insights_views import ViolationInsightsView, SameLocationViolationsView
@@ -28,6 +29,7 @@ router.register(r'tasks', ScheduledTaskViewSet, basename='tasks')
 router.register(r'task-runs', TaskRunViewSet, basename='task-runs')
 router.register(r'task-list', TaskListViewSet, basename='task-list')
 router.register(r'yandex-tokens', YandexTokenViewSet, basename='yandex-tokens')
+router.register(r'sms-configs', SmsConfigViewSet, basename='sms-configs')
 
 # The API URLs are now determined automatically by the router.
 # IMPORTANT: Specific paths must come BEFORE router.urls to avoid conflicts
@@ -56,6 +58,7 @@ urlpatterns = [
     path('task-status/', TaskStatusView.as_view(), name='task-status'),
     path('task-analytics/', TaskAnalyticsView.as_view(), name='task-analytics'),
     path('yandex-token-status/', YandexTokenStatusView.as_view(), name='yandex-token-status'),
+    path('sms-config-status/', SmsConfigStatusView.as_view(), name='sms-config-status'),
     
     # Authentication endpoints
     path('auth/register/', register_user, name='register'),

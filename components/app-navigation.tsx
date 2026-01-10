@@ -214,13 +214,13 @@ export function AppNavigation({
       icon: Home,
     },
     {
-      name: 'Foydalanuvchilar Qo\'llanmasi',
+      name: t('user_guide_title'),
       href: '/qollanma',
       icon: BookOpen,
       badge: 'NEW',
     },
     {
-      name: 'Cheklar',
+      name: t('checks_page_title'),
       href: '/checklar',
       icon: Clock,
       badge: 'NEW',
@@ -267,7 +267,7 @@ export function AppNavigation({
       icon: Clock,
     },
     {
-      name: 'Manager Xisoboti',
+      name: t('manager_report'),
       href: '/manager-report',
       icon: FileText,
     },

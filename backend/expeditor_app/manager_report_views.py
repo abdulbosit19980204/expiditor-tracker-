@@ -687,15 +687,33 @@ class ManagerReportEmailView(APIView):
         date_to_obj = datetime.fromisoformat(date_to.replace('Z', '+00:00'))
         html_content = pdf_view._generate_html_report(report_data, date_from_obj, date_to_obj)
         
-        # Email yuborish
+        # Email yuborish - dinamik email config bilan
         try:
+            # Email backend sozlamalarini dinamik qilib o'rnatish
+            if email_config:
+                # Django email backend sozlamalarini o'zgartirish
+                from django.core.mail import get_connection
+                connection = get_connection(
+                    backend=email_config.backend,
+                    host=email_config.host,
+                    port=email_config.port,
+                    username=email_config.username,
+                    password=email_config.password,
+                    use_tls=email_config.use_tls,
+                    use_ssl=email_config.use_ssl,
+                    fail_silently=False,
+                )
+            else:
+                connection = None
+            
             subject = f"Manager Xisoboti - {date_from_obj.date()} dan {date_to_obj.date()} gacha"
             
             email = EmailMessage(
                 subject=subject,
                 body=html_content,
-                from_email=email_config.from_email or DEFAULT_FROM_EMAIL,
+                from_email=email_config.from_email or DEFAULT_FROM_EMAIL if email_config else DEFAULT_FROM_EMAIL,
                 to=recipient_emails,
+                connection=connection,
             )
             email.content_subtype = "html"
             email.send()
@@ -706,8 +724,10 @@ class ManagerReportEmailView(APIView):
                 'recipients': recipient_emails
             })
         except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
             return Response(
-                {'error': f'Email yuborishda xatolik: {str(e)}'},
+                {'error': f'Email yuborishda xatolik: {str(e)}', 'trace': error_trace if settings.DEBUG else None},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
